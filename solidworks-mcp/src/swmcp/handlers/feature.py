@@ -68,14 +68,26 @@ _DATUM_TYPES = {
 
 
 def _select_refs(ctx: OpContext, doc: Any, refs: list[Any], *, mark: int = 0) -> int:
-    """Resolve and select a list of entity references, returning how many took."""
+    """Resolve and select a list of entity references, returning how many took.
+
+    ``Select4`` carries no selection mark, so when a mark matters — a pattern direction,
+    a revolve axis — ``Select2`` has to come first. Reversing this silently selects
+    everything with mark 0, and the feature call then fails as if the reference were
+    wrong rather than the selection.
+    """
     selected = 0
     for ref in refs:
         resolution = resolve(ctx.session, doc, ref, max_candidates=ctx.config.max_candidates)
         entity = resolution.entity
-        if try_com_member(entity, "Select4", True, null_dispatch(), default=False) or (
-            try_com_member(entity, "Select2", True, mark, default=False)
-        ):
+        if mark:
+            took = try_com_member(entity, "Select2", True, mark, default=False) or (
+                try_com_member(entity, "Select4", True, null_dispatch(), default=False)
+            )
+        else:
+            took = try_com_member(entity, "Select4", True, null_dispatch(), default=False) or (
+                try_com_member(entity, "Select2", True, 0, default=False)
+            )
+        if took:
             selected += 1
     return selected
 
@@ -743,8 +755,20 @@ def feature_pattern(ctx: OpContext, args: PatternArgs) -> PatternResult:
             )
         )
 
+    if args.second_count > 1 and args.second_direction_ref is None:
+        raise SwMcpError(
+            validation_error(
+                "MISSING_ARGUMENT",
+                "second_count is greater than 1, so second_direction_ref is required.",
+                context={"second_count": args.second_count},
+                remediation=["Probe for an edge perpendicular to the first direction."],
+            )
+        )
+
     try_com_member(doc, "ClearSelection2", True, default=None)
     _select_refs(ctx, doc, [args.direction_ref], mark=1)
+    if args.second_direction_ref is not None:
+        _select_refs(ctx, doc, [args.second_direction_ref], mark=2)
 
     for feature_name in args.feature_names:
         if not doc.Extension.SelectByID2(
@@ -761,13 +785,17 @@ def feature_pattern(ctx: OpContext, args: PatternArgs) -> PatternResult:
 
     manager = doc.FeatureManager
     if args.type == "linear":
+        # FeatureLinearPattern4(Num1, Spacing1, Num2, Spacing2, FlipDir1, FlipDir2,
+        # DName1, DName2, GeometryPattern, VaryInstance, HasOffset1, HasOffset2,
+        # CtrlByNum1, CtrlByNum2, FromCentroid1, FromCentroid2, RevOffset1, RevOffset2,
+        # Offset1, Offset2). The two offsets are distances, so they must be doubles.
         feature = manager.FeatureLinearPattern4(
             args.count, args.spacing,
             args.second_count, args.second_spacing,
             args.reverse, False,
             "NULL", "NULL",
             False, False, False, False, False, False,
-            True, True, False, False, False, 0,
+            False, False, False, False, 0.0, 0.0,
         )
     else:
         feature = manager.FeatureCircularPattern5(
@@ -796,7 +824,9 @@ def feature_pattern(ctx: OpContext, args: PatternArgs) -> PatternResult:
     return PatternResult(
         feature_name=str(try_com_member(feature, "Name", default="") or ""),
         pattern_type=args.type,
-        instances_requested=args.count,
+        # A two-direction pattern makes count x second_count instances, so reporting
+        # only count would understate what was asked for.
+        instances_requested=args.count * args.second_count,
         body_count_before=before["body_count"],
         body_count_after=after["body_count"],
         volume_mm3_before=before["volume_mm3"],

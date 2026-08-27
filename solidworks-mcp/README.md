@@ -120,6 +120,27 @@ Angles default to degrees and accept `"45deg"`, `"1.57rad"`, or `{"value": 0.25,
 
 Per-tool reference with full JSON schemas: `src/swmcp/generated/docs/`.
 
+## Demo
+
+```bash
+uv run python scripts/demo_build.py
+```
+
+Spawns `python -m swmcp` over stdio, does the MCP handshake, and drives the published
+tools the way any MCP client would — no test harness in the path. It builds three parts
+in `demo-output/` and writes `DEMO-TRANSCRIPT.md` (every call, its arguments, and the
+evidence returned) plus `demo-log.json` with the full payloads.
+
+| File | What it proves |
+|---|---|
+| `demo_01_bracket.SLDPRT` | Sketch → relations → dimensions (fully defined) → 8 mm extrude measuring exactly 48 000 mm³ → a Ø6.6 hole found in the B-Rep → a 2×2 pattern verified by probing four cylindrical faces → a fillet on four edges |
+| `demo_02_shaft.SLDPRT` | A revolve about a sketch centerline, measuring 37 699.112 mm³ against π·(15²·40 + 10²·30) |
+| `demo_03_safety.SLDPRT` | A write outside the roots refused, an unknown argument refused, a delete refused without `confirm`, the versioning policy writing `_v002` instead of replacing a file, and a checkpoint restore that re-measures identically after the feature was really deleted |
+
+`SWMCP_ALLOWED_ROOTS` is set to `demo-output/` for the run, so that folder is the only
+place the server can write. Documents already open are recorded first and left alone;
+only the documents the run created are closed, addressed by title.
+
 ## Development
 
 ```bash

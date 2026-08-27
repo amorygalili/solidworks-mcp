@@ -174,14 +174,16 @@ def sketch_start(ctx: OpContext, args: SketchStartArgs) -> SketchStartResult:
         )
 
     try_com_member(doc, "ClearSelection2", True, default=None)
+    selected: Any = None
     if target.standard_plane:
         plane = ctx.session.find_standard_plane(doc, target.standard_plane)
-        plane.Select2(False, 0)
+        selected = plane.Select2(False, 0)
         described = target.standard_plane
     elif target.plane_name:
-        if not doc.Extension.SelectByID2(
+        selected = doc.Extension.SelectByID2(
             target.plane_name, "PLANE", 0, 0, 0, False, 0, null_dispatch(), 0
-        ):
+        )
+        if not selected:
             raise SwMcpError(
                 make_error(
                     "PLANE_NOT_FOUND",
@@ -195,19 +197,45 @@ def sketch_start(ctx: OpContext, args: SketchStartArgs) -> SketchStartResult:
         resolution = resolve(
             ctx.session, doc, target.ref, max_candidates=ctx.config.max_candidates
         )
-        try_com_member(resolution.entity, "Select4", True, null_dispatch(), default=False)
+        selected = try_com_member(
+            resolution.entity, "Select4", True, null_dispatch(), default=False
+        )
         described = resolution.refreshed.label
 
     before = _sketch_names(doc)
-    doc.SketchManager.InsertSketch(True)
+    inserted = doc.SketchManager.InsertSketch(True)
     sketch = active_sketch(doc)
     if sketch is None:
+        # An empty context here would leave the caller guessing which half failed, so
+        # say whether the plane was selected and what the toggle actually did.
+        selection_count = try_com_member(
+            doc.SelectionManager, "GetSelectedObjectCount2", -1, default=None
+        )
         raise SwMcpError(
             make_error(
                 "SKETCH_NOT_STARTED",
                 "solidworks",
                 "SOLIDWORKS did not open a sketch on the selected plane.",
-                remediation=["Confirm the target is planar and not suppressed."],
+                context={
+                    "target": described,
+                    "selection_succeeded": bool(selected),
+                    "selected_object_count": selection_count,
+                    "insert_sketch_returned": repr(inserted),
+                    "sketches_before": len(before),
+                    "sketches_after": len(_sketch_names(doc)),
+                    "user_control": try_com_member(
+                        ctx.session.app, "UserControl", default=None
+                    ),
+                    "command_in_progress": try_com_member(
+                        ctx.session.app, "CommandInProgress", default=None
+                    ),
+                },
+                remediation=[
+                    "Confirm the target is planar and not suppressed.",
+                    "If selected_object_count is 0 the plane was not selected; if it is 1 "
+                    "the sketch toggle itself was refused, which usually means the "
+                    "document is not the active one in the SOLIDWORKS window.",
+                ],
             )
         )
 
