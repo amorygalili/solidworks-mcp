@@ -1,0 +1,30 @@
+"""Handler modules.
+
+Importing this package registers every operation: the ``@op`` decorator populates
+:data:`swmcp.catalog.registry.OPS` as a side effect of import, so the catalog and the
+implementations can never disagree about what exists.
+"""
+
+from __future__ import annotations
+
+from swmcp.handlers import (
+    constraint,
+    discovery,
+    document,
+    feature,
+    reference,
+    safety,
+    sketch,
+    system,
+)
+
+__all__ = [
+    "constraint",
+    "discovery",
+    "document",
+    "feature",
+    "reference",
+    "safety",
+    "sketch",
+    "system",
+]

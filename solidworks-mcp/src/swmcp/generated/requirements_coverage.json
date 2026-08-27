@@ -1,0 +1,212 @@
+{
+  "covered_by_platform": {
+    "DISC-001": "tests/test_dispatch_pipeline.py::test_search_tools_sees_untiered_ops",
+    "SAFE-001": "tests/test_catalog_integrity.py::test_every_args_model_is_strict",
+    "SAFE-002": "tests/test_safety_projection.py::test_projection_covers_every_variant",
+    "SAFE-003": "tests/test_dispatch_pipeline.py::test_destructive_requires_confirm",
+    "SAFE-004": "tests/test_path_guard.py::test_output_paths_fail_closed_when_no_roots_configured",
+    "SAFE-006": "tests/test_audit.py::test_entries_are_appended_never_rewritten",
+    "SAFE-007": "tests/test_dispatch_pipeline.py::test_preflight_skips_mutation",
+    "SAFE-010": "tests/test_catalog_integrity.py::test_mutations_return_verification",
+    "SYS-003": "tests/test_worker.py::test_all_com_calls_share_one_sta_thread",
+    "SYS-004": "tests/test_worker.py::test_a_busy_read_is_retried_with_backoff",
+    "SYS-006": "tests/test_units.py::test_every_supported_length_form_reaches_meters"
+  },
+  "fully_covered": {
+    "CON-001": [
+      "sw_sketch_add_relations"
+    ],
+    "CON-002": [
+      "sw_sketch_add_dimensions"
+    ],
+    "CON-003": [
+      "sw_dimension_list",
+      "sw_dimension_set"
+    ],
+    "CON-004": [
+      "sw_sketch_auto_dimension"
+    ],
+    "CON-005": [
+      "sw_sketch_add_dimensions",
+      "sw_sketch_add_relations",
+      "sw_sketch_diagnose"
+    ],
+    "DAT-001": [
+      "sw_datum_list"
+    ],
+    "DAT-002": [
+      "sw_datum_plane_create"
+    ],
+    "DISC-002": [
+      "sw_api_search"
+    ],
+    "DISC-003": [
+      "sw_api_batch_invoke",
+      "sw_api_invoke"
+    ],
+    "DISC-004": [
+      "sw_api_invoke_write"
+    ],
+    "DISC-005": [
+      "sw_capabilities"
+    ],
+    "DOC-001": [
+      "sw_doc_new"
+    ],
+    "DOC-002": [
+      "sw_doc_open"
+    ],
+    "DOC-003": [
+      "sw_doc_list"
+    ],
+    "DOC-004": [
+      "sw_doc_activate"
+    ],
+    "DOC-005": [
+      "sw_doc_close",
+      "sw_doc_save"
+    ],
+    "DOC-006": [
+      "sw_doc_rebuild"
+    ],
+    "DOC-007": [
+      "sw_doc_undo"
+    ],
+    "FEAT-001": [
+      "sw_feature_extrude_boss"
+    ],
+    "FEAT-002": [
+      "sw_feature_extrude_cut"
+    ],
+    "FEAT-003": [
+      "sw_feature_revolve"
+    ],
+    "FEAT-006": [
+      "sw_feature_chamfer",
+      "sw_feature_fillet"
+    ],
+    "FEAT-012": [
+      "sw_feature_hole"
+    ],
+    "FEAT-015": [
+      "sw_feature_delete",
+      "sw_feature_edit",
+      "sw_feature_list"
+    ],
+    "FEAT-016": [
+      "sw_body_list"
+    ],
+    "FEAT-019": [
+      "sw_measure"
+    ],
+    "REF-001": [
+      "sw_selection_get",
+      "sw_selection_set"
+    ],
+    "REF-002": [
+      "sw_ref_capture",
+      "sw_ref_resolve"
+    ],
+    "REF-003": [
+      "sw_ref_capture",
+      "sw_ref_resolve"
+    ],
+    "REF-004": [
+      "sw_ref_capture",
+      "sw_ref_resolve"
+    ],
+    "REF-006": [
+      "sw_probe_faces",
+      "sw_ref_resolve"
+    ],
+    "REF-007": [
+      "sw_ref_capture",
+      "sw_ref_resolve"
+    ],
+    "SAFE-003": [
+      "sw_checkpoint_restore"
+    ],
+    "SAFE-004": [
+      "sw_path_policy"
+    ],
+    "SAFE-005": [
+      "sw_checkpoint_create",
+      "sw_checkpoint_list",
+      "sw_checkpoint_restore"
+    ],
+    "SAFE-006": [
+      "sw_audit_tail"
+    ],
+    "SAFE-008": [
+      "sw_doc_save",
+      "sw_path_policy"
+    ],
+    "SAFE-009": [
+      "sw_explain_error"
+    ],
+    "SK-001": [
+      "sw_sketch_exit",
+      "sw_sketch_start"
+    ],
+    "SK-002": [
+      "sw_sketch_list"
+    ],
+    "SK-003": [
+      "sw_sketch_add_geometry"
+    ],
+    "SK-004": [
+      "sw_sketch_add_geometry",
+      "sw_sketch_set_construction"
+    ],
+    "SK-005": [
+      "sw_sketch_convert_entities"
+    ],
+    "SK-006": [
+      "sw_sketch_delete"
+    ],
+    "SYS-001": [
+      "sw_connect"
+    ],
+    "SYS-002": [
+      "sw_system_info"
+    ],
+    "SYS-005": [
+      "sw_health"
+    ],
+    "SYS-007": [
+      "sw_resolve_names"
+    ]
+  },
+  "note": "A requirement listed under partially_covered is NOT done. The limitation field says what is missing.",
+  "partially_covered": {
+    "FEAT-007": {
+      "limitation": "Linear and circular patterns only. Curve-driven, sketch-driven, table-driven, fill, and variable patterns are not implemented and are rejected by the schema rather than failing at runtime.",
+      "tools": [
+        "sw_feature_pattern"
+      ]
+    },
+    "REF-005": {
+      "limitation": "Face, planar-face, cylindrical-face, feature-face, body-ownership, and ray probes are implemented. Candidate mate entities require the assembly domain (P2).",
+      "tools": [
+        "sw_probe_faces",
+        "sw_probe_ray"
+      ]
+    },
+    "SK-007": {
+      "limitation": "Move, rotate, scale, mirror, offset, and trim are implemented. Extend, split, and sketch pattern are not, and are rejected by the schema rather than failing at runtime.",
+      "tools": [
+        "sw_sketch_modify"
+      ]
+    }
+  },
+  "totals": {
+    "covered_by_platform": 11,
+    "fully_covered_by_a_tool": 48,
+    "in_scope": 59,
+    "partially_covered": 3,
+    "requirements_in_backlog": 152,
+    "tools": 57,
+    "uncovered_in_scope": 0
+  },
+  "uncovered_in_scope": []
+}

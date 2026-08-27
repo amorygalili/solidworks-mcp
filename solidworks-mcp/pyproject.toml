@@ -1,0 +1,75 @@
+[project]
+name = "solidworks-mcp"
+version = "0.1.0"
+description = "Typed, auditable MCP server for SOLIDWORKS via COM."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp>=1.2.0",
+    "pydantic>=2.9",
+    "pywin32>=306; sys_platform == 'win32'",
+]
+
+[project.scripts]
+solidworks-mcp = "swmcp.__main__:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-timeout>=2.3",
+    "ruff>=0.8",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/swmcp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["-ra", "--strict-markers", "--strict-config", "-m", "not live"]
+markers = [
+    "asyncio_skip: informational marker; the test drives asyncio itself",
+    "live: requires a running SOLIDWORKS session and writes under SWMCP_ALLOWED_ROOTS",
+    "slow: multi-second live modeling flows",
+]
+timeout = 120
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src", "tests", "scripts"]
+extend-exclude = ["src/swmcp/com/swconst.py"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "C4", "UP", "SIM", "PTH", "RUF", "PL"]
+ignore = [
+    "PLR0913",  # CAD feature APIs genuinely take many parameters
+    "PLR2004",  # swconst values appear inline in decode tables
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["PLR2004", "PLC0415", "E501", "RUF100", "SLF001", "PLR0917"]
+"scripts/**" = ["PLC0415"]
+# PTH100/110/etc: os.path is deliberate here. Path.resolve() rewrites UNC roots
+# (\server\share becomes C:\server\share), which is the exact bug this module guards.
+"src/swmcp/safety/paths.py" = ["PTH100", "PTH110", "PTH111", "PTH118", "PTH119", "PTH120"]
+"src/swmcp/config.py" = ["PLW0603"]
+# pywin32 imports are deliberately deferred so these modules import on any platform
+# and the health/system-info operations work with no COM present.
+"src/swmcp/com/*.py" = ["PLC0415"]
+# Deferred imports elsewhere are also deliberate: they keep module import cheap, avoid
+# import cycles between handlers, and let the CLI start without touching COM.
+"src/swmcp/__main__.py" = ["PLC0415", "PLR0911"]
+"src/swmcp/context.py" = ["PLC0415"]
+"src/swmcp/dispatch.py" = ["PLC0415"]
+"src/swmcp/handlers/*.py" = ["PLC0415"]
+# A filter predicate is a flat series of independent early-outs; splitting it into
+# helpers would obscure rather than clarify what is being matched.
+"src/swmcp/refs/probes.py" = ["PLR0911", "PLR0912"]
+# A dispatch table over a discriminated union reads better as a flat series of
+# early returns than as a dict of lambdas over a dozen different COM signatures.
+"src/swmcp/handlers/sketch.py" = ["PLC0415", "PLR0911", "PLR0912"]
+"src/swmcp/catalog/registry.py" = ["PLC0415"]

@@ -1,0 +1,613 @@
+{
+  "note": "Snapshot of the parsed backlog so an installed package is self-contained.",
+  "requirements": {
+    "ADV-001": {
+      "priority": "P3",
+      "text": "Surface loft/boundary/sweep/fill, knit, trim, extend, offset, ruled surface, freeform, and thicken with continuity and curvature evidence."
+    },
+    "ADV-002": {
+      "priority": "P3",
+      "text": "Discrete G0/G1/G2 and minimum-curvature-radius checks, clearly labeled as sampling rather than proof of global quality/self-intersection."
+    },
+    "ADV-003": {
+      "priority": "P3",
+      "text": "Mold draft analysis, parting-line/surface plan, shut-off/core/ cavity references, tooling direction, and shrinkage; distinguish plan validation from actual core/cavity authoring."
+    },
+    "ADV-004": {
+      "priority": "P3",
+      "text": "Sheet-metal base flange/tab, edge/miter flange, hem, jog, bend, unfold/fold, corner relief, forming tool, gauge/K-factor, and flat-pattern validation/export."
+    },
+    "ADV-005": {
+      "priority": "P3",
+      "text": "Weldment 3D sketch, structural member, trim/extend, gusset, end cap, weld bead, cut-list update, and cut-list property/BOM export."
+    },
+    "ADV-006": {
+      "priority": "P3",
+      "text": "Engrave/emboss/deboss/wrap sketch text on planar/cylindrical faces, covering the FreeCAD ShapeString workflows."
+    },
+    "ADV-007": {
+      "priority": "P3",
+      "text": "Routing authoring for pipes/tubes/electrical routes only after type-library, add-in, and license evidence; include route endpoints, segments, fittings, bend radii, supports, clearance, and BOM."
+    },
+    "ADV-008": {
+      "priority": "P3",
+      "text": "Supplier-profile DFM rules for machining, sheet metal, laser cutting, FDM, and SLA with explicit missing-evidence blocking."
+    },
+    "ASM-001": {
+      "priority": "P2",
+      "text": "Insert part/subassembly at a transform with chosen configuration and optional fixed state."
+    },
+    "ASM-002": {
+      "priority": "P2",
+      "text": "Return a recursive component tree with path, referenced configuration, quantity, suppression, lightweight, hidden, fixed, envelope, virtual, and broken-reference state."
+    },
+    "ASM-003": {
+      "priority": "P2",
+      "text": "Resolve lightweight components; suppress/unsuppress; fix/float; show/hide; and set referenced configuration."
+    },
+    "ASM-004": {
+      "priority": "P2",
+      "text": "Get/set/reset component transforms and align a component to a feature/reference."
+    },
+    "ASM-005": {
+      "priority": "P2",
+      "text": "Rename, replace one/many by path, make independent, dissolve, create subassembly, mirror, and copy with mates."
+    },
+    "ASM-006": {
+      "priority": "P2",
+      "text": "Create virtual components and save externally under an explicit path policy."
+    },
+    "ASM-007": {
+      "priority": "P2",
+      "text": "Report broken/external/in-context references and dependency paths before replacement or Pack and Go."
+    },
+    "AUTO-001": {
+      "priority": "P3",
+      "text": "List/read/create/run/delete versioned macros only if macro execution is needed; validate language/module structure and apply an allowlist or explicit high-risk gate."
+    },
+    "AUTO-002": {
+      "priority": "P3",
+      "text": "Reusable parts/features library with search, metadata, insertion, configuration choice, transform, and dependency checks."
+    },
+    "AUTO-003": {
+      "priority": "P3",
+      "text": "Natural-language brief to a structured parametric plan with assumptions, unresolved engineering inputs, operation DAG, and review gates."
+    },
+    "AUTO-004": {
+      "priority": "P3",
+      "text": "URDF readiness: component tree, named link frames/joint axes, transforms, inertial properties, joint/mate limits, and missing-reference report."
+    },
+    "AUTO-005": {
+      "priority": "P3",
+      "text": "Add link coordinate systems, export versioned meshes/package manifest, and generate URDF with validation."
+    },
+    "CON-001": {
+      "priority": "P1",
+      "text": "Add/remove horizontal, vertical, coincident, collinear, parallel, perpendicular, tangent, equal, concentric, midpoint, symmetric, fix, and merge relations."
+    },
+    "CON-002": {
+      "priority": "P1",
+      "text": "Add distance, horizontal distance, vertical distance, radius, diameter, angle, and arc-length dimensions."
+    },
+    "CON-003": {
+      "priority": "P1",
+      "text": "Set/read a dimension in caller units, including tolerance, equation/driven state, name, and configuration scope."
+    },
+    "CON-004": {
+      "priority": "P1",
+      "text": "Auto-dimension a sketch only under an explicit policy and report every dimension/relation created."
+    },
+    "CON-005": {
+      "priority": "P1",
+      "text": "Validate under/over-defined state and dangling relations after every constraint batch."
+    },
+    "DAT-001": {
+      "priority": "P1",
+      "text": "List and inspect origin, standard/named planes, axes, points, coordinate systems, and temporary axes."
+    },
+    "DAT-002": {
+      "priority": "P1",
+      "text": "Create offset/angle/mid/three-point/tangent reference planes."
+    },
+    "DAT-003": {
+      "priority": "P1",
+      "text": "Create reference axes and points from structured entity inputs."
+    },
+    "DAT-004": {
+      "priority": "P1",
+      "text": "Create a coordinate system from origin and axis references and return its transform."
+    },
+    "DAT-005": {
+      "priority": "P1",
+      "text": "Rename, suppress, delete, and persistently reference datum features."
+    },
+    "DISC-001": {
+      "priority": "P0",
+      "text": "Search the registered tool catalog by name, domain, tags, and description."
+    },
+    "DISC-002": {
+      "priority": "P0",
+      "text": "Search a local, version-tagged SolidWorks API reference and warn when the installed version differs."
+    },
+    "DISC-003": {
+      "priority": "P0",
+      "text": "Provide an allowlisted read-only API/property invoker and an efficient batch form for multi-call inspection."
+    },
+    "DISC-004": {
+      "priority": "P0",
+      "text": "Gate low-level writes behind a separate configuration flag, confirmation, path policy, audit, and checkpoint."
+    },
+    "DISC-005": {
+      "priority": "P0",
+      "text": "Provide a tool/worker capability probe so callers can branch on edition, license, add-in, API signature, and verified-version evidence."
+    },
+    "DOC-001": {
+      "priority": "P1",
+      "text": "Create part, assembly, and drawing documents from explicit or discovered templates."
+    },
+    "DOC-002": {
+      "priority": "P1",
+      "text": "Open SLDPRT, SLDASM, SLDDRW, and supported neutral formats with decoded warnings/errors and optional read-only mode."
+    },
+    "DOC-003": {
+      "priority": "P1",
+      "text": "List open documents; inspect type, title, path, saved/dirty state, active configuration/sheet, units, and custom properties."
+    },
+    "DOC-004": {
+      "priority": "P1",
+      "text": "Activate a document by path/title and reject ambiguous matches."
+    },
+    "DOC-005": {
+      "priority": "P1",
+      "text": "Save, Save As, close one, and close all with explicit dirty-file behavior."
+    },
+    "DOC-006": {
+      "priority": "P1",
+      "text": "Rebuild/force rebuild and report feature/rebuild errors."
+    },
+    "DOC-007": {
+      "priority": "P1",
+      "text": "Native undo/redo and availability status, in addition to durable checkpoints."
+    },
+    "DRW-001": {
+      "priority": "P2",
+      "text": "Create a drawing from part/assembly using an explicit template, sheet size, projection standard, scale, units, and title-block/property mapping."
+    },
+    "DRW-002": {
+      "priority": "P2",
+      "text": "Add standard, projected, auxiliary, section, detail, broken-out, crop, relative, and exploded-model views with positions/scales."
+    },
+    "DRW-003": {
+      "priority": "P2",
+      "text": "List/inspect sheets and views, including referenced model/ configuration, orientation, scale, outline, alignment, and display style."
+    },
+    "DRW-004": {
+      "priority": "P2",
+      "text": "Import model items/dimensions and create drawing dimensions with placement, tolerances, precision, arrows, and formatting."
+    },
+    "DRW-005": {
+      "priority": "P2",
+      "text": "Create center marks/lines, hole callouts, datum symbols, GD&T, surface-finish, weld, balloon, revision, and general note annotations."
+    },
+    "DRW-006": {
+      "priority": "P2",
+      "text": "Create/update BOM, hole, revision, weldment cut-list, and general tables; inspect their rows/cells and component links."
+    },
+    "DRW-007": {
+      "priority": "P2",
+      "text": "Create additional sheets, change format/template, reorder views, and manage layer/line/font standards."
+    },
+    "DRW-008": {
+      "priority": "P2",
+      "text": "Inspect dimensions, notes, tables, dangling annotations, overlaps, clipping, empty views, and missing required views/callouts."
+    },
+    "DRW-009": {
+      "priority": "P2",
+      "text": "Export each sheet and full drawing to PDF/DXF/DWG/image and generate preview plus machine-readable review evidence."
+    },
+    "DRW-010": {
+      "priority": "P2",
+      "text": "Keep drawing visual acceptance human-reviewable; do not claim that approximate annotation bounding boxes prove a production drawing."
+    },
+    "FEA-001": {
+      "priority": "P3",
+      "text": "Preflight installed SolidWorks Simulation and/or allowlisted external solvers without arbitrary process execution."
+    },
+    "FEA-002": {
+      "priority": "P3",
+      "text": "Structured linear static study: materials, shells/solids/beams, connectors/contact, fixtures, loads, mesh, solve, and result extraction."
+    },
+    "FEA-003": {
+      "priority": "P3",
+      "text": "Constrained nonlinear/static plasticity/contact workflows only where inputs and solver support are explicit."
+    },
+    "FEA-004": {
+      "priority": "P3",
+      "text": "Mesh convergence across multiple levels using displacement, stress, strain, contact penetration, and pressure metrics as applicable."
+    },
+    "FEA-005": {
+      "priority": "P3",
+      "text": "Extract displacement, stress, strain, factor-of-safety/contact data and plots with units, mesh statistics, solver logs, and provenance."
+    },
+    "FEA-006": {
+      "priority": "P3",
+      "text": "Always mark FEA as review-required and never describe it as certification or proof of safety."
+    },
+    "FEAT-001": {
+      "priority": "P1",
+      "text": "Boss extrude with blind, through-all, up-to-surface/body, mid-plane, two-direction, thin-feature, draft, merge, and feature-scope options."
+    },
+    "FEAT-002": {
+      "priority": "P1",
+      "text": "Cut extrude with the same applicable end conditions and scope."
+    },
+    "FEAT-003": {
+      "priority": "P1",
+      "text": "Revolved boss/base and revolved cut with axis reference, direction, angle, and thin options."
+    },
+    "FEAT-004": {
+      "priority": "P1",
+      "text": "Sweep boss/cut with profile, path, guide curves, orientation, twist, and merge/scope options."
+    },
+    "FEAT-005": {
+      "priority": "P1",
+      "text": "Loft/boundary boss and cut across multiple profiles, with guide curves, start/end constraints, closed/centerline options, and read-back."
+    },
+    "FEAT-006": {
+      "priority": "P1",
+      "text": "Fillet variants and chamfer variants using stable edge/face references, not implicit current selection."
+    },
+    "FEAT-007": {
+      "priority": "P1",
+      "text": "Linear, circular, curve-driven, sketch-driven, table-driven, fill, and variable patterns with skipped instances."
+    },
+    "FEAT-008": {
+      "priority": "P1",
+      "text": "Mirror features, faces, bodies, and whole parts."
+    },
+    "FEAT-009": {
+      "priority": "P1",
+      "text": "Shell and thicken with face removal, direction, multi-thickness, and failure diagnostics."
+    },
+    "FEAT-010": {
+      "priority": "P1",
+      "text": "Draft by neutral plane/parting line/step draft with face lists and direction."
+    },
+    "FEAT-011": {
+      "priority": "P1",
+      "text": "Rib with thickness, direction, draft, contour, and merge scope."
+    },
+    "FEAT-012": {
+      "priority": "P1",
+      "text": "Hole Wizard/simple-hole support for blind, through, tapped, counterbore, countersink, spotface, and compound holes, including standard, size, fit, thread, end condition, and position sketch."
+    },
+    "FEAT-013": {
+      "priority": "P1",
+      "text": "Straight/arc/semicircular slots and hole/slot patterns with datum-based position acceptance."
+    },
+    "FEAT-014": {
+      "priority": "P1",
+      "text": "Direct/composed primitive workflows for box, cylinder, sphere, cone/frustum, torus, wedge, prism, regular polygon extrusion, and helix/spring."
+    },
+    "FEAT-015": {
+      "priority": "P1",
+      "text": "Rename, list, inspect, edit definition, reorder when safe, suppress/unsuppress, and delete features."
+    },
+    "FEAT-016": {
+      "priority": "P1",
+      "text": "List solid/surface bodies and map each body to owning features, material, visibility, and mass properties."
+    },
+    "FEAT-017": {
+      "priority": "P1",
+      "text": "Combine bodies with add/subtract/common; copy/move/rotate/scale, mirror, split, intersect, delete/keep, and save/clone a body to a part."
+    },
+    "FEAT-018": {
+      "priority": "P1",
+      "text": "Create/knit/trim/extend/offset surfaces and convert face/wire inputs where the API supports a stable implementation."
+    },
+    "FEAT-019": {
+      "priority": "P1",
+      "text": "Measure and inspect bounding box, volume, area, mass, center of mass, inertia, density, topology counts, and validity/rebuild state."
+    },
+    "FEAT-020": {
+      "priority": "P1",
+      "text": "Assign/read part, body, and component materials and optional mass override with explicit units."
+    },
+    "IO-001": {
+      "priority": "P2",
+      "text": "Import STEP, IGES, Parasolid, STL, and OBJ/mesh reference with options and import diagnostics."
+    },
+    "IO-002": {
+      "priority": "P2",
+      "text": "Export native/neutral formats as applicable: STEP, IGES, Parasolid, STL, 3MF, OBJ, GLB, BREP, DXF, DWG, PDF, PNG/BMP, and SVG."
+    },
+    "IO-003": {
+      "priority": "P2",
+      "text": "Expose tessellation/quality/unit/body-selection settings for mesh and neutral export and verify file type, size, timestamp, and reopen when feasible."
+    },
+    "IO-004": {
+      "priority": "P2",
+      "text": "Batch export multiple models/configurations/sheets/formats with a manifest, hashes, per-item status, and no silent overwrite."
+    },
+    "IO-005": {
+      "priority": "P2",
+      "text": "Export sheet-metal flat-pattern DXF with bend/sketch options and verify that a real flat pattern exists."
+    },
+    "IO-006": {
+      "priority": "P2",
+      "text": "Native Pack and Go with drawings, simulation results, Toolbox, external references, prefix/suffix/flatten options, dependency audit, and fallback policy."
+    },
+    "IO-007": {
+      "priority": "P2",
+      "text": "Export a component/property BOM CSV and a traceability matrix; retain a warning that it is a precursor until checked against a native BOM."
+    },
+    "IO-008": {
+      "priority": "P2",
+      "text": "Optionally provide CAD-free open-format writing, but keep it in a separate backend that never fabricates SLDPRT/SLDASM/SLDDRW."
+    },
+    "MATE-001": {
+      "priority": "P2",
+      "text": "Coincident, concentric, distance, angle, parallel, perpendicular, tangent, width, symmetric, lock, gear, rack-and-pinion, screw, universal-joint, slot, cam, hinge, linear-coupler, path, and coordinate-system mate contracts where supported by the installed version/license."
+    },
+    "MATE-002": {
+      "priority": "P2",
+      "text": "Limit-distance and limit-angle mates with read/update of min, max, current value, flip/alignment, and units."
+    },
+    "MATE-003": {
+      "priority": "P2",
+      "text": "Mate standard/named planes, origins, axes, faces, edges, vertices, and component coordinate systems through structured references."
+    },
+    "MATE-004": {
+      "priority": "P2",
+      "text": "List mates and mate entities; inspect type, alignment, suppression, status/error, owning components, and values."
+    },
+    "MATE-005": {
+      "priority": "P2",
+      "text": "Probe/dry-run candidate mate entities before mutation and return likely failure reasons."
+    },
+    "MATE-006": {
+      "priority": "P2",
+      "text": "Rename, suppress/unsuppress, edit, delete one/range/all, and replay a mate sequence with checkpoint rollback."
+    },
+    "MATE-007": {
+      "priority": "P2",
+      "text": "Report remaining assembly degrees of freedom and probe angular/ linear travel."
+    },
+    "MATE-008": {
+      "priority": "P2",
+      "text": "Run interference and clearance detection with component/body references and volume evidence."
+    },
+    "MOTION-001": {
+      "priority": "P2",
+      "text": "Detect/load Motion Study support and enumerate studies."
+    },
+    "MOTION-002": {
+      "priority": "P2",
+      "text": "Create/configure a study with type, duration, frame rate, and result folder."
+    },
+    "MOTION-003": {
+      "priority": "P2",
+      "text": "Add constant-speed/variable rotary and linear motors using stable geometry references."
+    },
+    "MOTION-004": {
+      "priority": "P2",
+      "text": "Add gravity, forces, torques, springs, dampers, contact, and friction when supported and licensed."
+    },
+    "MOTION-005": {
+      "priority": "P2",
+      "text": "Calculate and optionally play the study; capture solver status and result timestamps."
+    },
+    "MOTION-006": {
+      "priority": "P2",
+      "text": "Inspect and validate study type, duration, motor/force/contact counts, stale/missing results, and requested outputs."
+    },
+    "MOTION-007": {
+      "priority": "P2",
+      "text": "Export plots/data/animation evidence under controlled paths."
+    },
+    "PAR-001": {
+      "priority": "P1",
+      "text": "List, read, and update named driving dimensions with before/ after values and rebuild evidence."
+    },
+    "PAR-002": {
+      "priority": "P1",
+      "text": "Read and write equations/global variables, including dependency and circular-reference diagnostics."
+    },
+    "PAR-003": {
+      "priority": "P1",
+      "text": "List/create/copy/delete/rename configurations and set the active configuration."
+    },
+    "PAR-004": {
+      "priority": "P1",
+      "text": "Read and write configuration-specific dimension values and suppression states."
+    },
+    "PAR-005": {
+      "priority": "P1",
+      "text": "Import/export a parameter table (CSV/XLSX-neutral contract) and optionally connect it to a SolidWorks design table."
+    },
+    "PAR-006": {
+      "priority": "P1",
+      "text": "Read/write file-level and configuration-level custom properties, with evaluated and raw values."
+    },
+    "PAR-007": {
+      "priority": "P1",
+      "text": "Read/list display states and bind component appearance/visibility policies where appropriate."
+    },
+    "REF-001": {
+      "priority": "P0",
+      "text": "Inspect and clear the current selection; select by typed name and selection mark."
+    },
+    "REF-002": {
+      "priority": "P0",
+      "text": "Resolve documents, components, configurations, features, sketches, bodies, faces, edges, vertices, planes, axes, points, and coordinate systems by a structured reference."
+    },
+    "REF-003": {
+      "priority": "P0",
+      "text": "Capture and resolve SolidWorks persistent references (for example through model-extension persist-reference APIs)."
+    },
+    "REF-004": {
+      "priority": "P0",
+      "text": "Provide semantic fallback references using component path, feature ancestry, geometry type, location, direction, radius/area, and tolerances."
+    },
+    "REF-005": {
+      "priority": "P0",
+      "text": "Expose selection probes: ray-to-face, planar-face lookup, cylindrical-face lookup, feature faces, body ownership, and candidate mate entities."
+    },
+    "REF-006": {
+      "priority": "P0",
+      "text": "Detect stale/ambiguous references and return candidates rather than silently choosing the first face or edge."
+    },
+    "REF-007": {
+      "priority": "P0",
+      "text": "Make entity reference objects serializable so workflows can checkpoint and resume."
+    },
+    "REV-001": {
+      "priority": "P2",
+      "text": "Inspect document, feature tree, sketches, bodies, configurations, equations, dimensions, properties, components, mates, sheets, views, and external references without mutation."
+    },
+    "REV-002": {
+      "priority": "P2",
+      "text": "Validate rebuild state, invalid geometry, zero/negative volume, topology changes, missing references, suppressed/dangling features, and dirty state."
+    },
+    "REV-003": {
+      "priority": "P2",
+      "text": "Capture before/after geometry measurements and previews for mutations."
+    },
+    "REV-004": {
+      "priority": "P2",
+      "text": "Inspect holes/slots by B-Rep geometry and compare quantity, diameter/segments, depth, axis, and datum position against acceptance criteria."
+    },
+    "REV-005": {
+      "priority": "P2",
+      "text": "Produce structured JSON plus human-readable Markdown review reports with pass/warn/block outcomes and source artifact hashes."
+    },
+    "REV-006": {
+      "priority": "P2",
+      "text": "Provide an atomic `safe_execute` workflow: checkpoint, mutate, rebuild, validate selected invariants, and roll back on failure."
+    },
+    "REV-007": {
+      "priority": "P2",
+      "text": "Make review policies caller-supplied and domain-specific; a file existence check is not an engineering validation."
+    },
+    "SAFE-001": {
+      "priority": "P0",
+      "text": "Give every operation a strict schema, bounded collection sizes, enum values, and finite/range checks for geometry inputs."
+    },
+    "SAFE-002": {
+      "priority": "P0",
+      "text": "Classify tools as read-only, model mutation, destructive model mutation, or non-model side effect."
+    },
+    "SAFE-003": {
+      "priority": "P0",
+      "text": "Require explicit confirmation for destructive operations and overwrites."
+    },
+    "SAFE-004": {
+      "priority": "P0",
+      "text": "Restrict input/output paths to configured roots, canonicalize paths, reject traversal, and distinguish existing inputs from new outputs."
+    },
+    "SAFE-005": {
+      "priority": "P0",
+      "text": "Checkpoint before risky mutations; list and restore checkpoints."
+    },
+    "SAFE-006": {
+      "priority": "P0",
+      "text": "Keep an append-only audit record for writes, including tool, normalized arguments, document, result, checkpoint, timestamp, and error."
+    },
+    "SAFE-007": {
+      "priority": "P0",
+      "text": "Support dry-run/preflight where the API allows it, especially for mates, selection, export, replacement, and delivery packaging."
+    },
+    "SAFE-008": {
+      "priority": "P0",
+      "text": "Use versioned output filenames or explicit overwrite policies; never silently replace engineering deliverables."
+    },
+    "SAFE-009": {
+      "priority": "P0",
+      "text": "Return stable error codes plus decoded SolidWorks save/open/ rebuild/mate errors and actionable remediation."
+    },
+    "SAFE-010": {
+      "priority": "P0",
+      "text": "Do not advertise success until the operation is read back from the model, filesystem, or analysis result."
+    },
+    "SK-001": {
+      "priority": "P1",
+      "text": "Start a 2D sketch on a standard plane, named plane, planar face, or structured reference; exit a sketch and report active sketch state."
+    },
+    "SK-002": {
+      "priority": "P1",
+      "text": "List and inspect sketches, including geometry, constraints, construction state, fully-defined state, and transform/support."
+    },
+    "SK-003": {
+      "priority": "P1",
+      "text": "Create line, centerline, point, corner/center rectangle, circle, three-point/center arc, ellipse, regular polygon, straight/arc slot, and spline."
+    },
+    "SK-004": {
+      "priority": "P1",
+      "text": "Toggle construction geometry."
+    },
+    "SK-005": {
+      "priority": "P1",
+      "text": "Project/convert external geometry and return stable references to the created entities."
+    },
+    "SK-006": {
+      "priority": "P1",
+      "text": "Delete sketch geometry and delete constraints by stable index/id."
+    },
+    "SK-007": {
+      "priority": "P1",
+      "text": "Trim, extend, split, offset, mirror, move, rotate, scale, and pattern sketch entities."
+    },
+    "SK-008": {
+      "priority": "P1",
+      "text": "Create sketch text with font/alignment/path options so engraving, emboss, and wrap workflows do not require arbitrary macros."
+    },
+    "SYS-001": {
+      "priority": "P0",
+      "text": "Attach to a running SolidWorks instance and optionally start a visible instance."
+    },
+    "SYS-002": {
+      "priority": "P0",
+      "text": "Report installed SolidWorks version/service pack, COM registration, process/session identity, active document, and add-in/type-library availability."
+    },
+    "SYS-003": {
+      "priority": "P0",
+      "text": "Serialize all SolidWorks COM calls on one STA-compatible worker or session queue; reject accidental concurrent mutation."
+    },
+    "SYS-004": {
+      "priority": "P0",
+      "text": "Detect busy/rejected COM calls and implement bounded retry with useful error classification."
+    },
+    "SYS-005": {
+      "priority": "P0",
+      "text": "Provide health, latency, worker mutex/session, and dependency diagnostics without requiring an active document."
+    },
+    "SYS-006": {
+      "priority": "P0",
+      "text": "Normalize user units while preserving the SolidWorks API's internal meter/radian conventions. Support at least mm, cm, m, inch, and foot."
+    },
+    "SYS-007": {
+      "priority": "P0",
+      "text": "Resolve localized standard plane/view names and avoid assuming an English feature tree."
+    },
+    "VIEW-001": {
+      "priority": "P1",
+      "text": "Set/read document, body, feature, face, and component appearance; support colors, transparency, and named material values."
+    },
+    "VIEW-002": {
+      "priority": "P1",
+      "text": "Set component/body/feature visibility and display mode."
+    },
+    "VIEW-003": {
+      "priority": "P1",
+      "text": "Set front/back/left/right/top/bottom/isometric/trimetric/dimetric views, fit, zoom, and custom camera orientation/position."
+    },
+    "VIEW-004": {
+      "priority": "P1",
+      "text": "Capture a PNG/BMP preview at requested dimensions after clearing selection and fitting the model."
+    },
+    "VIEW-005": {
+      "priority": "P1",
+      "text": "Create/read exploded views and optionally export animation frames where stable."
+    }
+  }
+}

@@ -1,0 +1,615 @@
+{
+  "note": "Derived from the safety union by swmcp.catalog.projection.project. Do not edit; edit the safety declaration on the handler instead.",
+  "policies": {
+    "sw_api_batch_invoke": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_api_invoke": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_api_invoke_write": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": true,
+      "destructive": true,
+      "read_only": false,
+      "safety": {
+        "destructive": true,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_api_search": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_audit_tail": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_body_list": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_capabilities": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_checkpoint_create": {
+      "audited": true,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "Writes a snapshot file into the document's .checkpoints directory. The model itself is not modified."
+      }
+    },
+    "sw_checkpoint_list": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_checkpoint_restore": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": true,
+      "destructive": true,
+      "read_only": false,
+      "safety": {
+        "destructive": true,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_connect": {
+      "audited": true,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "With start_if_missing=true this launches SLDWORKS.exe, a visible desktop process. Attaching alone changes nothing."
+      }
+    },
+    "sw_datum_list": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_datum_plane_create": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_dimension_list": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_dimension_set": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_doc_activate": {
+      "audited": true,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "Changes which document is active in the SOLIDWORKS user interface."
+      }
+    },
+    "sw_doc_close": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": true,
+      "destructive": true,
+      "read_only": false,
+      "safety": {
+        "destructive": true,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_doc_list": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_doc_new": {
+      "audited": true,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "Creates a document in the SOLIDWORKS session and changes what is on screen. Nothing reaches disk until it is saved."
+      }
+    },
+    "sw_doc_open": {
+      "audited": true,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "Loads a document into the session, which can build an import feature tree and take a write lock on the file. The source file is not modified."
+      }
+    },
+    "sw_doc_rebuild": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_doc_save": {
+      "audited": true,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "Writes a CAD file to disk. The default 'version' overwrite policy never replaces an existing file, so the write is additive; replacing one requires overwrite='allow' plus confirm=true, gated inside the handler."
+      }
+    },
+    "sw_doc_undo": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": true,
+      "destructive": true,
+      "read_only": false,
+      "safety": {
+        "destructive": true,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_explain_error": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_feature_chamfer": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_feature_delete": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": true,
+      "destructive": true,
+      "read_only": false,
+      "safety": {
+        "destructive": true,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_feature_edit": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_feature_extrude_boss": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_feature_extrude_cut": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_feature_fillet": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_feature_hole": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_feature_list": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_feature_pattern": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_feature_revolve": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_health": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_measure": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_path_policy": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_probe_faces": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_probe_ray": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_ref_capture": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_ref_resolve": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_resolve_names": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_selection_get": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_selection_set": {
+      "audited": true,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "Changes the selection set shown in the SOLIDWORKS user interface. No model data is created, changed, or removed."
+      }
+    },
+    "sw_sketch_add_dimensions": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_sketch_add_geometry": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_sketch_add_relations": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_sketch_auto_dimension": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": true,
+      "destructive": true,
+      "read_only": false,
+      "safety": {
+        "destructive": true,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_sketch_convert_entities": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_sketch_delete": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": true,
+      "destructive": true,
+      "read_only": false,
+      "safety": {
+        "destructive": true,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_sketch_diagnose": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_sketch_exit": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_sketch_list": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_sketch_modify": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": true,
+      "destructive": true,
+      "read_only": false,
+      "safety": {
+        "destructive": true,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_sketch_set_construction": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_sketch_start": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_system_info": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    }
+  }
+}
