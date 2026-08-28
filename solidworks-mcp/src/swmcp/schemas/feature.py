@@ -50,6 +50,143 @@ class DatumPlaneCreateResult(MutationResult):
     reference: dict[str, Any] | None = None
 
 
+class DatumAxisCreateArgs(BaseArgs):
+    method: Literal["one_line", "two_planes", "two_points", "cyl_face", "point_and_plane"] = (
+        Field(
+            description=(
+                "How the axis is defined. SOLIDWORKS infers the axis type from the "
+                "selection, so this drives the required reference count and is checked "
+                "against what was actually created."
+            )
+        )
+    )
+    refs: list[EntityRef] = Field(
+        default_factory=list,
+        max_length=2,
+        description="Reference entities. Combine with standard_planes to reach the count.",
+    )
+    standard_planes: list[Literal["front", "top", "right"]] = Field(
+        default_factory=list,
+        max_length=2,
+        description="Standard planes used as references, e.g. two of them for 'two_planes'.",
+    )
+    auto_size: bool = Field(
+        default=True, description="Let SOLIDWORKS size the axis to the surrounding geometry."
+    )
+    name: str | None = Field(default=None, description="Rename the axis after creating it.")
+
+
+class DatumAxisCreateResult(MutationResult):
+    axis_name: str
+    method: str
+    reference: dict[str, Any] | None = None
+
+
+class DatumPointCreateArgs(BaseArgs):
+    method: Literal[
+        "along_curve",
+        "arc_center",
+        "face_center",
+        "face_vertex_projection",
+        "intersection",
+        "sketch_point",
+    ] = Field(
+        description=(
+            "What geometry the point is derived from. 'arc_center' needs a circular "
+            "edge and lands on its centre; a straight edge is rejected by SOLIDWORKS, "
+            "so use 'along_curve' with percentage 50 for an edge midpoint."
+        )
+    )
+    refs: list[EntityRef] = Field(
+        default_factory=list,
+        min_length=1,
+        max_length=8,
+        description="The edges, faces, vertices, or sketch points the point is built on.",
+    )
+    along_curve: Literal["distance", "percentage", "evenly"] = Field(
+        default="evenly",
+        description="For 'along_curve': place by distance, by percentage, or evenly spaced.",
+    )
+    distance: Length | None = Field(
+        default=None, description="Distance along the curve when along_curve is 'distance'."
+    )
+    percent: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=100.0,
+        description="Percentage along the curve when along_curve is 'percentage'.",
+    )
+    count: int = Field(
+        default=1,
+        ge=1,
+        le=50,
+        description="How many points to distribute when along_curve is 'evenly'.",
+    )
+    name: str | None = Field(default=None, description="Rename the point feature afterwards.")
+
+    @model_validator(mode="after")
+    def _placement_is_complete(self) -> DatumPointCreateArgs:
+        """A placement mode without its value would silently become a point at zero."""
+        if self.method != "along_curve":
+            return self
+        if self.along_curve == "distance" and self.distance is None:
+            raise ValueError("along_curve='distance' needs a distance")
+        if self.along_curve == "percentage" and self.percent is None:
+            raise ValueError("along_curve='percentage' needs a percent")
+        return self
+
+
+class DatumPointCreateResult(MutationResult):
+    point_names: list[str] = Field(default_factory=list)
+    count: int
+    method: str
+    references: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class DatumCsysCreateArgs(BaseArgs):
+    origin: EntityRef | None = Field(
+        default=None,
+        description="Vertex, sketch point, or reference point placed at the system's origin.",
+    )
+    x_axis: EntityRef | None = Field(default=None, description="Edge, axis, or line for +X.")
+    y_axis: EntityRef | None = Field(default=None, description="Edge, axis, or line for +Y.")
+    z_axis: EntityRef | None = Field(default=None, description="Edge, axis, or line for +Z.")
+    flip_x: bool = Field(default=False, description="Reverse the resolved X direction.")
+    flip_y: bool = Field(default=False, description="Reverse the resolved Y direction.")
+    flip_z: bool = Field(default=False, description="Reverse the resolved Z direction.")
+    name: str | None = Field(default=None, description="Rename the coordinate system afterwards.")
+
+    @model_validator(mode="after")
+    def _has_at_least_one_reference(self) -> DatumCsysCreateArgs:
+        """With nothing selected SOLIDWORKS builds a system at the model origin.
+
+        That is a legal feature but almost never what the caller meant, and it would
+        come back verified — an identity transform is still a transform. Requiring one
+        reference makes the empty call a validation error instead of a silent no-op.
+        """
+        if not any((self.origin, self.x_axis, self.y_axis, self.z_axis)):
+            raise ValueError(
+                "a coordinate system needs at least one of origin, x_axis, y_axis, or z_axis"
+            )
+        return self
+
+
+class DatumCsysTransform(StrictModel):
+    """The created system's placement, read back out of SOLIDWORKS."""
+
+    rotation: list[list[float]] = Field(
+        description="3x3 rotation matrix, row-major, mapping system axes into model space."
+    )
+    translation_mm: list[float] = Field(description="Origin position in millimetres.")
+    scale: float = Field(description="Uniform scale factor; 1.0 for an ordinary system.")
+
+
+class DatumCsysCreateResult(MutationResult):
+    csys_name: str
+    transform: DatumCsysTransform | None = None
+    reference: dict[str, Any] | None = None
+
+
 # --- features -----------------------------------------------------------------
 
 EndCondition = Literal[

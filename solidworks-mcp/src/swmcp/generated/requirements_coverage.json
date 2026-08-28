@@ -37,6 +37,18 @@
     "DAT-002": [
       "sw_datum_plane_create"
     ],
+    "DAT-003": [
+      "sw_datum_axis_create",
+      "sw_datum_point_create"
+    ],
+    "DAT-004": [
+      "sw_datum_csys_create"
+    ],
+    "DAT-005": [
+      "sw_datum_list",
+      "sw_feature_delete",
+      "sw_feature_edit"
+    ],
     "DISC-002": [
       "sw_api_search"
     ],
@@ -204,9 +216,6 @@
     "SYS-005": [
       "sw_health"
     ],
-    "SYS-007": [
-      "sw_resolve_names"
-    ],
     "VIEW-003": [
       "sw_view_set"
     ],
@@ -259,15 +268,21 @@
       "tools": [
         "sw_sketch_modify"
       ]
+    },
+    "SYS-007": {
+      "limitation": "Implemented structurally via locale-invariant GetTypeName2 tokens and ordinal standard-plane position. Only an English SOLIDWORKS is installed locally, so regression on a localized feature tree is outstanding.",
+      "tools": [
+        "sw_resolve_names"
+      ]
     }
   },
   "totals": {
     "covered_by_platform": 11,
-    "fully_covered_by_a_tool": 58,
-    "in_scope": 73,
-    "partially_covered": 7,
+    "fully_covered_by_a_tool": 60,
+    "in_scope": 76,
+    "partially_covered": 8,
     "requirements_in_backlog": 152,
-    "tools": 74,
+    "tools": 77,
     "uncovered_in_scope": 0
   },
   "uncovered_in_scope": []

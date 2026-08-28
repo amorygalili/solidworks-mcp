@@ -14,7 +14,7 @@ Delete a feature, optionally with its dependents, and verify it is gone from the
 | Auto-checkpointed | True |
 | Idempotent | False |
 | Timeout | 180s |
-| Satisfies | `FEAT-015` |
+| Satisfies | `FEAT-015`, `DAT-005` |
 
 ## Input schema
 

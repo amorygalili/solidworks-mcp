@@ -171,6 +171,28 @@
         "rationale": "With start_if_missing=true this launches SLDWORKS.exe, a visible desktop process. Attaching alone changes nothing."
       }
     },
+    "sw_datum_axis_create": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_datum_csys_create": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
     "sw_datum_list": {
       "audited": false,
       "auto_checkpoint": false,
@@ -182,6 +204,17 @@
       }
     },
     "sw_datum_plane_create": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_datum_point_create": {
       "audited": true,
       "auto_checkpoint": true,
       "confirm_required": false,

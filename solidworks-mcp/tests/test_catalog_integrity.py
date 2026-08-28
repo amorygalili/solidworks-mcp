@@ -135,6 +135,33 @@ def test_partial_coverage_is_declared_with_a_reason(specs):
             )
 
 
+def test_a_declared_limitation_always_reaches_the_coverage_report(specs):
+    """The reverse of the check above, and the direction that actually rots.
+
+    ``test_partial_coverage_is_declared_with_a_reason`` stops an operation from
+    claiming a requirement partially without saying what is missing. Nothing stopped
+    the opposite: recording a limitation in ``DECLARED_PARTIAL`` while the operation
+    still claimed the requirement in full, which reports the requirement as done and
+    drops the limitation on the floor — the generated coverage file being the artifact
+    a reader is pointed at, that is the honest source going quietly wrong.
+    """
+    from swmcp.catalog.artifacts import build_coverage
+
+    reported = build_coverage()["partially_covered"]
+    for rid, limitation in sorted(DECLARED_PARTIAL.items()):
+        claimants = [spec.name for spec in specs if rid in spec.satisfies]
+        assert not claimants, (
+            f"{rid} is declared partial in swmcp.catalog.scope.DECLARED_PARTIAL but "
+            f"{claimants} claim it in full; use partially_satisfies so the limitation "
+            f"is reported"
+        )
+        assert rid in reported, (
+            f"{rid} has a declared limitation that no operation surfaces: it is absent "
+            f"from the generated coverage file's partially_covered section"
+        )
+        assert reported[rid]["limitation"] == limitation
+
+
 def test_a_requirement_is_never_both_full_and_partial(specs):
     full = {rid for spec in specs for rid in spec.satisfies}
     partial = {rid for spec in specs for rid in spec.partially_satisfies}

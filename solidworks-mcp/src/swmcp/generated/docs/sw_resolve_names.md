@@ -14,7 +14,7 @@ Resolve standard plane names and document units for the target document, reporti
 | Auto-checkpointed | False |
 | Idempotent | True |
 | Timeout | 120s |
-| Satisfies | `SYS-007` |
+| Partially satisfies | `SYS-007` |
 
 ## Input schema
 

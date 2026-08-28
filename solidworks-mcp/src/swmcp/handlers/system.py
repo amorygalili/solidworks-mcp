@@ -215,7 +215,7 @@ def capabilities(ctx: OpContext, args: CapabilitiesArgs) -> CapabilitiesResult:
         "callers never string-match an English feature tree."
     ),
     safety=ReadSafety(),
-    satisfies=("SYS-007",),
+    partially_satisfies=("SYS-007",),
     precondition="any",
     idempotent=True,
 )

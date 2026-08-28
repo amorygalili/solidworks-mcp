@@ -186,3 +186,38 @@ def test_the_readme_names_every_declared_limitation():
         "these requirements are declared partial but the README does not mention them: "
         f"{missing}"
     )
+
+
+def test_the_readme_headline_counts_match_the_coverage_file():
+    """The one claim in the README that a reader meets before anything else.
+
+    "N operations covering all M in-scope requirements" is a hand-written copy of two
+    numbers the catalog already computes. It had drifted by two of each — the residue
+    of removing mirror and combine — which is exactly how long a prose count survives
+    unpinned.
+    """
+    from swmcp.catalog.artifacts import build_coverage
+
+    totals = build_coverage()["totals"]
+    readme = (Path(__file__).resolve().parent.parent / "README.md").read_text(encoding="utf-8")
+
+    claim = re.search(
+        r"\*\*(?P<tools>\d+) operations covering all (?P<in_scope>\d+) in-scope requirements\*\*",
+        readme,
+    )
+    assert claim is not None, (
+        "the README no longer states its headline counts in the pinned form "
+        '"**N operations covering all M in-scope requirements**"'
+    )
+    assert int(claim["tools"]) == totals["tools"], (
+        f"the README claims {claim['tools']} operations; the catalog registers "
+        f"{totals['tools']}"
+    )
+    assert int(claim["in_scope"]) == totals["in_scope"], (
+        f"the README claims {claim['in_scope']} in-scope requirements; scope.py declares "
+        f"{totals['in_scope']}"
+    )
+    assert totals["uncovered_in_scope"] == 0, (
+        "the README says every in-scope requirement is covered, but the coverage file "
+        f"lists {totals['uncovered_in_scope']} uncovered"
+    )

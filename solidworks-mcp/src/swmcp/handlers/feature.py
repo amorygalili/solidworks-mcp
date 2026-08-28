@@ -34,10 +34,17 @@ from swmcp.schemas.feature import (
     BodyListArgs,
     BodyListResult,
     ChamferArgs,
+    DatumAxisCreateArgs,
+    DatumAxisCreateResult,
+    DatumCsysCreateArgs,
+    DatumCsysCreateResult,
+    DatumCsysTransform,
     DatumListArgs,
     DatumListResult,
     DatumPlaneCreateArgs,
     DatumPlaneCreateResult,
+    DatumPointCreateArgs,
+    DatumPointCreateResult,
     EdgeFeatureResult,
     ExtrudeArgs,
     ExtrudeResult,
@@ -192,7 +199,7 @@ def _geometry_checks(before: dict[str, Any], after: dict[str, Any], *, expect: s
         "systems — with their locale-invariant type tokens and capture-ready references."
     ),
     safety=ReadSafety(),
-    satisfies=("DAT-001",),
+    satisfies=("DAT-001", "DAT-005"),
     precondition="part_or_assembly",
     idempotent=True,
     timeout_s=180.0,
@@ -338,6 +345,388 @@ def datum_plane_create(ctx: OpContext, args: DatumPlaneCreateArgs) -> DatumPlane
                 ),
             ],
         ),
+    )
+
+
+_AXIS_REFERENCE_COUNT = {
+    "one_line": 1,
+    "two_planes": 2,
+    "two_points": 2,
+    "cyl_face": 1,
+    "point_and_plane": 2,
+}
+
+_REF_POINT_TYPES = {
+    "along_curve": "swRefPointAlongCurve",
+    # swRefPointCenterEdge is the *arc* centre: SOLIDWORKS rejects a straight edge for
+    # it, which probing found the hard way. The schema name says so.
+    "arc_center": "swRefPointCenterEdge",
+    "face_center": "swRefPointFaceCenter",
+    "face_vertex_projection": "swRefPointFaceVertexProjection",
+    "intersection": "swRefPointIntersection",
+    "sketch_point": "swRefPointSketchPoint",
+}
+
+_ALONG_CURVE_TYPES = {
+    "distance": "swRefPointAlongCurveDistance",
+    "percentage": "swRefPointAlongCurvePercentage",
+    "evenly": "swRefPointAlongCurveEvenlyDistributed",
+}
+
+#: ``InsertCoordinateSystem`` reads its references from selection *marks*, not from
+#: argument order: 1 origin, 2 X, 4 Y, 8 Z. Selecting them all with mark 0 produces a
+#: system at the model origin rather than an error, so the mark is the whole contract.
+_CSYS_MARKS = {"origin": 1, "x_axis": 2, "y_axis": 4, "z_axis": 8}
+
+
+def _select_marked(ctx: OpContext, doc: Any, ref: Any, mark: int) -> bool:
+    """Select one reference under a specific mark.
+
+    ``Select4`` cannot carry a mark, so this goes through ``Select2`` and appends
+    rather than replacing: a coordinate system needs up to four marked selections
+    live at the same time.
+    """
+    resolution = resolve(ctx.session, doc, ref, max_candidates=ctx.config.max_candidates)
+    return bool(try_com_member(resolution.entity, "Select2", True, mark, default=False))
+
+
+def _datum_checks(before: set[str], after: set[str], name: str, kind: str) -> list[Check]:
+    return [
+        Check(
+            name=f"{kind}_created",
+            passed=bool(name),
+            detail=name or f"no {kind} came back from SOLIDWORKS",
+        ),
+        Check(
+            name="feature_tree_grew",
+            passed=len(after) > len(before),
+            detail=f"{len(before)} -> {len(after)} features",
+        ),
+    ]
+
+
+@op(
+    name="sw_datum_axis_create",
+    tier="core",
+    domains=("datum",),
+    tags=("datum", "axis", "reference"),
+    summary=(
+        "Create a reference axis from one line, two planes, two points, a cylindrical "
+        "face, or a point and a plane, and read back the axis that was actually made."
+    ),
+    safety=ModelMutation(destructive=False),
+    satisfies=("DAT-003",),
+    precondition="part_or_assembly",
+    idempotent=False,
+    timeout_s=180.0,
+)
+def datum_axis_create(ctx: OpContext, args: DatumAxisCreateArgs) -> DatumAxisCreateResult:
+    doc = ctx.require_doc()
+    needed = _AXIS_REFERENCE_COUNT[args.method]
+    supplied = len(args.refs) + len(args.standard_planes)
+    if supplied != needed:
+        raise SwMcpError(
+            validation_error(
+                "WRONG_REFERENCE_COUNT",
+                f"The {args.method!r} method needs {needed} reference(s), got {supplied}.",
+                context={"method": args.method, "required": needed, "supplied": supplied},
+            )
+        )
+
+    before = _feature_names(doc)
+    try_com_member(doc, "ClearSelection2", True, default=None)
+    for which in args.standard_planes:
+        ctx.session.find_standard_plane(doc, which).Select2(True, 0)
+    _select_refs(ctx, doc, args.refs)
+
+    # InsertAxis2 answers with a bare bool and puts nothing in the tree when the
+    # selection does not describe an axis, so the bool alone is not evidence.
+    created = bool(try_com_member(doc, "InsertAxis2", args.auto_size, default=False))
+    feature = _new_feature(doc, before)
+    type_name = str(try_com_member(feature, "GetTypeName2", default="") or "") if feature else ""
+
+    if not created or feature is None or type_name != "RefAxis":
+        raise SwMcpError(
+            make_error(
+                "AXIS_CREATE_FAILED",
+                "solidworks",
+                f"SOLIDWORKS could not create a {args.method} axis from those references.",
+                context={
+                    "method": args.method,
+                    "insert_axis_returned": created,
+                    "created_type": type_name or None,
+                },
+                remediation=[
+                    "Check the references suit the method: 'two_planes' needs two "
+                    "non-parallel planes, 'cyl_face' one cylindrical or conical face.",
+                    "Use sw_probe_faces to pick the face or edge precisely.",
+                ],
+            )
+        )
+
+    if args.name:
+        feature.Name = args.name
+    name = str(try_com_member(feature, "Name", default="") or "")
+    after = _feature_names(doc)
+    reference = capture(ctx.session, doc, feature)
+
+    return DatumAxisCreateResult(
+        axis_name=name,
+        method=args.method,
+        reference={
+            **reference.model_dump(mode="json", exclude_none=True),
+            "tool_args": reference.tool_args(),
+        },
+        verification=Verification(
+            read_back=True,
+            before={"feature_count": len(before)},
+            after={"feature_count": len(after), "type_name": type_name},
+            checks=_datum_checks(before, after, name, "axis"),
+        ),
+    )
+
+
+@op(
+    name="sw_datum_point_create",
+    tier="core",
+    domains=("datum",),
+    tags=("datum", "point", "reference"),
+    summary=(
+        "Create reference points at a face centre, an edge centre, an intersection, a "
+        "projected vertex, a sketch point, or spaced along a curve by distance, "
+        "percentage, or even division."
+    ),
+    safety=ModelMutation(destructive=False),
+    satisfies=("DAT-003",),
+    precondition="part_or_assembly",
+    idempotent=False,
+    timeout_s=180.0,
+)
+def datum_point_create(ctx: OpContext, args: DatumPointCreateArgs) -> DatumPointCreateResult:
+    doc = ctx.require_doc()
+    before = _feature_names(doc)
+
+    try_com_member(doc, "ClearSelection2", True, default=None)
+    selected = _select_refs(ctx, doc, args.refs)
+    if selected != len(args.refs):
+        raise SwMcpError(
+            make_error(
+                "REFERENCE_NOT_SELECTABLE",
+                "reference",
+                f"Only {selected} of {len(args.refs)} references could be selected.",
+                remediation=["Re-capture the references; the model may have changed."],
+            )
+        )
+
+    # Distance arrives in metres already; percentage passes straight through, and
+    # 'evenly' ignores the value entirely and reads the count instead.
+    if args.along_curve == "distance":
+        placement = float(args.distance or 0.0)
+    elif args.along_curve == "percentage":
+        placement = float(args.percent or 0.0)
+    else:
+        placement = 0.0
+    evenly = args.method == "along_curve" and args.along_curve == "evenly"
+    count = args.count if evenly else 1
+
+    raw = try_com_member(
+        doc.FeatureManager,
+        "InsertReferencePoint",
+        swconst.value("swRefPointType_e", _REF_POINT_TYPES[args.method]),
+        swconst.value("swRefPointAlongCurveType_e", _ALONG_CURVE_TYPES[args.along_curve]),
+        placement,
+        count,
+        default=None,
+    )
+    # pywin32 hands this one back as a one-element tuple rather than the IFeature the
+    # documentation describes. Treating the tuple as a feature makes every call look
+    # successful until `.Name` raises, so it is unwrapped here, once.
+    feature = next(iter(normalize_sequence(raw)), None)
+
+    created = {name for name in _feature_names(doc) - before if name}
+    if feature is None or not created:
+        raise SwMcpError(
+            make_error(
+                "POINT_CREATE_FAILED",
+                "solidworks",
+                f"SOLIDWORKS could not create a {args.method} reference point.",
+                context={"method": args.method, "along_curve": args.along_curve},
+                remediation=[
+                    "'arc_center' needs a circular edge; for the midpoint of a straight "
+                    "edge use 'along_curve' with along_curve='percentage' and percent=50.",
+                    "'face_center' needs a face, 'along_curve' needs an edge, and "
+                    "'intersection' needs entities that actually cross.",
+                ],
+            )
+        )
+
+    names = sorted(created)
+    if args.name and len(names) == 1:
+        feature.Name = args.name
+        names = [args.name]
+
+    after = _feature_names(doc)
+    references = []
+    for name in names:
+        found = find_feature(doc, name)
+        if found is None:
+            continue
+        ref = capture(ctx.session, doc, found)
+        references.append(
+            {
+                "name": name,
+                **ref.model_dump(mode="json", exclude_none=True),
+                "tool_args": ref.tool_args(),
+            }
+        )
+
+    return DatumPointCreateResult(
+        point_names=names,
+        count=len(names),
+        method=args.method,
+        references=references,
+        verification=Verification(
+            read_back=True,
+            before={"feature_count": len(before)},
+            after={"feature_count": len(after), "points_created": len(names)},
+            checks=[
+                *_datum_checks(before, after, ", ".join(names), "point"),
+                Check(
+                    name="every_point_is_addressable",
+                    passed=len(references) == len(names),
+                    detail=f"{len(references)} of {len(names)} came back capture-ready",
+                ),
+            ],
+        ),
+        warnings=(
+            [f"{args.name!r} was ignored: {len(names)} points were created, not one."]
+            if args.name and len(names) != 1
+            else []
+        ),
+    )
+
+
+@op(
+    name="sw_datum_csys_create",
+    tier="core",
+    domains=("datum",),
+    tags=("datum", "coordinate-system", "transform", "reference"),
+    summary=(
+        "Create a coordinate system from an origin and axis references, and return the "
+        "transform SOLIDWORKS actually built: rotation, origin position, and scale."
+    ),
+    safety=ModelMutation(destructive=False),
+    satisfies=("DAT-004",),
+    precondition="part_or_assembly",
+    idempotent=False,
+    timeout_s=180.0,
+)
+def datum_csys_create(ctx: OpContext, args: DatumCsysCreateArgs) -> DatumCsysCreateResult:
+    doc = ctx.require_doc()
+    before = _feature_names(doc)
+
+    try_com_member(doc, "ClearSelection2", True, default=None)
+    unresolved = []
+    for field, mark in _CSYS_MARKS.items():
+        ref = getattr(args, field)
+        if ref is not None and not _select_marked(ctx, doc, ref, mark):
+            unresolved.append(field)
+    if unresolved:
+        raise SwMcpError(
+            make_error(
+                "REFERENCE_NOT_SELECTABLE",
+                "reference",
+                f"These references could not be selected: {', '.join(unresolved)}.",
+                context={"unresolved": unresolved},
+                remediation=["Re-capture the references; the model may have changed."],
+            )
+        )
+
+    feature = try_com_member(
+        doc.FeatureManager,
+        "InsertCoordinateSystem",
+        args.flip_x,
+        args.flip_y,
+        args.flip_z,
+        default=None,
+    )
+    created = _new_feature(doc, before)
+    if feature is None or created is None:
+        raise SwMcpError(
+            make_error(
+                "CSYS_CREATE_FAILED",
+                "solidworks",
+                "SOLIDWORKS could not create a coordinate system from those references.",
+                remediation=[
+                    "The origin must be a vertex, sketch point, or reference point, and "
+                    "each axis an edge, reference axis, or sketch line.",
+                ],
+            )
+        )
+
+    if args.name:
+        created.Name = args.name
+    name = str(try_com_member(created, "Name", default="") or "")
+    after = _feature_names(doc)
+    transform = _read_csys_transform(doc, name)
+    reference = capture(ctx.session, doc, created)
+
+    return DatumCsysCreateResult(
+        csys_name=name,
+        transform=transform,
+        reference={
+            **reference.model_dump(mode="json", exclude_none=True),
+            "tool_args": reference.tool_args(),
+        },
+        verification=Verification(
+            read_back=True,
+            before={"feature_count": len(before)},
+            after={
+                "feature_count": len(after),
+                "translation_mm": transform.translation_mm if transform else None,
+            },
+            checks=[
+                *_datum_checks(before, after, name, "coordinate_system"),
+                Check(
+                    name="transform_read_back",
+                    passed=transform is not None,
+                    detail=(
+                        f"origin at {transform.translation_mm} mm"
+                        if transform
+                        else "SOLIDWORKS returned no transform for the new system"
+                    ),
+                ),
+            ],
+        ),
+        warnings=(
+            []
+            if transform
+            else ["The coordinate system was created but its transform could not be read."]
+        ),
+    )
+
+
+def _read_csys_transform(doc: Any, name: str) -> DatumCsysTransform | None:
+    """Decode ``IMathTransform.ArrayData`` for a named coordinate system.
+
+    The array is sixteen doubles: nine row-major rotation terms, three translation
+    terms in metres, a uniform scale, and three unused. Anything shorter means
+    SOLIDWORKS did not hand back a transform, and reporting a partly-filled one as
+    fact would be worse than reporting none.
+    """
+    if not name:
+        return None
+    math_transform = try_com_member(
+        doc.Extension, "GetCoordinateSystemTransformByName", name, default=None
+    )
+    data = normalize_sequence(try_com_member(math_transform, "ArrayData", default=None))
+    if len(data) < 13:
+        return None
+    values = [float(item) for item in data]
+    return DatumCsysTransform(
+        rotation=[values[0:3], values[3:6], values[6:9]],
+        translation_mm=[round(from_meters(value), 9) for value in values[9:12]],
+        scale=values[12],
     )
 
 
@@ -1135,7 +1524,7 @@ def feature_list(ctx: OpContext, args: FeatureListArgs) -> FeatureListResult:
     tags=("feature", "rename", "suppress"),
     summary="Rename a feature or change its suppression state, verified by reading it back.",
     safety=ModelMutation(destructive=False),
-    satisfies=("FEAT-015",),
+    satisfies=("FEAT-015", "DAT-005"),
     precondition="part_or_assembly",
     idempotent=True,
     timeout_s=180.0,
@@ -1198,7 +1587,7 @@ def feature_edit(ctx: OpContext, args: FeatureEditArgs) -> FeatureEditResult:
         "the tree."
     ),
     safety=ModelMutation(destructive=True),
-    satisfies=("FEAT-015",),
+    satisfies=("FEAT-015", "DAT-005"),
     precondition="part_or_assembly",
     idempotent=False,
     timeout_s=180.0,

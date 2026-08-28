@@ -6,7 +6,7 @@ worker thread.
 It implements the P0 foundation and a P1 modelling vertical from
 [`docs/solidworks-target-requirements.md`](../docs/solidworks-target-requirements.md),
 plus neutral-format export and an atomic mutate-and-validate workflow pulled forward
-from P2: **76 operations covering all 75 in-scope requirements**, with coverage
+from P2: **77 operations covering all 76 in-scope requirements**, with coverage
 reported honestly in `src/swmcp/generated/requirements_coverage.json` rather than
 asserted.
 
@@ -117,7 +117,7 @@ Angles default to degrees and accept `"45deg"`, `"1.57rad"`, or `{"value": 0.25,
 | selection / reference | selection get/set, ref capture/resolve, probe faces, probe ray |
 | sketch | start, exit, list, add geometry, set construction, delete, convert, modify |
 | constraint | add relations, add dimensions, diagnose, dimension list/set, auto-dimension |
-| datum | list, create plane |
+| datum | list, create plane, axis, point, coordinate system |
 | feature / body / measure | extrude boss/cut, revolve, fillet, chamfer, pattern, hole, shell, rib, primitives, list, edit, delete, body list, measure |
 | parameter | equation list/set, configuration list/create/activate/delete, property list/set, parameter table export/import |
 | view | set orientation and display mode, capture a PNG or BMP preview |
@@ -133,7 +133,7 @@ uv run python scripts/demo_build.py
 ```
 
 Spawns `python -m swmcp` over stdio, does the MCP handshake, and drives the published
-tools the way any MCP client would — no test harness in the path. It builds three parts
+tools the way any MCP client would — no test harness in the path. It builds six parts
 in `demo-output/` and writes `DEMO-TRANSCRIPT.md` (every call, its arguments, and the
 evidence returned) plus `demo-log.json` with the full payloads.
 
@@ -142,6 +142,9 @@ evidence returned) plus `demo-log.json` with the full payloads.
 | `demo_01_bracket.SLDPRT` | Sketch → relations → dimensions (fully defined) → 8 mm extrude measuring exactly 48 000 mm³ → a Ø6.6 hole found in the B-Rep → a 2×2 pattern verified by probing four cylindrical faces → a fillet on four edges |
 | `demo_02_shaft.SLDPRT` | A revolve about a sketch centerline, measuring 37 699.112 mm³ against π·(15²·40 + 10²·30) |
 | `demo_03_safety.SLDPRT` | A write outside the roots refused, an unknown argument refused, a delete refused without `confirm`, the versioning policy writing `_v002` instead of replacing a file, and a checkpoint restore that re-measures identically after the feature was really deleted |
+| `demo_04_parametric.SLDPRT` | A global variable driving a dimension through an equation, configurations created and activated, custom properties written, and the parameter table exported to `demo_04_parameters.csv` |
+| `demo_05_atomic.SLDPRT` | One sequence kept because its invariants held, and a second rolled back because they could not — the model measuring exactly what it did before the failed sequence ran |
+| `demo_06_datum.SLDPRT` | A reference axis at two planes' intersection and the parallel-plane axis that is refused rather than invented; a point at a bore centre and three spaced along an edge; and a coordinate system whose transform reports the bore centre the demo sketched, which is the only position read-back a reference point has |
 
 `SWMCP_ALLOWED_ROOTS` is set to `demo-output/` for the run, so that folder is the only
 place the server can write. Documents already open are recorded first and left alone;
@@ -150,7 +153,7 @@ only the documents the run created are closed, addressed by title.
 ## Development
 
 ```bash
-uv run pytest                       # 357 tests, no SOLIDWORKS needed
+uv run pytest                       # 371 tests, no SOLIDWORKS needed
 uv run pytest -m live               # against a running SOLIDWORKS; writes only to .scratch/
 uv run pytest -m "live and not slow"  # the quick live pass
 uv run ruff check src tests scripts
@@ -185,6 +188,24 @@ Two things it settled that probing had answered correctly but explained wrongly:
   using `Add3`", and `Add3` "only works for parts having multiple configurations".
   Both -1 returns were documented behaviour rather than a broken API, and one of them
   had cost a working feature — configuration-scoped equations — that is now restored.
+
+And two the docs did not settle, where only probing the running install would do. Both
+came out of building the reference-geometry tools:
+
+- `IFeatureManager::InsertReferencePoint` is documented as returning an `IFeature`.
+  Through `pywin32` it returns a **one-element tuple** containing one. Treating that
+  tuple as the feature makes every call look successful right up until `.Name` raises,
+  so `sw_datum_point_create` unwraps it once, at the call site.
+- `swRefPointCenterEdge` reads like "the centre of an edge" and is in fact the *arc*
+  centre: SOLIDWORKS refuses it on a straight edge. The schema therefore calls it
+  `arc_center`, and the failure points at `along_curve` with `percent: 50` — which is
+  how you actually get an edge midpoint.
+
+Neither is visible from the type library, which knows only names and arity, nor from
+the API help, which describes the C# binding. A reference point also has no position to
+read back, so the tools verify one the only way SOLIDWORKS allows: a coordinate system
+built on the point reports where it landed, and the live suite checks that against
+geometry it measured beforehand.
 
 A live run is inherently serial — one SOLIDWORKS, one STA thread — and SOLIDWORKS itself
 dominates the clock. Measured over a full run: `sw_doc_new` averages 3.6s and

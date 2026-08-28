@@ -30,6 +30,10 @@ PLATE_X, PLATE_Y, PLATE_Z = 100.0, 60.0, 8.0
 HOLE_DIA = 6.6
 FILLET_R = 5.0
 
+#: Where part six sketches its bore. The coordinate system built on that bore's
+#: centre has to report exactly this, which is what makes the datum demo checkable.
+DATUM_HOLE_CENTRE = (50.0, 30.0)
+
 WINDOWS_DECOY = "C:\\Windows\\System32\\swmcp_should_never_exist.SLDPRT"
 
 #: The global variable this demo drives a dimension with. Deliberately not
@@ -742,6 +746,250 @@ async def part_five_atomic(demo: Demo) -> Path:
     return target
 
 
+async def part_six_datum(demo: Demo) -> Path:
+    """Reference geometry, where a call that returns cleanly proves almost nothing.
+
+    ``InsertAxis2`` answers with a bare boolean and leaves the tree untouched when the
+    selection does not describe an axis, and a reference point has no position to read
+    back at all. So the evidence here is a coordinate system: built on a point, it
+    reports where that point actually landed, and the bore was sketched somewhere this
+    demo already knows.
+    """
+    target = OUT_DIR / "demo_06_datum.SLDPRT"
+    heading("Part 6 - datums: axes, points, and a coordinate system that proves them")
+
+    await demo.call("sw_doc_new", {"doc_type": "part"}, highlight=("title",))
+    await demo.call("sw_doc_save", {"output_path": str(target)}, highlight=("saved_path",))
+    await _bored_plate(demo)
+    await _datum_axis_and_the_one_that_cannot_exist(demo)
+    await _datum_points_and_their_position_evidence(demo)
+    await _datum_management(demo)
+
+    await demo.call(
+        "sw_view_capture",
+        {
+            "output_path": str(OUT_DIR / "demo_06_datum.png"),
+            "orientation": "isometric",
+            "width": 1280,
+            "height": 960,
+        },
+        why="Reference geometry is easier to believe when you can see it.",
+        highlight=("saved_path", "actual_size"),
+    )
+    await demo.call(
+        "sw_doc_save",
+        {"output_path": str(target), "overwrite": "allow", "confirm": True},
+        highlight=("saved_path",),
+    )
+    return target
+
+
+async def _bored_plate(demo: Demo) -> None:
+    """A 100 x 60 x 8 plate with a bore, so every coordinate below is arithmetic."""
+    await demo.call("sw_sketch_start", {"on": {"standard_plane": "front"}})
+    await demo.call(
+        "sw_sketch_add_geometry",
+        {"entities": [{"type": "rect_corner", "corner": [0, 0], "opposite": [PLATE_X, PLATE_Y]}]},
+    )
+    await demo.call("sw_sketch_exit")
+    await demo.call(
+        "sw_feature_extrude_boss",
+        {"depth": PLATE_Z, "name": "BasePlate"},
+        highlight=("volume_mm3_after",),
+    )
+    await demo.call("sw_sketch_start", {"on": {"standard_plane": "front"}})
+    await demo.call(
+        "sw_sketch_add_geometry",
+        {"entities": [{"type": "circle", "center": list(DATUM_HOLE_CENTRE), "radius": 10}]},
+    )
+    await demo.call("sw_sketch_exit")
+    # The plate was extruded in +Z from the front plane, so the cut has to follow it.
+    await demo.call(
+        "sw_feature_extrude_cut",
+        {"end_condition": "through_all", "reverse": True, "name": "Bore"},
+        highlight=("volume_mm3_before", "volume_mm3_after"),
+    )
+
+
+async def _datum_axis_and_the_one_that_cannot_exist(demo: Demo) -> None:
+    """DAT-003 for axes, next to the refusal that makes the success meaningful."""
+    await demo.call(
+        "sw_datum_axis_create",
+        {"method": "two_planes", "standard_planes": ["front", "right"], "name": "SpinAxis"},
+        why="DAT-003: an axis where two standard planes intersect.",
+        highlight=("axis_name", "method", "verification"),
+    )
+    await demo.call(
+        "sw_datum_plane_create",
+        {"method": "offset", "standard_plane": "front", "distance": 25, "name": "Parallel"},
+        why="DAT-002: an offset plane, which is by definition parallel to its reference.",
+        highlight=("plane_name",),
+    )
+
+    listed = await demo.call("sw_datum_list", highlight=("axes",))
+    if not listed.get("ok"):
+        return
+    axes_before = len(listed["result"]["axes"])
+    parallel_ref = next(
+        (p["tool_args"]["ref"] for p in listed["result"]["planes"] if p["name"] == "Parallel"),
+        None,
+    )
+    if parallel_ref is None:
+        return
+
+    await demo.call(
+        "sw_datum_axis_create",
+        {"method": "two_planes", "standard_planes": ["front"], "refs": [parallel_ref]},
+        why=(
+            "Parallel planes never intersect. SOLIDWORKS reports that by returning false "
+            "and leaving the tree alone - the exact shape of a silent success. The tool "
+            "reads the tree back and refuses instead."
+        ),
+        expect="error",
+    )
+    after = await demo.call("sw_datum_list", highlight=("axes",))
+    if after.get("ok") and len(after["result"]["axes"]) != axes_before:
+        demo.failures.append("the refused axis left something behind in the tree")
+
+
+async def _datum_points_and_their_position_evidence(demo: Demo) -> None:
+    """DAT-003 for points, and the DAT-004 coordinate system that proves where they are."""
+    edges = await demo.call(
+        "sw_probe_faces",
+        {"entity_class": "edge", "limit": 100},
+        why="Find the bore's circular edge and a 100 mm straight edge by measurement.",
+        highlight=("matched",),
+    )
+    circular_ref, straight_ref = _pick_edges(edges)
+
+    centre_ref = None
+    if circular_ref is not None:
+        created = await demo.call(
+            "sw_datum_point_create",
+            {"method": "arc_center", "refs": [circular_ref], "name": "BoreCentre"},
+            why="DAT-003: a point at the centre of the bore.",
+            highlight=("point_names", "count", "verification"),
+        )
+        if created.get("ok") and created["result"]["references"]:
+            centre_ref = created["result"]["references"][0]["tool_args"]["ref"]
+
+    if straight_ref is not None:
+        await demo.call(
+            "sw_datum_point_create",
+            {"method": "arc_center", "refs": [straight_ref]},
+            why=(
+                "swRefPointCenterEdge reads like 'the centre of an edge' and is really the "
+                "arc centre: SOLIDWORKS refuses it on a straight edge. The remediation "
+                "names the mode that does work."
+            ),
+            expect="error",
+        )
+        await demo.call(
+            "sw_datum_point_create",
+            {
+                "method": "along_curve",
+                "along_curve": "evenly",
+                "count": 3,
+                "refs": [straight_ref],
+            },
+            why="DAT-003: three points spaced evenly along the 100 mm edge.",
+            highlight=("point_names", "count"),
+        )
+
+    if centre_ref is None:
+        demo.failures.append("no bore-centre point was created to build a frame on")
+        return
+
+    frame = await demo.call(
+        "sw_datum_csys_create",
+        {"origin": centre_ref, "name": "BoreFrame"},
+        why=(
+            "DAT-004: a reference point exposes no position, so this is the only read-back "
+            f"SOLIDWORKS offers. The bore was sketched at ({DATUM_HOLE_CENTRE[0]:.0f}, "
+            f"{DATUM_HOLE_CENTRE[1]:.0f}) on a {PLATE_Z:.0f} mm plate, so the answer is "
+            "known before the call is made."
+        ),
+        highlight=("csys_name", "transform", "verification"),
+    )
+    if not frame.get("ok"):
+        return
+    transform = frame["result"]["transform"]
+    if transform is None:
+        demo.failures.append("the coordinate system returned no transform")
+        return
+    expected = [DATUM_HOLE_CENTRE[0], DATUM_HOLE_CENTRE[1], PLATE_Z]
+    landed = transform["translation_mm"]
+    if any(abs(a - b) > 1e-6 for a, b in zip(landed, expected, strict=True)):
+        demo.failures.append(f"the coordinate system landed at {landed}, expected {expected}")
+
+
+def _pick_edges(edges: dict[str, Any]) -> tuple[Any, Any]:
+    """The bore's circular edge and one 100 mm straight edge, found by measurement."""
+    circular_ref = None
+    straight_ref = None
+    if not edges.get("ok"):
+        return circular_ref, straight_ref
+    for candidate in edges["result"]["candidates"]:
+        length = candidate["measurements"].get("length_m")
+        if circular_ref is None and candidate["geometry_type"] == "circular_edge":
+            circular_ref = candidate["tool_args"]["ref"]
+        if (
+            straight_ref is None
+            and candidate["geometry_type"] == "line_edge"
+            and length is not None
+            and abs(length - PLATE_X / 1000.0) < 1e-9
+        ):
+            straight_ref = candidate["tool_args"]["ref"]
+    return circular_ref, straight_ref
+
+
+async def _datum_management(demo: Demo) -> None:
+    """DAT-005: a datum feature is an ordinary feature, and the tree says so."""
+    await demo.call(
+        "sw_feature_edit",
+        {"feature_name": "SpinAxis", "rename_to": "MainAxis"},
+        why="DAT-005: rename, read back out of the tree.",
+        highlight=("feature_name", "renamed_to", "verification"),
+    )
+    await demo.call(
+        "sw_feature_edit",
+        {"feature_name": "Parallel", "suppress": True},
+        why="DAT-005: suppress.",
+        highlight=("suppressed", "verification"),
+    )
+    suppressed = await demo.call("sw_datum_list", highlight=("planes",))
+    if suppressed.get("ok"):
+        entry = next(
+            (p for p in suppressed["result"]["planes"] if p["name"] == "Parallel"), None
+        )
+        if entry is None or not entry["suppressed"]:
+            demo.failures.append("the suppressed datum plane does not read back as suppressed")
+
+    await demo.call(
+        "sw_feature_edit",
+        {"feature_name": "Parallel", "suppress": False},
+        why="DAT-005: and unsuppress, so the saved file still shows the plane.",
+        highlight=("suppressed",),
+    )
+
+    final = await demo.call(
+        "sw_datum_list",
+        why="DAT-001: every datum, with its type token and a capture-ready reference.",
+        highlight=("planes", "axes", "points", "coordinate_systems", "origin"),
+    )
+    if not final.get("ok"):
+        return
+    result = final["result"]
+    if not result["axes"]:
+        demo.failures.append("the finished part has no reference axis")
+    if len(result["points"]) < 4:
+        demo.failures.append(
+            f"expected the bore centre plus three spaced points, got {len(result['points'])}"
+        )
+    if not result["coordinate_systems"]:
+        demo.failures.append("the finished part has no coordinate system")
+
+
 async def session_probes(demo: Demo) -> None:
     heading("Session - what the server discovered about this machine")
     await demo.call(
@@ -884,6 +1132,7 @@ async def run() -> int:
             await part_three_safety(demo),
             await part_four_parametric(demo),
             await part_five_atomic(demo),
+            await part_six_datum(demo),
         ]
 
         heading("Cleanup - closing only what this run created")

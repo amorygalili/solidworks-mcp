@@ -14,7 +14,7 @@ List the document's reference geometry — planes, axes, points, and coordinate 
 | Auto-checkpointed | False |
 | Idempotent | True |
 | Timeout | 180s |
-| Satisfies | `DAT-001` |
+| Satisfies | `DAT-001`, `DAT-005` |
 
 ## Input schema
 

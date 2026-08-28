@@ -14,7 +14,7 @@ Rename a feature or change its suppression state, verified by reading it back.
 | Auto-checkpointed | True |
 | Idempotent | True |
 | Timeout | 180s |
-| Satisfies | `FEAT-015` |
+| Satisfies | `FEAT-015`, `DAT-005` |
 
 ## Input schema
 

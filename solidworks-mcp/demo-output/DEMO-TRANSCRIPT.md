@@ -3,21 +3,23 @@
 Produced by `uv run python scripts/demo_build.py`, which spawns `python -m swmcp`
 over stdio and speaks MCP to it - the same path any MCP client takes.
 
-- tool calls: **85**
-- behaved as expected: **85/85**
+- tool calls: **113**
+- behaved as expected: **113/113**
 
 ## Files written
 
-- `demo_01_bracket.SLDPRT` - 73,814 bytes
-- `demo_02_shaft.SLDPRT` - 63,749 bytes
-- `demo_03_safety.SLDPRT` - 43,665 bytes
-- `demo_04_parametric.SLDPRT` - 91,785 bytes
-- `demo_05_atomic.SLDPRT` - 48,766 bytes
+- `demo_01_bracket.SLDPRT` - 74,438 bytes
+- `demo_02_shaft.SLDPRT` - 63,219 bytes
+- `demo_03_safety.SLDPRT` - 43,882 bytes
+- `demo_04_parametric.SLDPRT` - 91,765 bytes
+- `demo_05_atomic.SLDPRT` - 48,829 bytes
+- `demo_06_datum.SLDPRT` - 73,924 bytes
 - `demo_01_bracket.png` - 145,097 bytes
-- `demo_01_bracket.step` - 45,579 bytes
+- `demo_06_datum.png` - 173,807 bytes
+- `demo_01_bracket.step` - 45,575 bytes
 - `demo_01_bracket.STL` - 37,484 bytes
 - `demo_04_parameters.csv` - 450 bytes
-- `demo_03_safety_v002.SLDPRT` - 44,182 bytes (written by the versioning policy)
+- `demo_03_safety_v002.SLDPRT` - 44,409 bytes (written by the versioning policy)
 
 ## Calls
 
@@ -64,18 +66,7 @@ SYS-002: version, ProgID and install root discovered, never hardcoded.
     "base_prog_id": "SldWorks.Application",
     "language": "english",
     "executable_path": "C:\\Program Files\\Dassault Systemes\\SOLIDWORKS 3DEXPERIENCE R2026x\\SOLIDWORKS",
-    "active_document": {
-      "title": "swmcp_probe_gvnames.SLDPRT",
-      "path": "c:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\.scratch\\swmcp_probe_gvnames.SLDPRT",
-      "doc_type": "part",
-      "doc_type_code": 1,
-      "is_saved": true,
-      "is_dirty": true,
-      "configuration": "Default",
-      "checkpointable": true,
-      "opened_read_only": false,
-      "warnings": []
-    }
+    "active_document": null
   }
 }
 ```
@@ -95,7 +86,7 @@ SYS-005: answers without queueing, so it still works while COM is busy.
   "worker": {
     "thread_alive": true,
     "apartment": "STA",
-    "thread_ident": 27016,
+    "thread_ident": 28276,
     "queue_depth": 0,
     "inflight": {
       "label": "sw_health",
@@ -109,12 +100,12 @@ SYS-005: answers without queueing, so it still works while COM is busy.
       "reattaches": 0,
       "latency_ms": {
         "sw_doc_list": {
-          "p50": 930.61,
-          "p95": 1028.72
+          "p50": 13.23,
+          "p95": 50.54
         },
         "sw_system_info": {
-          "p50": 675.78,
-          "p95": 675.78
+          "p50": 397.23,
+          "p95": 397.23
         }
       }
     }
@@ -578,7 +569,7 @@ FEAT-012: confirmed by finding a cylindrical face, not by a return code.
     },
     "persistent": {
       "scheme": "GetPersistReference3",
-      "data_b64": "OEoAAAMAAAD//v8AAAAAAP//AQALAG1vRmFjZVJlZl9jAQAAAAAAAAAGAAAAAAIAAAAAAAB9w5QlrUmyVH3DlCWtSbJUAAD//wEAFABtb0VuZEZhY2VTdXJmSWRSZXBfYwAA//8BAAYAbW9GUl9j//8BAA0AbW9FeHRPYmplY3RfY///AQARAG1vQ1N0cmluZ0hhbmRsZV9j//7/UUMAOgBcAHAAcgBvAGoAZQBjAHQAcwBcAGMAYQBkAC0AbQBjAHAALQBjAG8AbQBwAGEAcgBpAHMAbwBuAHMAXABzAG8AbABpAGQAdwBvAHIAawBzAC0AbQBjAHAAXABkAGUAbQBvAC0AbwB1AHQAcAB1AHQAXABkAGUAbQBvAF8AMAAxAF8AYgByAGEAYwBrAGUAdAAuAFMATABEAFAAUgBUAAmA//7/D2QAZQBtAG8AXwAwADEAXwBiAHIAYQBjAGsAZQB0AAIAADmrkWr//v8A//7/AP/+/wAAAAAAAAAAAAAAAAAAAAAAAAD//v8HRABlAGYAYQB1AGwAdAAAAAAAAAAAAAAAAAAAAAAAIgAAAEqrkWoBAAAAAAAAAP//AQAXAG1vRnJvbVNrdEVudFN1cmZJZFJlcF9jAAAFgAgAIgAAAEqrkWoEAAAADIAAAAWACAAiAAAASquRagEAAAAMgAAABYAIACIAAABKq5FqAgAAAAyAAAAFgAgAIgAAAEqrkWoDAAAAAAAAAAAAAAAAADhKAAAAAAAAAAAAAA=="
+      "data_b64": "OEoAAAMAAAD//v8AAAAAAP//AQALAG1vRmFjZVJlZl9jAQAAAAAAAAAGAAAAAAIAAAAAAAB9w5QlrUmyVH3DlCWtSbJUAAD//wEAFABtb0VuZEZhY2VTdXJmSWRSZXBfYwAA//8BAAYAbW9GUl9j//8BAA0AbW9FeHRPYmplY3RfY///AQARAG1vQ1N0cmluZ0hhbmRsZV9j//7/UUMAOgBcAHAAcgBvAGoAZQBjAHQAcwBcAGMAYQBkAC0AbQBjAHAALQBjAG8AbQBwAGEAcgBpAHMAbwBuAHMAXABzAG8AbABpAGQAdwBvAHIAawBzAC0AbQBjAHAAXABkAGUAbQBvAC0AbwB1AHQAcAB1AHQAXABkAGUAbQBvAF8AMAAxAF8AYgByAGEAYwBrAGUAdAAuAFMATABEAFAAUgBUAAmA//7/D2QAZQBtAG8AXwAwADEAXwBiAHIAYQBjAGsAZQB0AAIAAKnwkWr//v8A//7/AP/+/wAAAAAAAAAAAAAAAAAAAAAAAAD//v8HRABlAGYAYQB1AGwAdAAAAAAAAAAAAAAAAAAAAAAAIgAAAMbwkWoBAAAAAAAAAP//AQAXAG1vRnJvbVNrdEVudFN1cmZJZFJlcF9jAAAFgAgAIgAAAMbwkWoEAAAADIAAAAWACAAiAAAAxvCRagEAAAAMgAAABYAIACIAAADG8JFqAgAAAAyAAAAFgAgAIgAAAMbwkWoDAAAAAAAAAAAAAAAAADhKAAAAAAAAAAAAAA=="
     },
     "semantic": {
       "component_path": [],
@@ -679,7 +670,7 @@ FEAT-007 is claimed only partially - linear and circular - and the schema says s
     },
     "persistent": {
       "scheme": "GetPersistReference3",
-      "data_b64": "OEoAAAMAAAD//v8AAAAAAP//AQALAG1vRWRnZVJlZl9jAQAAAAAAAAAEAAAAAAMAAAAAAAB9w5QlrUmyVH3DlCWtSbJUAAD//wEAFABtb0VuZEZhY2VTdXJmSWRSZXBfYwAA//8BAAYAbW9GUl9j//8BAA0AbW9FeHRPYmplY3RfY///AQARAG1vQ1N0cmluZ0hhbmRsZV9j//7/UUMAOgBcAHAAcgBvAGoAZQBjAHQAcwBcAGMAYQBkAC0AbQBjAHAALQBjAG8AbQBwAGEAcgBpAHMAbwBuAHMAXABzAG8AbABpAGQAdwBvAHIAawBzAC0AbQBjAHAAXABkAGUAbQBvAC0AbwB1AHQAcAB1AHQAXABkAGUAbQBvAF8AMAAxAF8AYgByAGEAYwBrAGUAdAAuAFMATABEAFAAUgBUAAmA//7/D2QAZQBtAG8AXwAwADEAXwBiAHIAYQBjAGsAZQB0AAIAADmrkWr//v8A//7/AP/+/wAAAAAAAAAAAAAAAAAAAAAAAAD//v8HRABlAGYAYQB1AGwAdAAAAAAAAAAAAAAAAAAAAAAAIgAAAEqrkWoBAAAAAAAAAP//AQAXAG1vRnJvbVNrdEVudFN1cmZJZFJlcF9jAAAFgAgAIgAAAEqrkWoBAAAADIAAAAWACAAiAAAASquRagQAAAAMgAAABYAIACIAAABKq5FqAgAAAAAAAAAAAAAAOEoAAAAAAAA="
+      "data_b64": "OEoAAAMAAAD//v8AAAAAAP//AQALAG1vRWRnZVJlZl9jAQAAAAAAAAAEAAAAAAMAAAAAAAB9w5QlrUmyVH3DlCWtSbJUAAD//wEAFABtb0VuZEZhY2VTdXJmSWRSZXBfYwAA//8BAAYAbW9GUl9j//8BAA0AbW9FeHRPYmplY3RfY///AQARAG1vQ1N0cmluZ0hhbmRsZV9j//7/UUMAOgBcAHAAcgBvAGoAZQBjAHQAcwBcAGMAYQBkAC0AbQBjAHAALQBjAG8AbQBwAGEAcgBpAHMAbwBuAHMAXABzAG8AbABpAGQAdwBvAHIAawBzAC0AbQBjAHAAXABkAGUAbQBvAC0AbwB1AHQAcAB1AHQAXABkAGUAbQBvAF8AMAAxAF8AYgByAGEAYwBrAGUAdAAuAFMATABEAFAAUgBUAAmA//7/D2QAZQBtAG8AXwAwADEAXwBiAHIAYQBjAGsAZQB0AAIAAKnwkWr//v8A//7/AP/+/wAAAAAAAAAAAAAAAAAAAAAAAAD//v8HRABlAGYAYQB1AGwAdAAAAAAAAAAAAAAAAAAAAAAAIgAAAMbwkWoBAAAAAAAAAP//AQAXAG1vRnJvbVNrdEVudFN1cmZJZFJlcF9jAAAFgAgAIgAAAMbwkWoBAAAADIAAAAWACAAiAAAAxvCRagQAAAAMgAAABYAIACIAAADG8JFqAgAAAAAAAAAAAAAAOEoAAAAAAAA="
     },
     "semantic": {
       "component_path": [],
@@ -722,7 +713,7 @@ FEAT-007 is claimed only partially - linear and circular - and the schema says s
     },
     "persistent": {
       "scheme": "GetPersistReference3",
-      "data_b64": "OEoAAAMAAAD//v8AAAAAAP//AQALAG1vRWRnZVJlZl9jAQAAAAAAAAAEAAAAAAMAAAAAAAB9w5QlrUmyVH3DlCWtSbJUAAD//wEAFABtb0VuZEZhY2VTdXJmSWRSZXBfYwAA//8BAAYAbW9GUl9j//8BAA0AbW9FeHRPYmplY3RfY///AQARAG1vQ1N0cmluZ0hhbmRsZV9j//7/UUMAOgBcAHAAcgBvAGoAZQBjAHQAcwBcAGMAYQBkAC0AbQBjAHAALQBjAG8AbQBwAGEAcgBpAHMAbwBuAHMAXABzAG8AbABpAGQAdwBvAHIAawBzAC0AbQBjAHAAXABkAGUAbQBvAC0AbwB1AHQAcAB1AHQAXABkAGUAbQBvAF8AMAAxAF8AYgByAGEAYwBrAGUAdAAuAFMATABEAFAAUgBUAAmA//7/D2QAZQBtAG8AXwAwADEAXwBiAHIAYQBjAGsAZQB0AAIAADmrkWr//v8A//7/AP/+/wAAAAAAAAAAAAAAAAAAAAAAAAD//v8HRABlAGYAYQB1AGwAdAAAAAAAAAAAAAAAAAAAAAAAIgAAAEqrkWoBAAAAAAAAAP//AQAXAG1vRnJvbVNrdEVudFN1cmZJZFJlcF9jAAAFgAgAIgAAAEqrkWoCAAAADIAAAAWACAAiAAAASquRagEAAAAMgAAABYAIACIAAABKq5FqAwAAAAAAAAAAAAAAOEoAAAAAAAA="
+      "data_b64": "OEoAAAMAAAD//v8AAAAAAP//AQALAG1vRWRnZVJlZl9jAQAAAAAAAAAEAAAAAAMAAAAAAAB9w5QlrUmyVH3DlCWtSbJUAAD//wEAFABtb0VuZEZhY2VTdXJmSWRSZXBfYwAA//8BAAYAbW9GUl9j//8BAA0AbW9FeHRPYmplY3RfY///AQARAG1vQ1N0cmluZ0hhbmRsZV9j//7/UUMAOgBcAHAAcgBvAGoAZQBjAHQAcwBcAGMAYQBkAC0AbQBjAHAALQBjAG8AbQBwAGEAcgBpAHMAbwBuAHMAXABzAG8AbABpAGQAdwBvAHIAawBzAC0AbQBjAHAAXABkAGUAbQBvAC0AbwB1AHQAcAB1AHQAXABkAGUAbQBvAF8AMAAxAF8AYgByAGEAYwBrAGUAdAAuAFMATABEAFAAUgBUAAmA//7/D2QAZQBtAG8AXwAwADEAXwBiAHIAYQBjAGsAZQB0AAIAAKnwkWr//v8A//7/AP/+/wAAAAAAAAAAAAAAAAAAAAAAAAD//v8HRABlAGYAYQB1AGwAdAAAAAAAAAAAAAAAAAAAAAAAIgAAAMbwkWoBAAAAAAAAAP//AQAXAG1vRnJvbVNrdEVudFN1cmZJZFJlcF9jAAAFgAgAIgAAAMbwkWoCAAAADIAAAAWACAAiAAAAxvCRagEAAAAMgAAABYAIACIAAADG8JFqAwAAAAAAAAAAAAAAOEoAAAAAAAA="
     },
     "semantic": {
       "component_path": [],
@@ -802,7 +793,7 @@ Rounding four corners must remove material; the check is arithmetic.
       },
       "persistent": {
         "scheme": "GetPersistReference3",
-        "data_b64": "OEoAAAMAAAD//v8AAAAAAP//AQALAG1vRWRnZVJlZl9jAQAAAAAAAAAEAAAAAAMAAAAAAAB9w5QlrUmyVH3DlCWtSbJUAAD//wEAFwBtb0Zyb21Ta3RFbnRTdXJmSWRSZXBfYwAA//8BAAYAbW9GUl9j//8BAA0AbW9FeHRPYmplY3RfY///AQARAG1vQ1N0cmluZ0hhbmRsZV9j//7/UUMAOgBcAHAAcgBvAGoAZQBjAHQAcwBcAGMAYQBkAC0AbQBjAHAALQBjAG8AbQBwAGEAcgBpAHMAbwBuAHMAXABzAG8AbABpAGQAdwBvAHIAawBzAC0AbQBjAHAAXABkAGUAbQBvAC0AbwB1AHQAcAB1AHQAXABkAGUAbQBvAF8AMAAxAF8AYgByAGEAYwBrAGUAdAAuAFMATABEAFAAUgBUAAmA//7/D2QAZQBtAG8AXwAwADEAXwBiAHIAYQBjAGsAZQB0AAIAADmrkWr//v8A//7/AP/+/wAAAAAAAAAAAAAAAAAAAAAAAAD//v8HRABlAGYAYQB1AGwAdAAAAAAAAAAAAAAAAAAAAAAAIgAAAEqrkWoBAAAAA4AAAAWACAAiAAAASquRagQAAAD//wEAFABtb0VuZEZhY2VTdXJmSWRSZXBfYwAABYAIACIAAABKq5FqAQAAAAAAAAAOgAAABYAIACIAAABKq5FqAAAAAAAAAAAAAAAAAAAAADhKAAAAAAAA"
+        "data_b64": "OEoAAAMAAAD//v8AAAAAAP//AQALAG1vRWRnZVJlZl9jAQAAAAAAAAAEAAAAAAMAAAAAAAB9w5QlrUmyVH3DlCWtSbJUAAD//wEAFwBtb0Zyb21Ta3RFbnRTdXJmSWRSZXBfYwAA//8BAAYAbW9GUl9j//8BAA0AbW9FeHRPYmplY3RfY///AQARAG1vQ1N0cmluZ0hhbmRsZV9j//7/UUMAOgBcAHAAcgBvAGoAZQBjAHQAcwBcAGMAYQBkAC0AbQBjAHAALQBjAG8AbQBwAGEAcgBpAHMAbwBuAHMAXABzAG8AbABpAGQAdwBvAHIAawBzAC0AbQBjAHAAXABkAGUAbQBvAC0AbwB1AHQAcAB1AHQAXABkAGUAbQBvAF8AMAAxAF8AYgByAGEAYwBrAGUAdAAuAFMATABEAFAAUgBUAAmA//7/D2QAZQBtAG8AXwAwADEAXwBiAHIAYQBjAGsAZQB0AAIAAKnwkWr//v8A//7/AP/+/wAAAAAAAAAAAAAAAAAAAAAAAAD//v8HRABlAGYAYQB1AGwAdAAAAAAAAAAAAAAAAAAAAAAAIgAAAMbwkWoBAAAAA4AAAAWACAAiAAAAxvCRagQAAAD//wEAFABtb0VuZEZhY2VTdXJmSWRSZXBfYwAABYAIACIAAADG8JFqAQAAAAAAAAAOgAAABYAIACIAAADG8JFqAAAAAAAAAAAAAAAAAAAAADhKAAAAAAAA"
       },
       "semantic": {
         "component_path": [],
@@ -843,7 +834,7 @@ Rounding four corners must remove material; the check is arithmetic.
       },
       "persistent": {
         "scheme": "GetPersistReference3",
-        "data_b64": "OEoAAAMAAAD//v8AAAAAAP//AQALAG1vRWRnZVJlZl9jAQAAAAAAAAAEAAAAAAMAAAAAAAB9w5QlrUmyVH3DlCWtSbJUAAD//wEAFwBtb0Zyb21Ta3RFbnRTdXJmSWRSZXBfYwAA//8BAAYAbW9GUl9j//8BAA0AbW9FeHRPYmplY3RfY///AQARAG1vQ1N0cmluZ0hhbmRsZV9j//7/UUMAOgBcAHAAcgBvAGoAZQBjAHQAcwBcAGMAYQBkAC0AbQBjAHAALQBjAG8AbQBwAGEAcgBpAHMAbwBuAHMAXABzAG8AbABpAGQAdwBvAHIAawBzAC0AbQBjAHAAXABkAGUAbQBvAC0AbwB1AHQAcAB1AHQAXABkAGUAbQBvAF8AMAAxAF8AYgByAGEAYwBrAGUAdAAuAFMATABEAFAAUgBUAAmA//7/D2QAZQBtAG8AXwAwADEAXwBiAHIAYQBjAGsAZQB0AAIAADmrkWr//v8A//7/AP/+/wAAAAAAAAAAAAAAAAAAAAAAAAD//v8HRABlAGYAYQB1AGwAdAAAAAAAAAAAAAAAAAAAAAAAIgAAAEqrkWoCAAAAA4AAAAWACAAiAAAASquRagEAAAD//wEAFABtb0VuZEZhY2VTdXJmSWRSZXBfYwAABYAIACIAAABKq5FqAQAAAAAAAAAOgAAABYAIACIAAABKq5FqAAAAAAAAAAAAAAAAAAAAADhKAAAAAAAA"
+        "data_b64": "OEoAAAMAAAD//v8AAAAAAP//AQALAG1vRWRnZVJlZl9jAQAAAAAAAAAEAAAAAAMAAAAAAAB9w5QlrUmyVH3DlCWtSbJUAAD//wEAFwBtb0Zyb21Ta3RFbnRTdXJmSWRSZXBfYwAA//8BAAYAbW9GUl9j//8BAA0AbW9FeHRPYmplY3RfY///AQARAG1vQ1N0cmluZ0hhbmRsZV9j//7/UUMAOgBcAHAAcgBvAGoAZQBjAHQAcwBcAGMAYQBkAC0AbQBjAHAALQBjAG8AbQBwAGEAcgBpAHMAbwBuAHMAXABzAG8AbABpAGQAdwBvAHIAawBzAC0AbQBjAHAAXABkAGUAbQBvAC0AbwB1AHQAcAB1AHQAXABkAGUAbQBvAF8AMAAxAF8AYgByAGEAYwBrAGUAdAAuAFMATABEAFAAUgBUAAmA//7/D2QAZQBtAG8AXwAwADEAXwBiAHIAYQBjAGsAZQB0AAIAAKnwkWr//v8A//7/AP/+/wAAAAAAAAAAAAAAAAAAAAAAAAD//v8HRABlAGYAYQB1AGwAdAAAAAAAAAAAAAAAAAAAAAAAIgAAAMbwkWoCAAAAA4AAAAWACAAiAAAAxvCRagEAAAD//wEAFABtb0VuZEZhY2VTdXJmSWRSZXBfYwAABYAIACIAAADG8JFqAQAAAAAAAAAOgAAABYAIACIAAADG8JFqAAAAAAAAAAAAAAAAAAAAADhKAAAAAAAA"
       },
       "semantic": {
         "component_path": [],
@@ -884,7 +875,7 @@ Rounding four corners must remove material; the check is arithmetic.
       },
       "persistent": {
         "scheme": "GetPersistReference3",
-        "data_b64": "OEoAAAMAAAD//v8AAAAAAP//AQALAG1vRWRnZVJlZl9jAQAAAAAAAAAEAAAAAAMAAAAAAAB9w5QlrUmyVH3DlCWtSbJUAAD//wEAFwBtb0Zyb21Ta3RFbnRTdXJmSWRSZXBfYwAA//8BAAYAbW9GUl9j//8BAA0AbW9FeHRPYmplY3RfY///AQARAG1vQ1N0cmluZ0hhbmRsZV9j//7/UUMAOgBcAHAAcgBvAGoAZQBjAHQAcwBcAGMAYQBkAC0AbQBjAHAALQBjAG8AbQBwAGEAcgBpAHMAbwBuAHMAXABzAG8AbABpAGQAdwBvAHIAawBzAC0AbQBjAHAAXABkAGUAbQBvAC0AbwB1AHQAcAB1AHQAXABkAGUAbQBvAF8AMAAxAF8AYgByAGEAYwBrAGUAdAAuAFMATABEAFAAUgBUAAmA//7/D2QAZQBtAG8AXwAwADEAXwBiAHIAYQBjAGsAZQB0AAIAADmrkWr//v8A//7/AP/+/wAAAAAAAAAAAAAAAAAAAAAAAAD//v8HRABlAGYAYQB1AGwAdAAAAAAAAAAAAAAAAAAAAAAAIgAAAEqrkWoDAAAAA4AAAAWACAAiAAAASquRagIAAAD//wEAFABtb0VuZEZhY2VTdXJmSWRSZXBfYwAABYAIACIAAABKq5FqAQAAAAAAAAAOgAAABYAIACIAAABKq5FqAAAAAAAAAAAAAAAAAAAAADhKAAAAAAAA"
+        "data_b64": "OEoAAAMAAAD//v8AAAAAAP//AQALAG1vRWRnZVJlZl9jAQAAAAAAAAAEAAAAAAMAAAAAAAB9w5QlrUmyVH3DlCWtSbJUAAD//wEAFwBtb0Zyb21Ta3RFbnRTdXJmSWRSZXBfYwAA//8BAAYAbW9GUl9j//8BAA0AbW9FeHRPYmplY3RfY///AQARAG1vQ1N0cmluZ0hhbmRsZV9j//7/UUMAOgBcAHAAcgBvAGoAZQBjAHQAcwBcAGMAYQBkAC0AbQBjAHAALQBjAG8AbQBwAGEAcgBpAHMAbwBuAHMAXABzAG8AbABpAGQAdwBvAHIAawBzAC0AbQBjAHAAXABkAGUAbQBvAC0AbwB1AHQAcAB1AHQAXABkAGUAbQBvAF8AMAAxAF8AYgByAGEAYwBrAGUAdAAuAFMATABEAFAAUgBUAAmA//7/D2QAZQBtAG8AXwAwADEAXwBiAHIAYQBjAGsAZQB0AAIAAKnwkWr//v8A//7/AP/+/wAAAAAAAAAAAAAAAAAAAAAAAAD//v8HRABlAGYAYQB1AGwAdAAAAAAAAAAAAAAAAAAAAAAAIgAAAMbwkWoDAAAAA4AAAAWACAAiAAAAxvCRagIAAAD//wEAFABtb0VuZEZhY2VTdXJmSWRSZXBfYwAABYAIACIAAADG8JFqAQAAAAAAAAAOgAAABYAIACIAAADG8JFqAAAAAAAAAAAAAAAAAAAAADhKAAAAAAAA"
       },
       "semantic": {
         "component_path": [],
@@ -925,7 +916,7 @@ Rounding four corners must remove material; the check is arithmetic.
       },
       "persistent": {
         "scheme": "GetPersistReference3",
-        "data_b64": "OEoAAAMAAAD//v8AAAAAAP//AQALAG1vRWRnZVJlZl9jAQAAAAAAAAAEAAAAAAMAAAAAAAB9w5QlrUmyVH3DlCWtSbJUAAD//wEAFwBtb0Zyb21Ta3RFbnRTdXJmSWRSZXBfYwAA//8BAAYAbW9GUl9j//8BAA0AbW9FeHRPYmplY3RfY///AQARAG1vQ1N0cmluZ0hhbmRsZV9j//7/UUMAOgBcAHAAcgBvAGoAZQBjAHQAcwBcAGMAYQBkAC0AbQBjAHAALQBjAG8AbQBwAGEAcgBpAHMAbwBuAHMAXABzAG8AbABpAGQAdwBvAHIAawBzAC0AbQBjAHAAXABkAGUAbQBvAC0AbwB1AHQAcAB1AHQAXABkAGUAbQBvAF8AMAAxAF8AYgByAGEAYwBrAGUAdAAuAFMATABEAFAAUgBUAAmA//7/D2QAZQBtAG8AXwAwADEAXwBiAHIAYQBjAGsAZQB0AAIAADmrkWr//v8A//7/AP/+/wAAAAAAAAAAAAAAAAAAAAAAAAD//v8HRABlAGYAYQB1AGwAdAAAAAAAAAAAAAAAAAAAAAAAIgAAAEqrkWoEAAAAA4AAAAWACAAiAAAASquRagMAAAD//wEAFABtb0VuZEZhY2VTdXJmSWRSZXBfYwAABYAIACIAAABKq5FqAQAAAAAAAAAOgAAABYAIACIAAABKq5FqAAAAAAAAAAAAAAAAAAAAADhKAAAAAAAA"
+        "data_b64": "OEoAAAMAAAD//v8AAAAAAP//AQALAG1vRWRnZVJlZl9jAQAAAAAAAAAEAAAAAAMAAAAAAAB9w5QlrUmyVH3DlCWtSbJUAAD//wEAFwBtb0Zyb21Ta3RFbnRTdXJmSWRSZXBfYwAA//8BAAYAbW9GUl9j//8BAA0AbW9FeHRPYmplY3RfY///AQARAG1vQ1N0cmluZ0hhbmRsZV9j//7/UUMAOgBcAHAAcgBvAGoAZQBjAHQAcwBcAGMAYQBkAC0AbQBjAHAALQBjAG8AbQBwAGEAcgBpAHMAbwBuAHMAXABzAG8AbABpAGQAdwBvAHIAawBzAC0AbQBjAHAAXABkAGUAbQBvAC0AbwB1AHQAcAB1AHQAXABkAGUAbQBvAF8AMAAxAF8AYgByAGEAYwBrAGUAdAAuAFMATABEAFAAUgBUAAmA//7/D2QAZQBtAG8AXwAwADEAXwBiAHIAYQBjAGsAZQB0AAIAAKnwkWr//v8A//7/AP/+/wAAAAAAAAAAAAAAAAAAAAAAAAD//v8HRABlAGYAYQB1AGwAdAAAAAAAAAAAAAAAAAAAAAAAIgAAAMbwkWoEAAAAA4AAAAWACAAiAAAAxvCRagMAAAD//wEAFABtb0VuZEZhY2VTdXJmSWRSZXBfYwAABYAIACIAAADG8JFqAQAAAAAAAAAOgAAABYAIACIAAADG8JFqAAAAAAAAAAAAAAAAAAAAADhKAAAAAAAA"
       },
       "semantic": {
         "component_path": [],
@@ -963,14 +954,14 @@ Rounding four corners must remove material; the check is arithmetic.
 ```json
 {
   "edges_selected": 4,
-  "volume_mm3_before": 46905.21779207701,
-  "volume_mm3_after": 46733.53632279497,
+  "volume_mm3_before": 46905.21779207703,
+  "volume_mm3_after": 46733.53632279498,
   "verification": {
     "read_back": true,
     "before": {
       "body_count": 1,
-      "volume_m3": 4.6905217792077015e-05,
-      "volume_mm3": 46905.21779207701,
+      "volume_m3": 4.690521779207703e-05,
+      "volume_mm3": 46905.21779207703,
       "surface_area_m2": 0.014949808816457421,
       "surface_area_mm2": 14949.808816457422,
       "face_count": 10,
@@ -979,8 +970,8 @@ Rounding four corners must remove material; the check is arithmetic.
     },
     "after": {
       "body_count": 1,
-      "volume_m3": 4.6733536322794974e-05,
-      "volume_mm3": 46733.53632279497,
+      "volume_m3": 4.673353632279498e-05,
+      "volume_mm3": 46733.53632279498,
       "surface_area_m2": 0.014838215861424099,
       "surface_area_mm2": 14838.2158614241,
       "face_count": 14,
@@ -1712,11 +1703,11 @@ SAFE-005: a snapshot that states by which method it was taken.
 {
   "checkpoint": {
     "method": "save_as_copy",
-    "checkpoint_path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\.checkpoints\\demo_03_safety_20260828_153940.SLDPRT",
+    "checkpoint_path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\.checkpoints\\demo_03_safety_20260828_203717.SLDPRT",
     "source_path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_03_safety.SLDPRT",
     "reason": null,
-    "created_utc": "2026-08-28T15:39:41.079069+00:00",
-    "size_bytes": 43665
+    "created_utc": "2026-08-28T20:37:18.221882+00:00",
+    "size_bytes": 43882
   }
 }
 ```
@@ -1737,7 +1728,7 @@ SAFE-005: a snapshot that states by which method it was taken.
     "mass_kg": 2.3999999999999997e-05,
     "density_kg_m3": 1.0,
     "center_of_mass_mm": [
-      -1.544070476765652e-16,
+      -1.5440704767656508e-16,
       0.0,
       5.0
     ]
@@ -1853,7 +1844,7 @@ Restoring is itself reversible: it snapshots the current state first.
 
 ```json
 {
-  "checkpoint_path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\.checkpoints\\demo_03_safety_20260828_153940.SLDPRT",
+  "checkpoint_path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\.checkpoints\\demo_03_safety_20260828_203717.SLDPRT",
   "confirm": true
 }
 ```
@@ -1861,7 +1852,7 @@ Restoring is itself reversible: it snapshots the current state first.
 ```json
 {
   "reopened": true,
-  "pre_restore_checkpoint": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\.checkpoints\\demo_03_safety_pre_restore_20260828_154000.SLDPRT"
+  "pre_restore_checkpoint": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\.checkpoints\\demo_03_safety_pre_restore_20260828_203741.SLDPRT"
 }
 ```
 
@@ -1911,13 +1902,13 @@ SAFE-006: every non-read operation is on the append-only log.
 {
   "entries": [
     {
-      "timestamp": "2026-08-28T15:40:02.154696+00:00",
+      "timestamp": "2026-08-28T20:37:44.382802+00:00",
       "tool": "sw_checkpoint_restore",
       "ok": true,
       "destructive": true,
       "document": null,
       "args": {
-        "checkpoint_path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\.checkpoints\\demo_03_safety_20260828_153940.SLDPRT",
+        "checkpoint_path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\.checkpoints\\demo_03_safety_20260828_203717.SLDPRT",
         "target_path": null,
         "confirm": true,
         "close_open_document": true,
@@ -1927,11 +1918,11 @@ SAFE-006: every non-read operation is on the append-only log.
       "checkpoint_method": "skipped",
       "error_code": null,
       "error_message": null,
-      "duration_ms": 2678.6,
-      "pid": 42512
+      "duration_ms": 3754.42,
+      "pid": 37388
     },
     {
-      "timestamp": "2026-08-28T15:39:59.468925+00:00",
+      "timestamp": "2026-08-28T20:37:40.621527+00:00",
       "tool": "sw_doc_save",
       "ok": true,
       "destructive": false,
@@ -1950,11 +1941,11 @@ SAFE-006: every non-read operation is on the append-only log.
       "checkpoint_method": null,
       "error_code": null,
       "error_message": null,
-      "duration_ms": 709.71,
-      "pid": 42512
+      "duration_ms": 978.29,
+      "pid": 37388
     },
     {
-      "timestamp": "2026-08-28T15:39:57.425211+00:00",
+      "timestamp": "2026-08-28T20:37:37.908547+00:00",
       "tool": "sw_feature_delete",
       "ok": true,
       "destructive": true,
@@ -1968,15 +1959,15 @@ SAFE-006: every non-read operation is on the append-only log.
         "delete_children": true,
         "confirm": true
       },
-      "checkpoint_path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\.checkpoints\\demo_03_safety_20260828_153950.SLDPRT",
+      "checkpoint_path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\.checkpoints\\demo_03_safety_20260828_203730.SLDPRT",
       "checkpoint_method": "save_as_copy",
       "error_code": null,
       "error_message": null,
-      "duration_ms": 7380.44,
-      "pid": 42512
+      "duration_ms": 7402.59,
+      "pid": 37388
     },
     {
-      "timestamp": "2026-08-28T15:39:47.095235+0
+      "timestamp": "2026-08-28T20:37:26.444318+
 ... (truncated; the full payload is in demo-log.json)
 ```
 
@@ -2508,7 +2499,7 @@ A saved document is a checkpointable one, which is what rollback needs.
     "mass_kg": 4.7999999999999994e-05,
     "density_kg_m3": 1.0,
     "center_of_mass_mm": [
-      0.0,
+      -1.5440704767656508e-16,
       0.0,
       10.0
     ]
@@ -2558,7 +2549,7 @@ REV-006: a sequence whose invariants hold is kept.
       "invariant": "volume_change",
       "held": true,
       "wanted": "decrease",
-      "found": "47999.99999999999 -> 15743.999999999995 mm\u00b3"
+      "found": "47999.99999999999 -> 15743.99999999998 mm\u00b3"
     },
     {
       "invariant": "no_features_in_error",
@@ -2588,14 +2579,14 @@ The starting point the next sequence will be rolled back to.
 ```json
 {
   "mass_properties": {
-    "volume_m3": 1.5743999999999997e-05,
-    "volume_mm3": 15743.999999999998,
+    "volume_m3": 1.5743999999999994e-05,
+    "volume_mm3": 15743.999999999995,
     "surface_area_m2": 0.015776000000000002,
     "surface_area_mm2": 15776.000000000002,
-    "mass_kg": 1.5743999999999997e-05,
+    "mass_kg": 1.5743999999999994e-05,
     "density_kg_m3": 1.0,
     "center_of_mass_mm": [
-      -3.698775096781831e-16,
+      -8.406307038140529e-16,
       0.0,
       10.0
     ]
@@ -2633,9 +2624,9 @@ The same machinery with an invariant it cannot meet: everything is undone.
   "invariants_held": false,
   "rolled_back": true,
   "rollback": {
-    "restored_from": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\.checkpoints\\demo_05_atomic_20260828_154231.SLDPRT",
+    "restored_from": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\.checkpoints\\demo_05_atomic_20260828_204051.SLDPRT",
     "restored_to": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_05_atomic.SLDPRT",
-    "pre_restore_checkpoint": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\.checkpoints\\demo_05_atomic_pre_restore_20260828_154248.SLDPRT",
+    "pre_restore_checkpoint": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\.checkpoints\\demo_05_atomic_pre_restore_20260828_204113.SLDPRT",
     "reopened": true,
     "checkpoint_method": "save_as_copy"
   },
@@ -2658,14 +2649,14 @@ The proof: the model measures exactly what it did before the sequence ran.
 ```json
 {
   "mass_properties": {
-    "volume_m3": 1.574399999999998e-05,
-    "volume_mm3": 15743.99999999998,
+    "volume_m3": 1.574399999999999e-05,
+    "volume_mm3": 15743.99999999999,
     "surface_area_m2": 0.015776000000000002,
     "surface_area_mm2": 15776.000000000002,
-    "mass_kg": 1.574399999999998e-05,
+    "mass_kg": 1.574399999999999e-05,
     "density_kg_m3": 1.0,
     "center_of_mass_mm": [
-      -8.406307038140535e-16,
+      0.0,
       0.0,
       10.0
     ]
@@ -2689,7 +2680,1059 @@ The proof: the model measures exactly what it did before the sequence ran.
 }
 ```
 
-### 81. `sw_doc_close` - ok
+### 81. `sw_doc_new` - ok
+
+```json
+{
+  "doc_type": "part"
+}
+```
+
+### 82. `sw_doc_save` - ok
+
+```json
+{
+  "output_path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_06_datum.SLDPRT"
+}
+```
+
+```json
+{
+  "saved_path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_06_datum.SLDPRT"
+}
+```
+
+### 83. `sw_sketch_start` - ok
+
+```json
+{
+  "on": {
+    "standard_plane": "front"
+  }
+}
+```
+
+### 84. `sw_sketch_add_geometry` - ok
+
+```json
+{
+  "entities": [
+    {
+      "type": "rect_corner",
+      "corner": [
+        0,
+        0
+      ],
+      "opposite": [
+        100.0,
+        60.0
+      ]
+    }
+  ]
+}
+```
+
+### 85. `sw_sketch_exit` - ok
+
+```json
+{}
+```
+
+### 86. `sw_feature_extrude_boss` - ok
+
+```json
+{
+  "depth": 8.0,
+  "name": "BasePlate"
+}
+```
+
+```json
+{
+  "volume_mm3_after": 47999.99999999999
+}
+```
+
+### 87. `sw_sketch_start` - ok
+
+```json
+{
+  "on": {
+    "standard_plane": "front"
+  }
+}
+```
+
+### 88. `sw_sketch_add_geometry` - ok
+
+```json
+{
+  "entities": [
+    {
+      "type": "circle",
+      "center": [
+        50.0,
+        30.0
+      ],
+      "radius": 10
+    }
+  ]
+}
+```
+
+### 89. `sw_sketch_exit` - ok
+
+```json
+{}
+```
+
+### 90. `sw_feature_extrude_cut` - ok
+
+```json
+{
+  "end_condition": "through_all",
+  "reverse": true,
+  "name": "Bore"
+}
+```
+
+```json
+{
+  "volume_mm3_before": 47999.99999999999,
+  "volume_mm3_after": 45486.725877128156
+}
+```
+
+### 91. `sw_datum_axis_create` - ok
+
+DAT-003: an axis where two standard planes intersect.
+
+```json
+{
+  "method": "two_planes",
+  "standard_planes": [
+    "front",
+    "right"
+  ],
+  "name": "SpinAxis"
+}
+```
+
+```json
+{
+  "axis_name": "SpinAxis",
+  "method": "two_planes",
+  "verification": {
+    "read_back": true,
+    "before": {
+      "feature_count": 21
+    },
+    "after": {
+      "feature_count": 22,
+      "type_name": "RefAxis"
+    },
+    "checks": [
+      {
+        "name": "axis_created",
+        "passed": true,
+        "detail": "SpinAxis"
+      },
+      {
+        "name": "feature_tree_grew",
+        "passed": true,
+        "detail": "21 -> 22 features"
+      }
+    ]
+  }
+}
+```
+
+### 92. `sw_datum_plane_create` - ok
+
+DAT-002: an offset plane, which is by definition parallel to its reference.
+
+```json
+{
+  "method": "offset",
+  "standard_plane": "front",
+  "distance": 25,
+  "name": "Parallel"
+}
+```
+
+```json
+{
+  "plane_name": "Parallel"
+}
+```
+
+### 93. `sw_datum_list` - ok
+
+```json
+{}
+```
+
+```json
+{
+  "axes": [
+    {
+      "name": "SpinAxis",
+      "type_name": "RefAxis",
+      "suppressed": false,
+      "ref": {
+        "ref_version": 1,
+        "kind": "axis",
+        "label": "axis",
+        "document": {
+          "path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_06_datum.SLDPRT",
+          "title": "demo_06_datum.SLDPRT",
+          "configuration": "Default"
+        },
+        "persistent": {
+          "scheme": "GetPersistReference3",
+          "data_b64": "OEoAAAEAAAD//v8AAAAAACkAAAA="
+        },
+        "semantic": {
+          "component_path": [],
+          "feature_ancestry": [],
+          "feature_type_names": [],
+          "geometry_type": "axis",
+          "measurements": {},
+          "signature": "e6abc90a93a96c553f22",
+          "tolerance": {
+            "linear_m": 1e-06,
+            "angular_rad": 1e-06,
+            "relative": 0.0001
+          }
+        },
+        "select_hint": {
+          "sw_select_type": "AXIS",
+          "mark": 0
+        },
+        "captured_at": "2026-08-28T20:43:02.463558+00:00",
+        "warnings": []
+      },
+      "tool_args": {
+        "ref": {
+          "ref_version": 1,
+          "kind": "axis",
+          "label": "",
+          "document": {
+            "path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_06_datum.SLDPRT",
+            "title": "demo_06_datum.SLDPRT",
+            "configuration": "Default"
+          },
+          "persistent": {
+            "scheme": "GetPersistReference3",
+            "data_b64": "OEoAAAEAAAD//v8AAAAAACkAAAA="
+          },
+          "semantic": {
+            "component_path": [],
+            "feature_ancestry": [],
+            "feature_type_names": [],
+            "geometry_type": "axis",
+            "measurements": {},
+            "signature": "e6abc90a93a96c553f22",
+            "tolerance": {
+              "linear_m": 1e-06,
+              "angular_rad": 1e-06,
+              "relative": 0.0001
+            }
+          },
+   
+... (truncated; the full payload is in demo-log.json)
+```
+
+### 94. `sw_datum_axis_create` - refused: AXIS_CREATE_FAILED
+
+Parallel planes never intersect. SOLIDWORKS reports that by returning false and leaving the tree alone - the exact shape of a silent success. The tool reads the tree back and refuses instead.
+
+```json
+{
+  "method": "two_planes",
+  "standard_planes": [
+    "front"
+  ],
+  "refs": [
+    {
+      "ref_version": 1,
+      "kind": "plane",
+      "label": "",
+      "document": {
+        "path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_06_datum.SLDPRT",
+        "title": "demo_06_datum.SLDPRT",
+        "configuration": "Default"
+      },
+      "persistent": {
+        "scheme": "GetPersistReference3",
+        "data_b64": "OEoAAAEAAAD//v8AAAAAACsAAAA="
+      },
+      "semantic": {
+        "component_path": [],
+        "feature_ancestry": [],
+        "feature_type_names": [],
+        "geometry_type": "plane",
+        "measurements": {},
+        "signature": "14fb357ed3a104b0cffd",
+        "tolerance": {
+          "linear_m": 1e-06,
+          "angular_rad": 1e-06,
+          "relative": 0.0001
+        }
+      },
+      "warnings": []
+    }
+  ]
+}
+```
+
+```json
+{
+  "code": "AXIS_CREATE_FAILED",
+  "category": "solidworks",
+  "message": "SOLIDWORKS could not create a two_planes axis from those references.",
+  "context": {
+    "method": "two_planes",
+    "insert_axis_returned": false,
+    "created_type": null
+  },
+  "remediation": [
+    "Check the references suit the method: 'two_planes' needs two non-parallel planes, 'cyl_face' one cylindrical or conical face.",
+    "Use sw_probe_faces to pick the face or edge precisely."
+  ],
+  "doc_link": "swmcp://errors/AXIS_CREATE_FAILED"
+}
+```
+
+### 95. `sw_datum_list` - ok
+
+```json
+{}
+```
+
+```json
+{
+  "axes": [
+    {
+      "name": "SpinAxis",
+      "type_name": "RefAxis",
+      "suppressed": false,
+      "ref": {
+        "ref_version": 1,
+        "kind": "axis",
+        "label": "axis",
+        "document": {
+          "path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_06_datum.SLDPRT",
+          "title": "demo_06_datum.SLDPRT",
+          "configuration": "Default"
+        },
+        "persistent": {
+          "scheme": "GetPersistReference3",
+          "data_b64": "OEoAAAEAAAD//v8AAAAAACkAAAA="
+        },
+        "semantic": {
+          "component_path": [],
+          "feature_ancestry": [],
+          "feature_type_names": [],
+          "geometry_type": "axis",
+          "measurements": {},
+          "signature": "e6abc90a93a96c553f22",
+          "tolerance": {
+            "linear_m": 1e-06,
+            "angular_rad": 1e-06,
+            "relative": 0.0001
+          }
+        },
+        "select_hint": {
+          "sw_select_type": "AXIS",
+          "mark": 0
+        },
+        "captured_at": "2026-08-28T20:43:21.231377+00:00",
+        "warnings": []
+      },
+      "tool_args": {
+        "ref": {
+          "ref_version": 1,
+          "kind": "axis",
+          "label": "",
+          "document": {
+            "path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_06_datum.SLDPRT",
+            "title": "demo_06_datum.SLDPRT",
+            "configuration": "Default"
+          },
+          "persistent": {
+            "scheme": "GetPersistReference3",
+            "data_b64": "OEoAAAEAAAD//v8AAAAAACkAAAA="
+          },
+          "semantic": {
+            "component_path": [],
+            "feature_ancestry": [],
+            "feature_type_names": [],
+            "geometry_type": "axis",
+            "measurements": {},
+            "signature": "e6abc90a93a96c553f22",
+            "tolerance": {
+              "linear_m": 1e-06,
+              "angular_rad": 1e-06,
+              "relative": 0.0001
+            }
+          },
+   
+... (truncated; the full payload is in demo-log.json)
+```
+
+### 96. `sw_probe_faces` - ok
+
+Find the bore's circular edge and a 100 mm straight edge by measurement.
+
+```json
+{
+  "entity_class": "edge",
+  "limit": 100
+}
+```
+
+```json
+{
+  "matched": 14
+}
+```
+
+### 97. `sw_datum_point_create` - ok
+
+DAT-003: a point at the centre of the bore.
+
+```json
+{
+  "method": "arc_center",
+  "refs": [
+    {
+      "ref_version": 1,
+      "kind": "edge",
+      "label": "",
+      "document": {
+        "path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_06_datum.SLDPRT",
+        "title": "demo_06_datum.SLDPRT",
+        "configuration": "Default"
+      },
+      "persistent": {
+        "scheme": "GetPersistReference3",
+        "data_b64": "OEoAAAMAAAD//v8AAAAAAP//AQALAG1vRWRnZVJlZl9jAQAAAAAAAAAEAAAAAAMAAAAAAAB9w5QlrUmyVH3DlCWtSbJUAAD//wEAGwBtb0Zyb21Ta3RFbnQzSW50U3VyZklkUmVwX2MAAP//AQAGAG1vRlJfY///AQANAG1vRXh0T2JqZWN0X2P//wEAEQBtb0NTdHJpbmdIYW5kbGVfY//+/09DADoAXABwAHIAbwBqAGUAYwB0AHMAXABjAGEAZAAtAG0AYwBwAC0AYwBvAG0AcABhAHIAaQBzAG8AbgBzAFwAcwBvAGwAaQBkAHcAbwByAGsAcwAtAG0AYwBwAFwAZABlAG0AbwAtAG8AdQB0AHAAdQB0AFwAZABlAG0AbwBfADAANgBfAGQAYQB0AHUAbQAuAFMATABEAFAAUgBUAAmA//7/DWQAZQBtAG8AXwAwADYAXwBkAGEAdAB1AG0AAgAAgPKRav/+/wD//v8A//7/AAAAAAAAAAAAAAAAAAAAAAAAAP/+/wdEAGUAZgBhAHUAbAB0AAAAAAAAAAAAAAAAAAAAAAAoAAAAsPKRagEAAAD/////AAAAAP//AQAUAG1vRW5kRmFjZVN1cmZJZFJlcF9jAAAFgAgAIAAAAJXykWoBAAAAAAAAAAyAAAAFgAgAIAAAAJXykWoBAAAAAAAAAAyAAAAFgAgAIAAAAJXykWoBAAAAAAAAAAAAAAAAAAAAOEoAAAAAAAA="
+      },
+      "semantic": {
+        "component_path": [],
+        "feature_ancestry": [],
+        "feature_type_names": [],
+        "geometry_type": "circular_edge",
+        "body_name": "Bore",
+        "measurements": {
+          "point_m": [
+            0.05,
+            0.03,
+            0.008
+          ],
+          "direction": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "radius_m": 0.010000000000000002,
+          "length_m": 0.0
+        },
+        "signature": "b07974dc2e6cd9d4275c",
+        "tolerance": {
+          "linear_m": 1e-06,
+          "angular_rad": 1e-06,
+          "relative": 0.0001
+        }
+      },
+      "warnings": []
+    }
+  ],
+  "name": "BoreCentre"
+}
+```
+
+```json
+{
+  "point_names": [
+    "BoreCentre"
+  ],
+  "count": 1,
+  "verification": {
+    "read_back": true,
+    "before": {
+      "feature_count": 23
+    },
+    "after": {
+      "feature_count": 24,
+      "points_created": 1
+    },
+    "checks": [
+      {
+        "name": "point_created",
+        "passed": true,
+        "detail": "BoreCentre"
+      },
+      {
+        "name": "feature_tree_grew",
+        "passed": true,
+        "detail": "23 -> 24 features"
+      },
+      {
+        "name": "every_point_is_addressable",
+        "passed": true,
+        "detail": "1 of 1 came back capture-ready"
+      }
+    ]
+  }
+}
+```
+
+### 98. `sw_datum_point_create` - refused: POINT_CREATE_FAILED
+
+swRefPointCenterEdge reads like 'the centre of an edge' and is really the arc centre: SOLIDWORKS refuses it on a straight edge. The remediation names the mode that does work.
+
+```json
+{
+  "method": "arc_center",
+  "refs": [
+    {
+      "ref_version": 1,
+      "kind": "edge",
+      "label": "",
+      "document": {
+        "path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_06_datum.SLDPRT",
+        "title": "demo_06_datum.SLDPRT",
+        "configuration": "Default"
+      },
+      "persistent": {
+        "scheme": "GetPersistReference3",
+        "data_b64": "OEoAAAMAAAD//v8AAAAAAP//AQALAG1vRWRnZVJlZl9jAQAAAAAAAAAEAAAAAAMAAAAAAAB9w5QlrUmyVH3DlCWtSbJUAAD//wEAFABtb0VuZEZhY2VTdXJmSWRSZXBfYwAA//8BAAYAbW9GUl9j//8BAA0AbW9FeHRPYmplY3RfY///AQARAG1vQ1N0cmluZ0hhbmRsZV9j//7/T0MAOgBcAHAAcgBvAGoAZQBjAHQAcwBcAGMAYQBkAC0AbQBjAHAALQBjAG8AbQBwAGEAcgBpAHMAbwBuAHMAXABzAG8AbABpAGQAdwBvAHIAawBzAC0AbQBjAHAAXABkAGUAbQBvAC0AbwB1AHQAcAB1AHQAXABkAGUAbQBvAF8AMAA2AF8AZABhAHQAdQBtAC4AUwBMAEQAUABSAFQACYD//v8NZABlAG0AbwBfADAANgBfAGQAYQB0AHUAbQACAACA8pFq//7/AP/+/wD//v8AAAAAAAAAAAAAAAAAAAAAAAAA//7/B0QAZQBmAGEAdQBsAHQAAAAAAAAAAAAAAAAAAAAAACAAAACV8pFqAQAAAAAAAAD//wEAFwBtb0Zyb21Ta3RFbnRTdXJmSWRSZXBfYwAABYAIACAAAACV8pFqAwAAAAyAAAAFgAgAIAAAAJXykWoCAAAADIAAAAWACAAgAAAAlfKRagQAAAAAAAAAAAAAADhKAAAAAAAA"
+      },
+      "semantic": {
+        "component_path": [],
+        "feature_ancestry": [],
+        "feature_type_names": [],
+        "geometry_type": "line_edge",
+        "body_name": "Bore",
+        "measurements": {
+          "point_m": [
+            0.05,
+            0.06,
+            0.008
+          ],
+          "direction": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "length_m": 0.1
+        },
+        "signature": "f189251d483d7a5a81cb",
+        "tolerance": {
+          "linear_m": 1e-06,
+          "angular_rad": 1e-06,
+          "relative": 0.0001
+        }
+      },
+      "warnings": []
+    }
+  ]
+}
+```
+
+```json
+{
+  "code": "POINT_CREATE_FAILED",
+  "category": "solidworks",
+  "message": "SOLIDWORKS could not create a arc_center reference point.",
+  "context": {
+    "method": "arc_center",
+    "along_curve": "evenly"
+  },
+  "remediation": [
+    "'arc_center' needs a circular edge; for the midpoint of a straight edge use 'along_curve' with along_curve='percentage' and percent=50.",
+    "'face_center' needs a face, 'along_curve' needs an edge, and 'intersection' needs entities that actually cross."
+  ],
+  "doc_link": "swmcp://errors/POINT_CREATE_FAILED"
+}
+```
+
+### 99. `sw_datum_point_create` - ok
+
+DAT-003: three points spaced evenly along the 100 mm edge.
+
+```json
+{
+  "method": "along_curve",
+  "along_curve": "evenly",
+  "count": 3,
+  "refs": [
+    {
+      "ref_version": 1,
+      "kind": "edge",
+      "label": "",
+      "document": {
+        "path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_06_datum.SLDPRT",
+        "title": "demo_06_datum.SLDPRT",
+        "configuration": "Default"
+      },
+      "persistent": {
+        "scheme": "GetPersistReference3",
+        "data_b64": "OEoAAAMAAAD//v8AAAAAAP//AQALAG1vRWRnZVJlZl9jAQAAAAAAAAAEAAAAAAMAAAAAAAB9w5QlrUmyVH3DlCWtSbJUAAD//wEAFABtb0VuZEZhY2VTdXJmSWRSZXBfYwAA//8BAAYAbW9GUl9j//8BAA0AbW9FeHRPYmplY3RfY///AQARAG1vQ1N0cmluZ0hhbmRsZV9j//7/T0MAOgBcAHAAcgBvAGoAZQBjAHQAcwBcAGMAYQBkAC0AbQBjAHAALQBjAG8AbQBwAGEAcgBpAHMAbwBuAHMAXABzAG8AbABpAGQAdwBvAHIAawBzAC0AbQBjAHAAXABkAGUAbQBvAC0AbwB1AHQAcAB1AHQAXABkAGUAbQBvAF8AMAA2AF8AZABhAHQAdQBtAC4AUwBMAEQAUABSAFQACYD//v8NZABlAG0AbwBfADAANgBfAGQAYQB0AHUAbQACAACA8pFq//7/AP/+/wD//v8AAAAAAAAAAAAAAAAAAAAAAAAA//7/B0QAZQBmAGEAdQBsAHQAAAAAAAAAAAAAAAAAAAAAACAAAACV8pFqAQAAAAAAAAD//wEAFwBtb0Zyb21Ta3RFbnRTdXJmSWRSZXBfYwAABYAIACAAAACV8pFqAwAAAAyAAAAFgAgAIAAAAJXykWoCAAAADIAAAAWACAAgAAAAlfKRagQAAAAAAAAAAAAAADhKAAAAAAAA"
+      },
+      "semantic": {
+        "component_path": [],
+        "feature_ancestry": [],
+        "feature_type_names": [],
+        "geometry_type": "line_edge",
+        "body_name": "Bore",
+        "measurements": {
+          "point_m": [
+            0.05,
+            0.06,
+            0.008
+          ],
+          "direction": [
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "length_m": 0.1
+        },
+        "signature": "f189251d483d7a5a81cb",
+        "tolerance": {
+          "linear_m": 1e-06,
+          "angular_rad": 1e-06,
+          "relative": 0.0001
+        }
+      },
+      "warnings": []
+    }
+  ]
+}
+```
+
+```json
+{
+  "point_names": [
+    "Point2",
+    "Point3",
+    "Point4"
+  ],
+  "count": 3
+}
+```
+
+### 100. `sw_datum_csys_create` - ok
+
+DAT-004: a reference point exposes no position, so this is the only read-back SOLIDWORKS offers. The bore was sketched at (50, 30) on a 8 mm plate, so the answer is known before the call is made.
+
+```json
+{
+  "origin": {
+    "ref_version": 1,
+    "kind": "point",
+    "label": "",
+    "document": {
+      "path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_06_datum.SLDPRT",
+      "title": "demo_06_datum.SLDPRT",
+      "configuration": "Default"
+    },
+    "persistent": {
+      "scheme": "GetPersistReference3",
+      "data_b64": "OEoAAAEAAAD//v8AAAAAACwAAAA="
+    },
+    "semantic": {
+      "component_path": [],
+      "feature_ancestry": [],
+      "feature_type_names": [],
+      "geometry_type": "point",
+      "measurements": {},
+      "signature": "084e8444a2b5df4fe125",
+      "tolerance": {
+        "linear_m": 1e-06,
+        "angular_rad": 1e-06,
+        "relative": 0.0001
+      }
+    },
+    "warnings": []
+  },
+  "name": "BoreFrame"
+}
+```
+
+```json
+{
+  "csys_name": "BoreFrame",
+  "transform": {
+    "rotation": [
+      [
+        1.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        1.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "translation_mm": [
+      50.0,
+      30.0,
+      8.0
+    ],
+    "scale": 1.0
+  },
+  "verification": {
+    "read_back": true,
+    "before": {
+      "feature_count": 27
+    },
+    "after": {
+      "feature_count": 28,
+      "translation_mm": [
+        50.0,
+        30.0,
+        8.0
+      ]
+    },
+    "checks": [
+      {
+        "name": "coordinate_system_created",
+        "passed": true,
+        "detail": "BoreFrame"
+      },
+      {
+        "name": "feature_tree_grew",
+        "passed": true,
+        "detail": "27 -> 28 features"
+      },
+      {
+        "name": "transform_read_back",
+        "passed": true,
+        "detail": "origin at [50.0, 30.0, 8.0] mm"
+      }
+    ]
+  }
+}
+```
+
+### 101. `sw_feature_edit` - ok
+
+DAT-005: rename, read back out of the tree.
+
+```json
+{
+  "feature_name": "SpinAxis",
+  "rename_to": "MainAxis"
+}
+```
+
+```json
+{
+  "feature_name": "MainAxis",
+  "renamed_to": "MainAxis",
+  "verification": {
+    "read_back": true,
+    "before": {
+      "name": "SpinAxis",
+      "type": "RefAxis",
+      "suppressed": false,
+      "error_code": 0,
+      "error_name": null,
+      "created_at": "8/28/2026 4:42:38 PM"
+    },
+    "after": {
+      "name": "MainAxis",
+      "type": "RefAxis",
+      "suppressed": false,
+      "error_code": 0,
+      "error_name": null,
+      "created_at": "8/28/2026 4:42:38 PM"
+    },
+    "checks": [
+      {
+        "name": "rename_applied",
+        "passed": true,
+        "detail": "SpinAxis -> MainAxis"
+      },
+      {
+        "name": "suppression_applied",
+        "passed": true,
+        "detail": "suppressed=False"
+      }
+    ]
+  }
+}
+```
+
+### 102. `sw_feature_edit` - ok
+
+DAT-005: suppress.
+
+```json
+{
+  "feature_name": "Parallel",
+  "suppress": true
+}
+```
+
+```json
+{
+  "suppressed": true,
+  "verification": {
+    "read_back": true,
+    "before": {
+      "name": "Parallel",
+      "type": "RefPlane",
+      "suppressed": false,
+      "error_code": 0,
+      "error_name": null,
+      "created_at": "8/28/2026 4:42:49 PM"
+    },
+    "after": {
+      "name": "Parallel",
+      "type": "RefPlane",
+      "suppressed": true,
+      "error_code": 0,
+      "error_name": null,
+      "created_at": "8/28/2026 4:42:49 PM"
+    },
+    "checks": [
+      {
+        "name": "rename_applied",
+        "passed": true,
+        "detail": "Parallel -> Parallel"
+      },
+      {
+        "name": "suppression_applied",
+        "passed": true,
+        "detail": "suppressed=True"
+      }
+    ]
+  }
+}
+```
+
+### 103. `sw_datum_list` - ok
+
+```json
+{}
+```
+
+```json
+{
+  "planes": [
+    {
+      "name": "Front Plane",
+      "type_name": "RefPlane",
+      "suppressed": false,
+      "ref": {
+        "ref_version": 1,
+        "kind": "plane",
+        "label": "plane",
+        "document": {
+          "path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_06_datum.SLDPRT",
+          "title": "demo_06_datum.SLDPRT",
+          "configuration": "Default"
+        },
+        "persistent": {
+          "scheme": "GetPersistReference3",
+          "data_b64": "OEoAAAEAAAD//v8AAAAAAAIAAAA="
+        },
+        "semantic": {
+          "component_path": [],
+          "feature_ancestry": [],
+          "feature_type_names": [],
+          "geometry_type": "plane",
+          "measurements": {},
+          "signature": "14fb357ed3a104b0cffd",
+          "tolerance": {
+            "linear_m": 1e-06,
+            "angular_rad": 1e-06,
+            "relative": 0.0001
+          }
+        },
+        "select_hint": {
+          "sw_select_type": "PLANE",
+          "mark": 0
+        },
+        "captured_at": "2026-08-28T20:45:01.907229+00:00",
+        "warnings": []
+      },
+      "tool_args": {
+        "ref": {
+          "ref_version": 1,
+          "kind": "plane",
+          "label": "",
+          "document": {
+            "path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_06_datum.SLDPRT",
+            "title": "demo_06_datum.SLDPRT",
+            "configuration": "Default"
+          },
+          "persistent": {
+            "scheme": "GetPersistReference3",
+            "data_b64": "OEoAAAEAAAD//v8AAAAAAAIAAAA="
+          },
+          "semantic": {
+            "component_path": [],
+            "feature_ancestry": [],
+            "feature_type_names": [],
+            "geometry_type": "plane",
+            "measurements": {},
+            "signature": "14fb357ed3a104b0cffd",
+            "tolerance": {
+              "linear_m": 1e-06,
+              "angular_rad": 1e-06,
+              "relative": 0.0001
+            }
+    
+... (truncated; the full payload is in demo-log.json)
+```
+
+### 104. `sw_feature_edit` - ok
+
+DAT-005: and unsuppress, so the saved file still shows the plane.
+
+```json
+{
+  "feature_name": "Parallel",
+  "suppress": false
+}
+```
+
+```json
+{
+  "suppressed": false
+}
+```
+
+### 105. `sw_datum_list` - ok
+
+DAT-001: every datum, with its type token and a capture-ready reference.
+
+```json
+{}
+```
+
+```json
+{
+  "planes": [
+    {
+      "name": "Front Plane",
+      "type_name": "RefPlane",
+      "suppressed": false,
+      "ref": {
+        "ref_version": 1,
+        "kind": "plane",
+        "label": "plane",
+        "document": {
+          "path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_06_datum.SLDPRT",
+          "title": "demo_06_datum.SLDPRT",
+          "configuration": "Default"
+        },
+        "persistent": {
+          "scheme": "GetPersistReference3",
+          "data_b64": "OEoAAAEAAAD//v8AAAAAAAIAAAA="
+        },
+        "semantic": {
+          "component_path": [],
+          "feature_ancestry": [],
+          "feature_type_names": [],
+          "geometry_type": "plane",
+          "measurements": {},
+          "signature": "14fb357ed3a104b0cffd",
+          "tolerance": {
+            "linear_m": 1e-06,
+            "angular_rad": 1e-06,
+            "relative": 0.0001
+          }
+        },
+        "select_hint": {
+          "sw_select_type": "PLANE",
+          "mark": 0
+        },
+        "captured_at": "2026-08-28T20:45:24.944552+00:00",
+        "warnings": []
+      },
+      "tool_args": {
+        "ref": {
+          "ref_version": 1,
+          "kind": "plane",
+          "label": "",
+          "document": {
+            "path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_06_datum.SLDPRT",
+            "title": "demo_06_datum.SLDPRT",
+            "configuration": "Default"
+          },
+          "persistent": {
+            "scheme": "GetPersistReference3",
+            "data_b64": "OEoAAAEAAAD//v8AAAAAAAIAAAA="
+          },
+          "semantic": {
+            "component_path": [],
+            "feature_ancestry": [],
+            "feature_type_names": [],
+            "geometry_type": "plane",
+            "measurements": {},
+            "signature": "14fb357ed3a104b0cffd",
+            "tolerance": {
+              "linear_m": 1e-06,
+              "angular_rad": 1e-06,
+              "relative": 0.0001
+            }
+    
+... (truncated; the full payload is in demo-log.json)
+```
+
+### 106. `sw_view_capture` - ok
+
+Reference geometry is easier to believe when you can see it.
+
+```json
+{
+  "output_path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_06_datum.png",
+  "orientation": "isometric",
+  "width": 1280,
+  "height": 960
+}
+```
+
+```json
+{
+  "saved_path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_06_datum.png",
+  "actual_size": [
+    1248,
+    771
+  ]
+}
+```
+
+### 107. `sw_doc_save` - ok
+
+```json
+{
+  "output_path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_06_datum.SLDPRT",
+  "overwrite": "allow",
+  "confirm": true
+}
+```
+
+```json
+{
+  "saved_path": "C:\\projects\\cad-mcp-comparisons\\solidworks-mcp\\demo-output\\demo_06_datum.SLDPRT"
+}
+```
+
+### 108. `sw_doc_close` - ok
 
 Addressed by title; never 'whatever happens to be active'.
 
@@ -2703,7 +3746,7 @@ Addressed by title; never 'whatever happens to be active'.
 }
 ```
 
-### 82. `sw_doc_close` - ok
+### 109. `sw_doc_close` - ok
 
 Addressed by title; never 'whatever happens to be active'.
 
@@ -2717,7 +3760,7 @@ Addressed by title; never 'whatever happens to be active'.
 }
 ```
 
-### 83. `sw_doc_close` - ok
+### 110. `sw_doc_close` - ok
 
 Addressed by title; never 'whatever happens to be active'.
 
@@ -2731,7 +3774,7 @@ Addressed by title; never 'whatever happens to be active'.
 }
 ```
 
-### 84. `sw_doc_close` - ok
+### 111. `sw_doc_close` - ok
 
 Addressed by title; never 'whatever happens to be active'.
 
@@ -2745,7 +3788,7 @@ Addressed by title; never 'whatever happens to be active'.
 }
 ```
 
-### 85. `sw_doc_close` - ok
+### 112. `sw_doc_close` - ok
 
 Addressed by title; never 'whatever happens to be active'.
 
@@ -2753,6 +3796,20 @@ Addressed by title; never 'whatever happens to be active'.
 {
   "document": {
     "title": "demo_05_atomic.SLDPRT"
+  },
+  "save_first": "discard",
+  "confirm": true
+}
+```
+
+### 113. `sw_doc_close` - ok
+
+Addressed by title; never 'whatever happens to be active'.
+
+```json
+{
+  "document": {
+    "title": "demo_06_datum.SLDPRT"
   },
   "save_first": "discard",
   "confirm": true

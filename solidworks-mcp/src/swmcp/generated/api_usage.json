@@ -1,5 +1,5 @@
 {
-  "call_count": 164,
+  "call_count": 168,
   "calls": [
     {
       "argument_counts": [
@@ -598,6 +598,15 @@
     },
     {
       "argument_counts": [
+        1
+      ],
+      "member": "GetCoordinateSystemTransformByName",
+      "sources": [
+        "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
         0
       ],
       "member": "GetCount",
@@ -1091,6 +1100,24 @@
     },
     {
       "argument_counts": [
+        1
+      ],
+      "member": "InsertAxis2",
+      "sources": [
+        "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        3
+      ],
+      "member": "InsertCoordinateSystem",
+      "sources": [
+        "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
         8
       ],
       "member": "InsertFeatureChamfer",
@@ -1112,6 +1139,15 @@
         6
       ],
       "member": "InsertRefPlane",
+      "sources": [
+        "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        4
+      ],
+      "member": "InsertReferencePoint",
       "sources": [
         "swmcp/handlers/feature.py"
       ]

@@ -27,7 +27,7 @@ IN_SCOPE_REQUIREMENTS: frozenset[str] = frozenset(
         # P1 vertical — constraints and dimensions
         "CON-001", "CON-002", "CON-003", "CON-004", "CON-005",
         # P1 vertical — reference geometry
-        "DAT-001", "DAT-002",
+        "DAT-001", "DAT-002", "DAT-003", "DAT-004", "DAT-005",
         # P1 vertical — parameters, configurations, and metadata
         "PAR-001", "PAR-002", "PAR-003", "PAR-004", "PAR-005", "PAR-006",
         # Pulled forward from P2: export is how the model reaches anything else, and
