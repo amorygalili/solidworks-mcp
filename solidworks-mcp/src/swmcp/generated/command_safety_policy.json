@@ -62,6 +62,17 @@
         "kind": "read"
       }
     },
+    "sw_body_primitive": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
     "sw_capabilities": {
       "audited": false,
       "auto_checkpoint": false,
@@ -103,6 +114,49 @@
       "safety": {
         "destructive": true,
         "kind": "model_mutation"
+      }
+    },
+    "sw_config_activate": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_config_create": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_config_delete": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": true,
+      "destructive": true,
+      "read_only": false,
+      "safety": {
+        "destructive": true,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_config_list": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
       }
     },
     "sw_connect": {
@@ -250,6 +304,27 @@
         "kind": "model_mutation"
       }
     },
+    "sw_equation_list": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_equation_set": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
     "sw_explain_error": {
       "audited": false,
       "auto_checkpoint": false,
@@ -258,6 +333,18 @@
       "read_only": true,
       "safety": {
         "kind": "read"
+      }
+    },
+    "sw_export": {
+      "audited": true,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "Writes a file under an allowed output root, and temporarily changes the SOLIDWORKS export preferences it needs, restoring them afterwards. The file is reported with its size, timestamp, and SHA-256."
       }
     },
     "sw_feature_chamfer": {
@@ -369,6 +456,28 @@
         "kind": "model_mutation"
       }
     },
+    "sw_feature_rib": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_feature_shell": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
     "sw_health": {
       "audited": false,
       "auto_checkpoint": false,
@@ -387,6 +496,29 @@
       "read_only": true,
       "safety": {
         "kind": "read"
+      }
+    },
+    "sw_parameter_table_export": {
+      "audited": true,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "Writes a CSV file under an allowed output root. Nothing in the model changes, but a file leaves the process and is reported with its size, timestamp, and SHA-256."
+      }
+    },
+    "sw_parameter_table_import": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
       }
     },
     "sw_path_policy": {
@@ -419,6 +551,27 @@
         "kind": "read"
       }
     },
+    "sw_property_list": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_property_set": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
     "sw_ref_capture": {
       "audited": false,
       "auto_checkpoint": false,
@@ -447,6 +600,17 @@
       "read_only": true,
       "safety": {
         "kind": "read"
+      }
+    },
+    "sw_safe_execute": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": true,
+      "destructive": true,
+      "read_only": false,
+      "safety": {
+        "destructive": true,
+        "kind": "model_mutation"
       }
     },
     "sw_selection_get": {
@@ -609,6 +773,30 @@
       "read_only": true,
       "safety": {
         "kind": "read"
+      }
+    },
+    "sw_view_capture": {
+      "audited": true,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "Writes an image file under an allowed output root, and changes the SOLIDWORKS viewport to take it. The file is reported with its size, timestamp, and SHA-256; the default overwrite policy never replaces one."
+      }
+    },
+    "sw_view_set": {
+      "audited": true,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "Changes what the SOLIDWORKS window displays and the view orientation stored with the document. No geometry, feature, or parameter is altered, but the application's visible state is, which a user watching the screen will see."
       }
     }
   }

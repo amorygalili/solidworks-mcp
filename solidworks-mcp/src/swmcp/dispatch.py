@@ -24,7 +24,14 @@ from swmcp.com.worker import StaWorker
 from swmcp.config import SwmcpConfig, get_config
 from swmcp.context import OpContext
 from swmcp.envelope import MutationResult
-from swmcp.errors import ErrorEnvelope, SwMcpError, make_error, policy_error, validation_error
+from swmcp.errors import (
+    ErrorEnvelope,
+    SwMcpError,
+    make_error,
+    policy_error,
+    validation_error,
+    wire_safe_validation_errors,
+)
 from swmcp.safety.audit import append_audit
 from swmcp.safety.checkpoint import CheckpointStore
 from swmcp.safety.paths import assert_output_path, prepare_document_path
@@ -56,11 +63,11 @@ class Dispatcher:
         try:
             return spec.args_model.model_validate(raw or {})
         except ValidationError as exc:
-            errors = exc.errors(include_url=False)
+            errors = wire_safe_validation_errors(exc)
             # A destructive op types confirm as Literal[True], so omitting it surfaces
             # here as a schema error. Report it as the policy problem it actually is,
             # with the remediation, rather than as an anonymous validation failure.
-            if all(error.get("loc") == ("confirm",) for error in errors):
+            if all(error.get("loc") == ["confirm"] for error in errors):
                 raise SwMcpError(
                     policy_error(
                         "CONFIRM_REQUIRED",
@@ -169,7 +176,9 @@ class Dispatcher:
                     )
                 )
 
-        ctx.checkpoint = self.checkpoints.create(source, saver=saver)
+        ctx.checkpoint = self.checkpoints.create(
+            source, saver=saver, force=ctx.spec.fresh_checkpoint
+        )
         if editing and ctx.checkpoint.method == "file_copy":
             ctx.warn(
                 "A sketch is open for editing, so the checkpoint is a copy of the last "
@@ -228,8 +237,10 @@ class Dispatcher:
             for warning in ctx.warnings:
                 if warning not in result.warnings:
                     result.warnings.append(warning)
-            if isinstance(result, MutationResult) and result.checkpoint is None:
-                result.checkpoint = ctx.checkpoint
+            if isinstance(result, MutationResult):
+                if result.checkpoint is None:
+                    result.checkpoint = ctx.checkpoint
+                _warn_about_failed_checks(result)
             return result
 
         kind = "read" if project(spec.safety).read_only else "mutation"
@@ -309,6 +320,24 @@ class Dispatcher:
 
     def close(self) -> None:
         self.worker.stop()
+
+
+def _warn_about_failed_checks(result: MutationResult) -> None:
+    """Raise a failed read-back check to the top of the response.
+
+    A COM call can succeed and still change nothing — a chamfer given a type its API
+    does not accept adds a feature that removes no material. The evidence is already in
+    ``verification.checks``, but a caller reading only ``ok`` would miss it, so the
+    failure is repeated as a warning where it cannot be overlooked.
+    """
+    failed = [check for check in result.verification.checks if not check.passed]
+    if not failed:
+        return
+    detail = "; ".join(f"{check.name} ({check.detail})" if check.detail else check.name
+                       for check in failed)
+    warning = f"Read-back verification did not hold: {detail}"
+    if warning not in result.warnings:
+        result.warnings.append(warning)
 
 
 def _error_payload(envelope: ErrorEnvelope, request_id: str) -> dict[str, Any]:

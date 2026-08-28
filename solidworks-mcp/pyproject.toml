@@ -33,7 +33,7 @@ addopts = ["-ra", "--strict-markers", "--strict-config", "-m", "not live"]
 markers = [
     "asyncio_skip: informational marker; the test drives asyncio itself",
     "live: requires a running SOLIDWORKS session and writes under SWMCP_ALLOWED_ROOTS",
-    "slow: multi-second live modeling flows",
+    "slow: a live test that builds several features, so the whole file takes minutes. `-m \"live and not slow\"` is the quick pass.",
 ]
 timeout = 120
 
@@ -57,6 +57,10 @@ ignore = [
 # (\server\share becomes C:\server\share), which is the exact bug this module guards.
 "src/swmcp/safety/paths.py" = ["PTH100", "PTH110", "PTH111", "PTH118", "PTH119", "PTH120"]
 "src/swmcp/config.py" = ["PLW0603"]
+# The generated tables are large, so both readers cache the parsed payload in a module
+# global rather than re-reading and re-parsing JSON on every lookup.
+"src/swmcp/com/swconst.py" = ["PLW0603"]
+"src/swmcp/com/apiver.py" = ["PLW0603", "PLC0415"]
 # pywin32 imports are deliberately deferred so these modules import on any platform
 # and the health/system-info operations work with no COM present.
 "src/swmcp/com/*.py" = ["PLC0415"]
@@ -69,6 +73,12 @@ ignore = [
 # A filter predicate is a flat series of independent early-outs; splitting it into
 # helpers would obscure rather than clarify what is being matched.
 "src/swmcp/refs/probes.py" = ["PLR0911", "PLR0912"]
+# One file-signature check per format, each two lines long. A dispatch table of
+# lambdas over byte patterns would be harder to read than the flat sequence.
+"src/swmcp/handlers/exchange.py" = ["PLC0415", "PLR0911"]
+# One profile per primitive, each a short literal list of sketch entities. A dispatch
+# table would hide the geometry, which is the part worth reading.
+"src/swmcp/handlers/solid.py" = ["PLC0415", "PLR0911"]
 # A dispatch table over a discriminated union reads better as a flat series of
 # early returns than as a dict of lambdas over a dozen different COM signatures.
 "src/swmcp/handlers/sketch.py" = ["PLC0415", "PLR0911", "PLR0912"]

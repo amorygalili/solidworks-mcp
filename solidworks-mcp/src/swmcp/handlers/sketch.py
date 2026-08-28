@@ -203,7 +203,9 @@ def sketch_start(ctx: OpContext, args: SketchStartArgs) -> SketchStartResult:
         described = resolution.refreshed.label
 
     before = _sketch_names(doc)
-    inserted = doc.SketchManager.InsertSketch(True)
+    # InsertSketch is declared void, so there is no return value worth keeping: whether
+    # a sketch opened is answered by asking the document, not by what came back.
+    doc.SketchManager.InsertSketch(True)
     sketch = active_sketch(doc)
     if sketch is None:
         # An empty context here would leave the caller guessing which half failed, so
@@ -220,7 +222,6 @@ def sketch_start(ctx: OpContext, args: SketchStartArgs) -> SketchStartResult:
                     "target": described,
                     "selection_succeeded": bool(selected),
                     "selected_object_count": selection_count,
-                    "insert_sketch_returned": repr(inserted),
                     "sketches_before": len(before),
                     "sketches_after": len(_sketch_names(doc)),
                     "user_control": try_com_member(
@@ -664,20 +665,40 @@ def sketch_modify(ctx: OpContext, args: SketchModifyArgs) -> SketchModifyResult:
     before_count = len(available)
     selected = select_segments(doc, chosen) if chosen else 0
 
+    # None of ISketchManager's members do this: SketchMove, SketchRotate and SketchScale
+    # are on no interface in the type library. The transforms live on IModelDoc2 and
+    # IModelDocExtension, and they are not interchangeable — SketchModifyScale returns
+    # True and changes nothing, while Extension.ScaleOrCopy does the work.
+    if args.keep_original and args.operation == "rotate":
+        raise SwMcpError(
+            validation_error(
+                "UNSUPPORTED_OPTION",
+                "The rotate API turns the selected geometry in place; it cannot leave a "
+                "copy behind.",
+                context={"operation": args.operation, "keep_original": True},
+                remediation=["Drop keep_original, or mirror the geometry instead."],
+            )
+        )
+
     if args.operation == "move":
         _require(args.delta, "delta", "move")
-        manager.SketchMove(args.delta[0], args.delta[1], 0.0, 0.0, 0.0, 0.0, args.keep_original)
+        if args.keep_original:
+            doc.Extension.MoveOrCopy(
+                True, 1, False, 0.0, 0.0, 0.0, args.delta[0], args.delta[1], 0.0
+            )
+        else:
+            # SketchModifyTranslate takes a from-point and a to-point, so the delta is
+            # expressed as a move away from the origin.
+            doc.SketchModifyTranslate(0.0, 0.0, args.delta[0], args.delta[1])
     elif args.operation == "rotate":
         _require(args.angle, "angle", "rotate")
         _require(args.about, "about", "rotate")
-        manager.SketchRotate(
-            args.about[0], args.about[1], 0.0, args.angle, args.keep_original
-        )
+        doc.SketchModifyRotate(args.about[0], args.about[1], args.angle)
     elif args.operation == "scale":
         _require(args.factor, "factor", "scale")
-        _require(args.about, "about", "scale")
-        manager.SketchScale(
-            args.about[0], args.about[1], 0.0, args.factor, args.keep_original, 1
+        about = args.about or [0.0, 0.0]
+        doc.Extension.ScaleOrCopy(
+            args.keep_original, 1, about[0], about[1], 0.0, args.factor
         )
     elif args.operation == "mirror":
         _require(args.mirror_axis_id, "mirror_axis_id", "mirror")
@@ -690,7 +711,7 @@ def sketch_modify(ctx: OpContext, args: SketchModifyArgs) -> SketchModifyResult:
                 )
             )
         try_com_member(axis, "Select2", True, 0, default=False)
-        manager.SketchMirror()
+        doc.SketchMirror()
     elif args.operation == "offset":
         _require(args.distance, "distance", "offset")
         manager.SketchOffset2(args.distance, False, True, 0, 0, False)

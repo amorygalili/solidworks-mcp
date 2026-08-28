@@ -303,10 +303,18 @@ class DimensionListArgs(BaseArgs):
         default=None, description="Restrict to one sketch. Omit for every driving dimension."
     )
     unit: str = Field(default="mm", description="Unit to report lengths in.")
+    configuration: str | None = Field(
+        default=None,
+        description=(
+            "Read each dimension's value in this configuration rather than the active "
+            "one. A dimension can hold a different value per configuration."
+        ),
+    )
 
 
 class DimensionListResult(ReadResult):
     unit: str
+    configuration: str | None = None
     dimensions: list[dict[str, Any]] = Field(default_factory=list)
 
 
@@ -314,6 +322,19 @@ class DimensionSetArgs(BaseArgs):
     name: str = Field(min_length=1, description="Dimension name, e.g. 'D1@Sketch1'.")
     value: Length = Field(description="New value.")
     rebuild: bool = Field(default=True, description="Rebuild after changing the value.")
+    configuration_scope: Literal["this", "all", "specify"] = Field(
+        default="all",
+        description=(
+            "Which configurations take the new value. 'all' is the default because a "
+            "single-configuration part has only one, and a silent per-configuration "
+            "write is a common way to change less than you meant to."
+        ),
+    )
+    configurations: list[str] = Field(
+        default_factory=list,
+        max_length=200,
+        description="Required when configuration_scope is 'specify'.",
+    )
 
 
 class DimensionSetResult(MutationResult):
@@ -321,6 +342,8 @@ class DimensionSetResult(MutationResult):
     before_mm: float
     after_mm: float
     requested_mm: float
+    configuration_scope: str = "all"
+    configurations: list[str] = Field(default_factory=list)
 
 
 class SketchAutoDimensionArgs(BaseArgs):
@@ -361,11 +384,21 @@ class SketchModifyArgs(BaseArgs):
     segment_ids: list[str] = Field(default_factory=list, max_length=500)
     delta: Point2D | None = Field(default=None, description="Translation for 'move'.")
     angle: Angle | None = Field(default=None, description="Rotation angle.")
-    about: Point2D | None = Field(default=None, description="Centre for rotate or scale.")
+    about: Point2D | None = Field(
+        default=None,
+        description="Centre of rotation, or the fixed point a scale works from.",
+    )
     factor: float | None = Field(default=None, gt=0, description="Scale factor.")
     distance: Length | None = Field(default=None, description="Offset distance.")
     mirror_axis_id: str | None = Field(default=None, description="Centerline to mirror about.")
-    keep_original: bool = Field(default=False)
+    keep_original: bool = Field(
+        default=False,
+        description=(
+            "Leave the original geometry in place and act on a copy. Supported by move, "
+            "scale, mirror, and offset. Rotate transforms in place and refuses this "
+            "rather than ignoring it."
+        ),
+    )
     confirm: ConfirmField
 
 

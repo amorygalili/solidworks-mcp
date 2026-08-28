@@ -64,6 +64,20 @@ Report worker, session, and dependency health without needing an active document
       "default": null,
       "title": "Probe"
     },
+    "process": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "What the SOLIDWORKS process is costing, read through WMI rather than COM so it still answers when every COM call is blocked.",
+      "title": "Process"
+    },
     "warnings": {
       "description": "Non-fatal problems the caller should see (degraded evidence, fallbacks used).",
       "items": {

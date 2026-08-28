@@ -4,9 +4,11 @@ A typed, auditable MCP server for SOLIDWORKS, driven over COM from a dedicated S
 worker thread.
 
 It implements the P0 foundation and a P1 modelling vertical from
-[`docs/solidworks-target-requirements.md`](../docs/solidworks-target-requirements.md):
-**57 operations covering all 59 in-scope requirements**, with coverage reported
-honestly in `src/swmcp/generated/requirements_coverage.json` rather than asserted.
+[`docs/solidworks-target-requirements.md`](../docs/solidworks-target-requirements.md),
+plus neutral-format export and an atomic mutate-and-validate workflow pulled forward
+from P2: **76 operations covering all 75 in-scope requirements**, with coverage
+reported honestly in `src/swmcp/generated/requirements_coverage.json` rather than
+asserted.
 
 The organising principle comes from the requirements document itself: *an operation is
 not complete because a COM call returned without throwing*. Read-back verification,
@@ -116,7 +118,11 @@ Angles default to degrees and accept `"45deg"`, `"1.57rad"`, or `{"value": 0.25,
 | sketch | start, exit, list, add geometry, set construction, delete, convert, modify |
 | constraint | add relations, add dimensions, diagnose, dimension list/set, auto-dimension |
 | datum | list, create plane |
-| feature / body / measure | extrude boss/cut, revolve, fillet, chamfer, pattern, hole, list, edit, delete, body list, measure |
+| feature / body / measure | extrude boss/cut, revolve, fillet, chamfer, pattern, hole, shell, rib, primitives, list, edit, delete, body list, measure |
+| parameter | equation list/set, configuration list/create/activate/delete, property list/set, parameter table export/import |
+| view | set orientation and display mode, capture a PNG or BMP preview |
+| exchange | export STEP, IGES, STL, 3MF, OBJ, PLY, Parasolid, SAT, VRML, PDF, DXF, DWG |
+| review | safe execute: run a sequence under one checkpoint and roll it back if an invariant fails |
 
 Per-tool reference with full JSON schemas: `src/swmcp/generated/docs/`.
 
@@ -144,12 +150,54 @@ only the documents the run created are closed, addressed by title.
 ## Development
 
 ```bash
-uv run pytest                       # ~200 tests, no SOLIDWORKS needed
+uv run pytest                       # 357 tests, no SOLIDWORKS needed
 uv run pytest -m live               # against a running SOLIDWORKS; writes only to .scratch/
+uv run pytest -m "live and not slow"  # the quick live pass
 uv run ruff check src tests scripts
 uv run solidworks-mcp --check-artifacts
 uv run python scripts/gen_swconst.py --check
+uv run python scripts/gen_swapi.py --check
+uv run python scripts/fetch_api_docs.py          # vendor the offline API reference
+uv run python scripts/fetch_api_docs.py --check  # does it still match this install?
 ```
+
+### The offline API reference
+
+The type library says what exists and with how many arguments. It cannot say what a
+call means, what it returns, or what it quietly requires — and that gap is where this
+project's real bugs have lived. `scripts/fetch_api_docs.py` vendors
+[offline-solidworks-api-docs](https://github.com/pedropaulovc/offline-solidworks-api-docs)
+into `reference/swapi-docs/`, curated to the same 29 interfaces as `swapi.json`.
+
+It is **gitignored, deliberately**: the content is Dassault's SOLIDWORKS API Help,
+marked for personal and educational use, and the upstream repository carries no license,
+so it is fetched rather than redistributed here.
+
+`--check` cross-checks every vendored signature against the type library registered on
+the machine and fails on any arity mismatch — 3,298 members checked here with none. It
+is the difference between "the docs say 2026" and "the docs describe this install."
+
+Two things it settled that probing had answered correctly but explained wrongly:
+
+- `IFeatureManager::InsertRib` is declared `void`. Its `None` return is the signature,
+  not a failure, and reading it as one reported `RIB_FAILED` for a rib that had built.
+- `IEquationMgr::SetEquationAndConfigurationOption` "modifies only equations added
+  using `Add3`", and `Add3` "only works for parts having multiple configurations".
+  Both -1 returns were documented behaviour rather than a broken API, and one of them
+  had cost a working feature — configuration-scoped equations — that is now restored.
+
+A live run is inherently serial — one SOLIDWORKS, one STA thread — and SOLIDWORKS itself
+dominates the clock. Measured over a full run: `sw_doc_new` averages 3.6s and
+`sw_doc_close` 3.2s, so the per-test document costs about seven seconds before any
+modelling happens. The audit log records a duration for every call, which makes
+`.scratch/audit.jsonl` the place to look before optimising anything here.
+
+**Restart SOLIDWORKS between long runs.** A session driven through a few hundred
+document create/close cycles accumulates private bytes and handles it never gives back.
+Observed on this machine after roughly 300 documents: 11.6 GB private memory, 44,662
+handles, calls slowing from 3s to 15s and then not returning at all. `sw_health` reads
+those figures from WMI — which keeps answering while every COM call is blocked — and
+says so plainly rather than leaving you with a timeout and no explanation.
 
 The headless suite covers the path guard, unit normalization, checkpoint policy, audit,
 error decoding, COM marshalling, the STA worker, and catalog integrity — all against
@@ -162,6 +210,12 @@ Two structural guards are worth knowing about before editing:
   anything that must live in one place: safety booleans outside `catalog/projection.py`,
   a unit conversion outside `units.py`, a hardcoded ProgID, a hardcoded install path, a
   bare `except`, or classification by localized error text.
+- `tests/test_api_versions.py` checks every SOLIDWORKS call this package makes against
+  `sldworks.tlb`: that the member exists on the installed release, and that the call
+  site passes a declared number of arguments. `FeatureCircularPattern5` takes fourteen;
+  passing thirteen returns "Parameter not optional", which names neither the member nor
+  the count. The call list is found by walking this package's own source, so it cannot
+  drift from what the code does.
 - `tests/test_catalog_integrity.py` enforces the requirements document's definition of
   done across the whole catalog at once — strict schemas, verification on mutations,
   artifact evidence on side effects, confirmation on destructive operations, and a
@@ -190,15 +244,35 @@ coverage file, rather than left for a user to discover:
   Extend, split, and sketch pattern are not implemented.
 - **`REF-005` (probes)** — face, edge, planar, cylindrical, body-ownership, and ray
   probes. Candidate *mate* entities need the assembly domain, which is P2.
+- **`FEAT-009` (shell)** — one wall thickness, with faces removed to open the shell.
+  Multi-thickness shells and the thicken feature are not implemented.
+- **`FEAT-014` (primitives)** — box, cylinder, sphere, cone, frustum, torus, wedge, and
+  prism, each built as an ordinary sketch and boss so the tree stays editable. Helix
+  and spring are not implemented.
+- **`PAR-004` (per-configuration values)** — dimension values are read and written per
+  configuration. Per-configuration *feature suppression* is not; `sw_feature_edit`
+  suppresses in the active configuration.
+- **`IO-003` (export options)** — tessellation quality, mesh unit, binary or ASCII, and
+  the STEP protocol, with every written file verified against its format signature.
+  Exporting a selected subset of bodies is not implemented.
 - **`SYS-007` (localization)** — implemented structurally through locale-invariant
   `GetTypeName2` tokens and ordinal plane position rather than an alias table. Only an
   English SOLIDWORKS was available, so regression on a localized tree is outstanding.
 - **Hole Wizard** — availability is probed rather than assumed. A counterbored or
   tapped hole fails with an explanation when Toolbox is unavailable; it is never
   silently downgraded to a plain cut.
+- **Mirror (`FEAT-008`) and combine (`FEAT-017`) are not implemented.** Both were
+  written, and neither works on SOLIDWORKS 2026 SP3.0: `InsertMirrorFeature2` and
+  `InsertCombineFeature` return nothing for every argument combination tried, which
+  `src/swmcp/handlers/solid.py` records in full so the next attempt starts ahead. They
+  were removed rather than shipped, because a tool that reports success it cannot back
+  up is the failure mode this whole project exists to avoid.
 - **3DEXPERIENCE-managed documents** — a document with no local file path cannot be
   snapshotted. Non-destructive edits proceed with a warning; destructive ones are
   refused unless `SWMCP_ALLOW_UNCHECKPOINTED=1`.
 
-P2 and P3 domains from the backlog — assemblies, mates, motion, drawings, import and
-export, sheet metal, weldments, simulation — are not implemented.
+Export (`IO-002`, `IO-003`) and the atomic mutate-and-validate workflow (`REV-006`)
+are pulled forward from P2 because a model that cannot leave SOLIDWORKS, and a sequence
+that can end half-applied, both undercut everything else. The rest of P2 and P3 —
+assemblies, mates, motion, drawings, import, sheet metal, weldments, simulation — are
+not implemented.

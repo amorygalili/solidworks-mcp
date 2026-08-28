@@ -17,6 +17,21 @@ from swmcp.units import area_from_m2, from_meters
 _VOLUME_UNIT = "mm"
 
 
+def configuration_names(doc: Any) -> list[str]:
+    """Every configuration in the document, in the order SOLIDWORKS reports them.
+
+    Shared rather than reimplemented per handler: the parameter, constraint, and export
+    domains all need it, and two copies of "how do I list configurations" is how the
+    three of them would drift apart.
+    """
+    return [
+        str(name)
+        for name in normalize_sequence(
+            try_com_member(doc, "GetConfigurationNames", default=None)
+        )
+    ]
+
+
 def volume_to_display(volume_m3: float | None, unit: str = _VOLUME_UNIT) -> float | None:
     """Convert m³ to the cube of ``unit`` using the one conversion table."""
     if volume_m3 is None:

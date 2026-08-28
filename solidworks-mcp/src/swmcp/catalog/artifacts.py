@@ -1,8 +1,9 @@
 """Derive every published artifact from the catalog, and detect drift.
 
-``build_artifacts`` is a pure function — catalog in, canonical bytes out, no I/O — so
-the drift check is just a comparison. It runs inside ``pytest`` rather than only in a
-separate script, because a check you have to remember to run is a check that rots.
+``build_artifacts`` is deterministic — the catalog and this package's own source in,
+canonical bytes out — so the drift check is just a comparison. It runs inside
+``pytest`` rather than only in a separate script, because a check you have to remember
+to run is a check that rots.
 """
 
 from __future__ import annotations
@@ -16,6 +17,7 @@ from swmcp.catalog.registry import OPS, load_all_ops
 from swmcp.catalog.requirements import load_requirements
 from swmcp.catalog.scope import DECLARED_PARTIAL, IN_SCOPE_REQUIREMENTS, PLATFORM_REQUIREMENTS
 from swmcp.catalog.spec import OpSpec
+from swmcp.com.apiver import build_usage
 
 GENERATED = Path(__file__).resolve().parent.parent / "generated"
 
@@ -34,6 +36,7 @@ def _tool_entry(spec: OpSpec) -> dict[str, Any]:
         "precondition": spec.precondition,
         "idempotent": spec.idempotent,
         "timeout_s": spec.timeout_s,
+        "fresh_checkpoint": spec.fresh_checkpoint,
         "handler_ref": spec.handler_ref,
         "safety": spec.safety.model_dump(),
         "projection": project(spec.safety).model_dump(),
@@ -103,6 +106,11 @@ def _render_doc(spec: OpSpec) -> str:
         f"| Idempotent | {spec.idempotent} |",
         f"| Timeout | {spec.timeout_s:g}s |",
     ]
+    if spec.fresh_checkpoint:
+        lines.append(
+            "| Checkpoint | Always fresh: the debounce is bypassed, because this "
+            "operation restores its own snapshot. |"
+        )
     if isinstance(spec.safety.model_dump().get("rationale"), str):
         lines.append(f"| Side-effect rationale | {spec.safety.model_dump()['rationale']} |")
     if spec.satisfies:
@@ -162,6 +170,7 @@ def build_artifacts() -> dict[Path, str]:
             }
         ),
         GENERATED / "requirements_coverage.json": _json(build_coverage()),
+        GENERATED / "api_usage.json": _json(build_usage()),
         GENERATED
         / "requirements.json": _json(
             {

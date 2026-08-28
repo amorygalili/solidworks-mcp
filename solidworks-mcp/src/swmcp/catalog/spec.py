@@ -97,6 +97,11 @@ class OpSpec:
     handler: Callable[..., Any]
     handler_ref: str
     timeout_s: float
+    #: Take a new snapshot even if a recent one exists. The debounce window
+    #: exists to stop a burst of edits writing a file each time, but an
+    #: operation that promises to undo *itself* cannot be rolled back to a
+    #: snapshot taken before some earlier edit.
+    fresh_checkpoint: bool = False
 
 
 def tier_allowed(tier: Tier, max_tier: Tier | Literal["all"]) -> bool:

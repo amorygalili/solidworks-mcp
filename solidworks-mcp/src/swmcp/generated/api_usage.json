@@ -1,0 +1,1579 @@
+{
+  "call_count": 164,
+  "calls": [
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "ActiveConfiguration",
+      "sources": [
+        "swmcp/com/session.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "ActiveDoc",
+      "sources": [
+        "swmcp/com/session.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "ActiveSketch",
+      "sources": [
+        "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        3
+      ],
+      "member": "Add2",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        4,
+        5
+      ],
+      "member": "Add3",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        7
+      ],
+      "member": "AddConfiguration2",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        3
+      ],
+      "member": "AddDimension2",
+      "sources": [
+        "swmcp/handlers/constraint.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "AlternateName",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "AutomaticRebuild",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "AutomaticSolveOrder",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "CircleParams",
+      "sources": [
+        "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "ClearSelection2",
+      "sources": [
+        "swmcp/handlers/constraint.py",
+        "swmcp/handlers/feature.py",
+        "swmcp/handlers/reference.py",
+        "swmcp/handlers/sketch.py",
+        "swmcp/handlers/solid.py",
+        "swmcp/handlers/view.py",
+        "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "CloseDoc",
+      "sources": [
+        "swmcp/handlers/document.py",
+        "swmcp/handlers/safety.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "CommandInProgress",
+      "sources": [
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "Comment",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "ConeParams",
+      "sources": [
+        "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "ConfigurationManager",
+      "sources": [
+        "swmcp/com/session.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "ConstructionGeometry",
+      "sources": [
+        "swmcp/handlers/sketch.py",
+        "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        9
+      ],
+      "member": "Create3PointArc",
+      "sources": [
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        10
+      ],
+      "member": "CreateArc",
+      "sources": [
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        6
+      ],
+      "member": "CreateCenterRectangle",
+      "sources": [
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        4
+      ],
+      "member": "CreateCircleByRadius",
+      "sources": [
+        "swmcp/handlers/feature.py",
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        6
+      ],
+      "member": "CreateCornerRectangle",
+      "sources": [
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        9
+      ],
+      "member": "CreateEllipse",
+      "sources": [
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        3
+      ],
+      "member": "CreatePoint",
+      "sources": [
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        8
+      ],
+      "member": "CreatePolygon",
+      "sources": [
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        14
+      ],
+      "member": "CreateSketchSlot",
+      "sources": [
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        2
+      ],
+      "member": "CreateSpline2",
+      "sources": [
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "CustomPropertyManager",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "CylinderParams",
+      "sources": [
+        "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "DateCreated",
+      "sources": [
+        "swmcp/modeling.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "Delete",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "Delete2",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "DeleteConfiguration2",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "DeleteSelection2",
+      "sources": [
+        "swmcp/handlers/feature.py",
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "Description",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "DrivenState",
+      "sources": [
+        "swmcp/handlers/constraint.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "EditRebuild3",
+      "sources": [
+        "swmcp/handlers/constraint.py",
+        "swmcp/handlers/document.py",
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "EditUndo2",
+      "sources": [
+        "swmcp/handlers/document.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "Equation",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "EvaluateAll",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        14
+      ],
+      "member": "FeatureCircularPattern5",
+      "sources": [
+        "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        27
+      ],
+      "member": "FeatureCut4",
+      "sources": [
+        "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        23
+      ],
+      "member": "FeatureExtrusion3",
+      "sources": [
+        "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        14
+      ],
+      "member": "FeatureFillet3",
+      "sources": [
+        "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        20
+      ],
+      "member": "FeatureLinearPattern4",
+      "sources": [
+        "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        20
+      ],
+      "member": "FeatureRevolve2",
+      "sources": [
+        "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "FilePath",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "FirstFeature",
+      "sources": [
+        "swmcp/com/session.py",
+        "swmcp/handlers/constraint.py",
+        "swmcp/handlers/document.py",
+        "swmcp/handlers/feature.py",
+        "swmcp/handlers/review.py",
+        "swmcp/handlers/sketch.py",
+        "swmcp/modeling.py",
+        "swmcp/refs/resolve.py",
+        "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "ForceRebuild3",
+      "sources": [
+        "swmcp/handlers/document.py",
+        "swmcp/handlers/review.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "FullName",
+      "sources": [
+        "swmcp/handlers/constraint.py",
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "Get",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        2
+      ],
+      "member": "Get5",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetActiveConfiguration",
+      "sources": [
+        "swmcp/handlers/exchange.py",
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetArea",
+      "sources": [
+        "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetBody",
+      "sources": [
+        "swmcp/handlers/feature.py",
+        "swmcp/modeling.py",
+        "swmcp/refs/capture.py",
+        "swmcp/refs/resolve.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetBodyBox",
+      "sources": [
+        "swmcp/handlers/feature.py",
+        "swmcp/modeling.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetBox",
+      "sources": [
+        "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetChildren",
+      "sources": [
+        "swmcp/modeling.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetComponent",
+      "sources": [
+        "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "GetConfigurationByName",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetConfigurationNames",
+      "sources": [
+        "swmcp/modeling.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetConstrainedStatus",
+      "sources": [
+        "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetCount",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetCurrentLanguage",
+      "sources": [
+        "swmcp/com/session.py",
+        "swmcp/handlers/system.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetCurve",
+      "sources": [
+        "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetCurveParams2",
+      "sources": [
+        "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetCustomPropertiesCount",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetDimension",
+      "sources": [
+        "swmcp/handlers/constraint.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetDisabledEquationCount",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetEdges",
+      "sources": [
+        "swmcp/handlers/feature.py",
+        "swmcp/modeling.py",
+        "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetEquationMgr",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetErrorCode2",
+      "sources": [
+        "swmcp/handlers/document.py",
+        "swmcp/handlers/feature.py",
+        "swmcp/handlers/review.py",
+        "swmcp/modeling.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetExecutablePath",
+      "sources": [
+        "swmcp/com/session.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetFaces",
+      "sources": [
+        "swmcp/handlers/feature.py",
+        "swmcp/modeling.py",
+        "swmcp/refs/capture.py",
+        "swmcp/refs/resolve.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetFeature",
+      "sources": [
+        "swmcp/modeling.py",
+        "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetFirstDisplayDimension",
+      "sources": [
+        "swmcp/handlers/constraint.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetFirstDocument",
+      "sources": [
+        "swmcp/com/session.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetID",
+      "sources": [
+        "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetLength",
+      "sources": [
+        "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "GetMassProperties",
+      "sources": [
+        "swmcp/modeling.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "GetMaterialPropertyName2",
+      "sources": [
+        "swmcp/modeling.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetName",
+      "sources": [
+        "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetNames",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetNext",
+      "sources": [
+        "swmcp/com/session.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "GetNextDisplayDimension",
+      "sources": [
+        "swmcp/handlers/constraint.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetNextFeature",
+      "sources": [
+        "swmcp/com/session.py",
+        "swmcp/handlers/constraint.py",
+        "swmcp/handlers/document.py",
+        "swmcp/handlers/feature.py",
+        "swmcp/handlers/review.py",
+        "swmcp/handlers/sketch.py",
+        "swmcp/modeling.py",
+        "swmcp/refs/resolve.py",
+        "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "GetOpenDocumentByName",
+      "sources": [
+        "swmcp/com/session.py",
+        "swmcp/handlers/document.py",
+        "swmcp/handlers/safety.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetOwnerFeature",
+      "sources": [
+        "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetParent",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetPathName",
+      "sources": [
+        "swmcp/com/session.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "GetPersistReference3",
+      "sources": [
+        "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetPoint",
+      "sources": [
+        "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "GetRelations",
+      "sources": [
+        "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetSaveFlag",
+      "sources": [
+        "swmcp/com/session.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        2
+      ],
+      "member": "GetSelectedObject6",
+      "sources": [
+        "swmcp/handlers/reference.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "GetSelectedObjectCount2",
+      "sources": [
+        "swmcp/handlers/reference.py",
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "GetSelectedObjectMark",
+      "sources": [
+        "swmcp/handlers/reference.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetSketchSegments",
+      "sources": [
+        "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetSpecificFeature2",
+      "sources": [
+        "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetSurface",
+      "sources": [
+        "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "GetSystemValue2",
+      "sources": [
+        "swmcp/handlers/constraint.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetTitle",
+      "sources": [
+        "swmcp/com/session.py",
+        "swmcp/handlers/document.py",
+        "swmcp/handlers/safety.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetToleranceType",
+      "sources": [
+        "swmcp/handlers/constraint.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetType",
+      "sources": [
+        "swmcp/com/session.py",
+        "swmcp/modeling.py",
+        "swmcp/refs/capture.py",
+        "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "GetType2",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetTypeName2",
+      "sources": [
+        "swmcp/com/session.py",
+        "swmcp/handlers/document.py",
+        "swmcp/handlers/feature.py",
+        "swmcp/handlers/sketch.py",
+        "swmcp/modeling.py",
+        "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "GetUserPreferenceIntegerValue",
+      "sources": [
+        "swmcp/handlers/exchange.py",
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "GetUserPreferenceStringValue",
+      "sources": [
+        "swmcp/handlers/document.py",
+        "swmcp/handlers/system.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "GetUserPreferenceToggle",
+      "sources": [
+        "swmcp/com/session.py",
+        "swmcp/handlers/exchange.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "GlobalVariable",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GraphicsRedraw2",
+      "sources": [
+        "swmcp/handlers/view.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        27
+      ],
+      "member": "HoleWizard5",
+      "sources": [
+        "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "Identity",
+      "sources": [
+        "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        8
+      ],
+      "member": "InsertFeatureChamfer",
+      "sources": [
+        "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        2
+      ],
+      "member": "InsertFeatureShell",
+      "sources": [
+        "swmcp/handlers/solid.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        6
+      ],
+      "member": "InsertRefPlane",
+      "sources": [
+        "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        10
+      ],
+      "member": "InsertRib",
+      "sources": [
+        "swmcp/handlers/solid.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "InsertSketch",
+      "sources": [
+        "swmcp/handlers/feature.py",
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "IsAppliedToAllConfigurations",
+      "sources": [
+        "swmcp/handlers/constraint.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "IsDerived",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "IsOpenedReadOnly",
+      "sources": [
+        "swmcp/com/session.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "IsSuppressed",
+      "sources": [
+        "swmcp/handlers/document.py",
+        "swmcp/handlers/feature.py",
+        "swmcp/modeling.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "LengthUnit",
+      "sources": [
+        "swmcp/com/session.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "Lock",
+      "sources": [
+        "swmcp/com/worker.py",
+        "swmcp/safety/audit.py",
+        "swmcp/safety/checkpoint.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        9
+      ],
+      "member": "MoveOrCopy",
+      "sources": [
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "Name",
+      "sources": [
+        "swmcp/com/session.py",
+        "swmcp/handlers/constraint.py",
+        "swmcp/handlers/document.py",
+        "swmcp/handlers/exchange.py",
+        "swmcp/handlers/feature.py",
+        "swmcp/handlers/parameter.py",
+        "swmcp/handlers/review.py",
+        "swmcp/handlers/sketch.py",
+        "swmcp/handlers/solid.py",
+        "swmcp/modeling.py",
+        "swmcp/refs/capture.py",
+        "swmcp/refs/probes.py",
+        "swmcp/refs/resolve.py",
+        "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "Name2",
+      "sources": [
+        "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "NeedsRebuild",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        4
+      ],
+      "member": "NewDocument",
+      "sources": [
+        "swmcp/handlers/document.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "PlaneParams",
+      "sources": [
+        "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "RelationManager",
+      "sources": [
+        "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "RevisionNumber",
+      "sources": [
+        "swmcp/com/session.py",
+        "swmcp/handlers/system.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        6
+      ],
+      "member": "SaveAs",
+      "sources": [
+        "swmcp/dispatch.py",
+        "swmcp/handlers/exchange.py",
+        "swmcp/handlers/safety.py",
+        "swmcp/handlers/view.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        3
+      ],
+      "member": "SaveBMP",
+      "sources": [
+        "swmcp/handlers/view.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        6
+      ],
+      "member": "ScaleOrCopy",
+      "sources": [
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        2
+      ],
+      "member": "Select2",
+      "sources": [
+        "swmcp/handlers/feature.py",
+        "swmcp/handlers/sketch.py",
+        "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        2
+      ],
+      "member": "Select4",
+      "sources": [
+        "swmcp/handlers/feature.py",
+        "swmcp/handlers/reference.py",
+        "swmcp/handlers/sketch.py",
+        "swmcp/handlers/solid.py",
+        "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        9
+      ],
+      "member": "SelectByID2",
+      "sources": [
+        "swmcp/handlers/feature.py",
+        "swmcp/handlers/reference.py",
+        "swmcp/handlers/sketch.py",
+        "swmcp/handlers/solid.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        11
+      ],
+      "member": "SelectByRay",
+      "sources": [
+        "swmcp/handlers/reference.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "SelectionManager",
+      "sources": [
+        "swmcp/handlers/reference.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        4
+      ],
+      "member": "SetEquationAndConfigurationOption",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        3
+      ],
+      "member": "SetSystemValue3",
+      "sources": [
+        "swmcp/handlers/constraint.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        2
+      ],
+      "member": "SetUserPreferenceIntegerValue",
+      "sources": [
+        "swmcp/handlers/exchange.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        2
+      ],
+      "member": "SetUserPreferenceToggle",
+      "sources": [
+        "swmcp/com/session.py",
+        "swmcp/handlers/exchange.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "ShowConfiguration2",
+      "sources": [
+        "swmcp/handlers/exchange.py",
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        2
+      ],
+      "member": "ShowNamedView2",
+      "sources": [
+        "swmcp/handlers/view.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        23
+      ],
+      "member": "SimpleHole2",
+      "sources": [
+        "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "SketchAddConstraints",
+      "sources": [
+        "swmcp/handlers/constraint.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "SketchManager",
+      "sources": [
+        "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "SketchMirror",
+      "sources": [
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        3
+      ],
+      "member": "SketchModifyRotate",
+      "sources": [
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        4
+      ],
+      "member": "SketchModifyTranslate",
+      "sources": [
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        6
+      ],
+      "member": "SketchOffset2",
+      "sources": [
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        4
+      ],
+      "member": "SketchTrim",
+      "sources": [
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        2
+      ],
+      "member": "SketchUseEdge3",
+      "sources": [
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "Status",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "SuppressNewFeatures",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "Suppression",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "SystemValue",
+      "sources": [
+        "swmcp/handlers/constraint.py",
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "UserControl",
+      "sources": [
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "Value",
+      "sources": [
+        "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "ViewZoomtofit2",
+      "sources": [
+        "swmcp/handlers/view.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "Visible",
+      "sources": [
+        "swmcp/modeling.py"
+      ]
+    }
+  ],
+  "generated_from": "swmcp.com.apiver.scan_source",
+  "note": "Every SOLIDWORKS API member this package calls, found by walking its own source. Checked against the installed type library by tests/test_api_versions.py."
+}

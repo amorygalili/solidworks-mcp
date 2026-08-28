@@ -166,3 +166,23 @@ def test_prose_is_skipped_but_code_is_not():
 
     live = "x = 1\nread_only = True\n"
     assert _prose_lines(live) == set()
+
+
+def test_the_readme_names_every_declared_limitation():
+    """Prose may restate a fact; it may not quietly fall behind it.
+
+    ``DECLARED_PARTIAL`` is the machine-readable record and drives the generated
+    coverage file. The README's "Known limitations" section exists so a reader meets
+    the same caveats without opening JSON, which is only useful while the two agree.
+    """
+    from swmcp.catalog.scope import DECLARED_PARTIAL
+
+    readme = (Path(__file__).resolve().parent.parent / "README.md").read_text(encoding="utf-8")
+    limitations = readme.split("## Known limitations", 1)
+    assert len(limitations) == 2, "the README has no Known limitations section"
+
+    missing = [rid for rid in sorted(DECLARED_PARTIAL) if rid not in limitations[1]]
+    assert not missing, (
+        "these requirements are declared partial but the README does not mention them: "
+        f"{missing}"
+    )

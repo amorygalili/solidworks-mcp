@@ -15,6 +15,7 @@ import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from swmcp.com.progid import BASE_PROGID, PROBE_MAJORS, progid_for_major
 
@@ -132,13 +133,57 @@ def is_running() -> bool:
     Attaching is a side effect; a health report should be able to say "not running"
     without starting anything or waiting on COM.
     """
+    return process_resources() is not None
+
+
+#: A SOLIDWORKS session that has been driven hard for a long time accumulates private
+#: bytes and handles it never gives back. Past roughly this much, calls slow markedly
+#: and then stop returning at all — the process is paging rather than working. The
+#: number is a reporting threshold, not a limit anything enforces.
+STRAINED_PRIVATE_BYTES = 8 * 1024**3
+STRAINED_HANDLE_COUNT = 30_000
+
+
+def process_resources() -> dict[str, Any] | None:
+    """What the SOLIDWORKS process is costing, or ``None`` if it is not running.
+
+    Read through WMI rather than COM, deliberately: when a session has exhausted itself
+    every COM call blocks, which is exactly when a caller most needs to be told why.
+    """
     try:
         import win32com.client
     except ImportError:  # pragma: no cover - non-Windows
-        return False
+        return None
     try:
         wmi = win32com.client.GetObject("winmgmts:")
-        processes = wmi.ExecQuery("SELECT Name FROM Win32_Process WHERE Name='SLDWORKS.exe'")
-        return len(list(processes)) > 0
+        rows = list(
+            wmi.ExecQuery(
+                "SELECT ProcessId, PrivatePageCount, HandleCount, WorkingSetSize "
+                "FROM Win32_Process WHERE Name='SLDWORKS.exe'"
+            )
+        )
     except Exception:
-        return False
+        return None
+    if not rows:
+        return None
+
+    row = rows[0]
+    private = int(getattr(row, "PrivatePageCount", 0) or 0)
+    handles = int(getattr(row, "HandleCount", 0) or 0)
+    strained = private >= STRAINED_PRIVATE_BYTES or handles >= STRAINED_HANDLE_COUNT
+
+    return {
+        "process_id": int(getattr(row, "ProcessId", 0) or 0),
+        "private_bytes": private,
+        "private_mb": round(private / 1024**2, 1),
+        "working_set_bytes": int(getattr(row, "WorkingSetSize", 0) or 0),
+        "handle_count": handles,
+        "strained": strained,
+        "note": (
+            "A long automation session leaks private bytes and handles that SOLIDWORKS "
+            "never returns. Past this point calls slow down and then stop returning; "
+            "restarting SOLIDWORKS is the only remedy."
+        )
+        if strained
+        else None,
+    }

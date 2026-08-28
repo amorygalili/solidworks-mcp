@@ -219,10 +219,15 @@ def datum_list(ctx: OpContext, args: DatumListArgs) -> DatumListResult:
             origin = {"name": name, "type_name": type_name}
         bucket = _DATUM_TYPES.get(type_name)
         if bucket:
+            # The summary promises capture-ready references, so every datum carries one:
+            # listing datums you then cannot address would make the tool a dead end.
+            reference = capture(ctx.session, doc, feature)
             entry = {
                 "name": name,
                 "type_name": type_name,
                 "suppressed": bool(try_com_member(feature, "IsSuppressed", default=False)),
+                "ref": reference.model_dump(mode="json", exclude_none=True),
+                "tool_args": reference.tool_args(),
             }
             if type_name == "RefPlane" and name in standard:
                 entry["standard"] = standard[name]["standard"]
@@ -311,10 +316,15 @@ def datum_plane_create(ctx: OpContext, args: DatumPlaneCreateArgs) -> DatumPlane
         feature.Name = args.name
     name = str(try_com_member(feature, "Name", default="") or "")
     after = _feature_names(doc)
+    reference = capture(ctx.session, doc, feature)
 
     return DatumPlaneCreateResult(
         plane_name=name,
         method=args.method,
+        reference={
+            **reference.model_dump(mode="json", exclude_none=True),
+            "tool_args": reference.tool_args(),
+        },
         verification=Verification(
             read_back=True,
             before={"feature_count": len(before)},
@@ -644,16 +654,24 @@ def feature_chamfer(ctx: OpContext, args: ChamferArgs) -> EdgeFeatureResult:
             )
         )
 
-    chamfer_type = swconst.value(
-        "swChamferType_e",
-        "swChamferEqualDistance" if args.kind == "equal_distance" else "swChamferAngleDistance",
-    )
+    # swChamferEqualDistance belongs to the chamfer *feature data* interface, not to
+    # InsertFeatureChamfer: passing it creates a Chamfer feature that removes nothing
+    # and reports no error. An equal-distance chamfer is distance-distance with the
+    # same distance twice.
+    if args.kind == "equal_distance":
+        chamfer_type = swconst.value("swChamferType_e", "swChamferDistanceDistance")
+        other_distance = args.distance
+    else:
+        chamfer_type = swconst.value("swChamferType_e", "swChamferAngleDistance")
+        other_distance = 0.0
+
     feature = doc.FeatureManager.InsertFeatureChamfer(
         4 if args.propagate else 0,
         chamfer_type,
         args.distance,
         args.angle,
-        0, 0, 0, 0,
+        other_distance,
+        0, 0, 0,
     )
     return _edge_feature_result(
         ctx, doc, feature, before, selected=selected, kind="chamfer", name=args.name
@@ -798,9 +816,14 @@ def feature_pattern(ctx: OpContext, args: PatternArgs) -> PatternResult:
             False, False, False, False, 0.0, 0.0,
         )
     else:
+        # FeatureCircularPattern5(Number, Spacing, FlipDirection, DName, GeometryPattern,
+        # EqualSpacing, VaryInstance, SyncSubAssemblies, BDir2, BSymmetric, Number2,
+        # Spacing2, DName2, EqualSpacing2) — 14 arguments. Passing 13 raises
+        # "Parameter not optional" rather than anything that names the real problem.
         feature = manager.FeatureCircularPattern5(
             args.count, args.angle, args.reverse, "NULL",
-            False, args.equal_spacing, False, False, False, False, 0, 0, 0,
+            False, args.equal_spacing, False, False,
+            False, False, 1, 0.0, "NULL", False,
         )
 
     if feature is None:

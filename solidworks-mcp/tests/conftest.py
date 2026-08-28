@@ -25,11 +25,18 @@ def scratch_root() -> Path:
 
 @pytest.fixture(scope="session")
 def live_config(scratch_root):
+    """Configuration for the live suite, with the shipped checkpoint debounce.
+
+    An earlier version set ``checkpoint_debounce_s=0``, which made every mutation write
+    a full SaveAs-Copy of the part: measured across a run, that was most of the time the
+    suite spent, and it also meant the suite was not exercising the debounce the server
+    actually ships with. Operations that must not reuse a snapshot say so themselves
+    through ``fresh_checkpoint``, so this no longer has to be turned off wholesale.
+    """
     from swmcp.config import SwmcpConfig
 
     return SwmcpConfig(
         allowed_roots=(scratch_root,),
-        checkpoint_debounce_s=0.0,
         call_timeout_s=180.0,
     )
 

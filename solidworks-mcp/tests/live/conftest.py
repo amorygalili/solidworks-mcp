@@ -86,12 +86,22 @@ def close_documents_this_test_opened(dispatcher, pre_existing_titles, scratch_ro
             {"document": {"title": title}, "save_first": "discard", "confirm": True},
         )
 
-    for stale in scratch_root.glob("swmcp_*.SLDPRT"):
-        try:
-            stale.unlink()
-        except OSError:
-            # Still locked by SOLIDWORKS; a later test's pre-run sweep will get it.
-            continue
+    for pattern in (
+        "swmcp_*.SLDPRT",
+        "swmcp_*.csv",
+        "swmcp_*.png",
+        "swmcp_*.bmp",
+        "swmcp_*.step",
+        "swmcp_*.stl",
+        "swmcp_*.3mf",
+        "swmcp_*.x_t",
+    ):
+        for stale in scratch_root.glob(pattern):
+            try:
+                stale.unlink()
+            except OSError:
+                # Still locked by SOLIDWORKS; a later test's pre-run sweep will get it.
+                continue
 
 
 def _open_titles(dispatcher) -> set[str]:

@@ -97,7 +97,7 @@ Move, rotate, scale, mirror, offset, or trim sketch geometry, reporting how many
         }
       ],
       "default": null,
-      "description": "Centre for rotate or scale.",
+      "description": "Centre of rotation, or the fixed point a scale works from.",
       "title": "About"
     },
     "angle": {
@@ -242,6 +242,7 @@ Move, rotate, scale, mirror, offset, or trim sketch geometry, reporting how many
     },
     "keep_original": {
       "default": false,
+      "description": "Leave the original geometry in place and act on a copy. Supported by move, scale, mirror, and offset. Rotate transforms in place and refuses this rather than ignoring it.",
       "title": "Keep Original",
       "type": "boolean"
     },

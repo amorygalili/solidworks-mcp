@@ -7,7 +7,8 @@ from typing import Any
 
 from swmcp.catalog.registry import op
 from swmcp.catalog.spec import ModelMutation, NonModelSideEffect, ReadSafety
-from swmcp.com import swconst
+from swmcp.com import apiver, swconst
+from swmcp.com.install import process_resources
 from swmcp.com.marshal import try_com_member
 from swmcp.context import OpContext
 from swmcp.schemas.system import (
@@ -118,16 +119,34 @@ def health(ctx: OpContext, args: HealthArgs) -> HealthResult:
         if not probe["answered"]:
             issues.append("SOLIDWORKS did not answer a live version probe.")
 
+    # Read through WMI, which keeps answering while COM does not — a session that has
+    # exhausted itself is exactly when a caller needs to be told why.
+    process = process_resources()
+    if process and process["strained"]:
+        issues.append(
+            f"SOLIDWORKS is holding {process['private_mb']:.0f} MB of private memory "
+            f"and {process['handle_count']} handles. A long automation session leaks "
+            "both, and past this point calls slow down and then stop returning. "
+            "Restart SOLIDWORKS."
+        )
+
     inflight = snapshot.get("inflight")
     if inflight and inflight.get("elapsed_s", 0) > 120:
+        detail = "Check SOLIDWORKS for a modal dialog."
+        if process and process["strained"]:
+            detail = (
+                "The process is also low on resources, so this may be paging rather "
+                "than waiting on a dialog."
+            )
         issues.append(
             f"{inflight['label']} has been running for {inflight['elapsed_s']:.0f}s. "
-            "Check SOLIDWORKS for a modal dialog."
+            + detail
         )
 
     return HealthResult(
         healthy=not issues,
         worker=snapshot,
+        process=process,
         probe=probe,
         issues=issues,
     )
@@ -169,6 +188,7 @@ def capabilities(ctx: OpContext, args: CapabilitiesArgs) -> CapabilitiesResult:
                 kind: bool(path and Path(path).is_file()) for kind, path in templates.items()
             },
             "constant_table": swconst.table_info(),
+            "api_table": apiver.table_info(),
             "revision": ctx.session.system_info().get("revision"),
         },
         evidence={
@@ -179,6 +199,7 @@ def capabilities(ctx: OpContext, args: CapabilitiesArgs) -> CapabilitiesResult:
                 "Templates come from GetUserPreferenceStringValue and are then checked "
                 "on disk; the registry supplies the install location."
             ),
+            "api_versions": apiver.usage_report(),
         },
     )
 

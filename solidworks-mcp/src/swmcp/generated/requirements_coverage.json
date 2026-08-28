@@ -85,6 +85,9 @@
       "sw_feature_chamfer",
       "sw_feature_fillet"
     ],
+    "FEAT-011": [
+      "sw_feature_rib"
+    ],
     "FEAT-012": [
       "sw_feature_hole"
     ],
@@ -98,6 +101,31 @@
     ],
     "FEAT-019": [
       "sw_measure"
+    ],
+    "IO-002": [
+      "sw_export"
+    ],
+    "PAR-001": [
+      "sw_dimension_list",
+      "sw_dimension_set"
+    ],
+    "PAR-002": [
+      "sw_equation_list",
+      "sw_equation_set"
+    ],
+    "PAR-003": [
+      "sw_config_activate",
+      "sw_config_create",
+      "sw_config_delete",
+      "sw_config_list"
+    ],
+    "PAR-005": [
+      "sw_parameter_table_export",
+      "sw_parameter_table_import"
+    ],
+    "PAR-006": [
+      "sw_property_list",
+      "sw_property_set"
     ],
     "REF-001": [
       "sw_selection_get",
@@ -122,6 +150,9 @@
     "REF-007": [
       "sw_ref_capture",
       "sw_ref_resolve"
+    ],
+    "REV-006": [
+      "sw_safe_execute"
     ],
     "SAFE-003": [
       "sw_checkpoint_restore"
@@ -175,6 +206,12 @@
     ],
     "SYS-007": [
       "sw_resolve_names"
+    ],
+    "VIEW-003": [
+      "sw_view_set"
+    ],
+    "VIEW-004": [
+      "sw_view_capture"
     ]
   },
   "note": "A requirement listed under partially_covered is NOT done. The limitation field says what is missing.",
@@ -183,6 +220,31 @@
       "limitation": "Linear and circular patterns only. Curve-driven, sketch-driven, table-driven, fill, and variable patterns are not implemented and are rejected by the schema rather than failing at runtime.",
       "tools": [
         "sw_feature_pattern"
+      ]
+    },
+    "FEAT-009": {
+      "limitation": "Shell with a single wall thickness and face removal. Multi-thickness shells and the thicken feature are not implemented.",
+      "tools": [
+        "sw_feature_shell"
+      ]
+    },
+    "FEAT-014": {
+      "limitation": "Box, cylinder, sphere, cone, frustum, torus, wedge, and prism, each built as an ordinary sketch and boss. Helix and spring are not implemented.",
+      "tools": [
+        "sw_body_primitive"
+      ]
+    },
+    "IO-003": {
+      "limitation": "Tessellation quality, mesh unit, binary/ASCII, and the STEP protocol are exposed, and every written file is verified against its format signature. Exporting a selected subset of bodies is not implemented; the whole document is exported.",
+      "tools": [
+        "sw_export"
+      ]
+    },
+    "PAR-004": {
+      "limitation": "Configuration-specific dimension values are read and written through sw_dimension_list and sw_dimension_set. Per-configuration feature suppression is not implemented; sw_feature_edit suppresses in the active configuration.",
+      "tools": [
+        "sw_dimension_list",
+        "sw_dimension_set"
       ]
     },
     "REF-005": {
@@ -201,11 +263,11 @@
   },
   "totals": {
     "covered_by_platform": 11,
-    "fully_covered_by_a_tool": 48,
-    "in_scope": 59,
-    "partially_covered": 3,
+    "fully_covered_by_a_tool": 58,
+    "in_scope": 73,
+    "partially_covered": 7,
     "requirements_in_backlog": 152,
-    "tools": 57,
+    "tools": 74,
     "uncovered_in_scope": 0
   },
   "uncovered_in_scope": []

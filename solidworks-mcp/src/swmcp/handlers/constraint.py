@@ -17,6 +17,7 @@ from swmcp.com.marshal import get_com_member, try_com_member
 from swmcp.context import OpContext
 from swmcp.envelope import Check, Verification
 from swmcp.errors import SwMcpError, make_error, validation_error
+from swmcp.modeling import configuration_names
 from swmcp.schemas.sketch import (
     DimensionListArgs,
     DimensionListResult,
@@ -411,7 +412,14 @@ def _find_dimension(doc: Any, name: str) -> Any | None:
 
 
 def _iter_dimensions(doc: Any, sketch_name: str | None):
-    """Walk the feature tree yielding ``(feature_name, IDimension)`` pairs."""
+    """Walk the feature tree yielding ``(feature_name, IDimension)`` pairs.
+
+    A sketch dimension is reported twice — once by the sketch that owns it and once by
+    the feature that consumed the sketch — so each is yielded only the first time its
+    full name is seen. Without that, a parameter table lists every driving dimension
+    twice and an import applies each change twice.
+    """
+    seen: set[str] = set()
     feature = try_com_member(doc, "FirstFeature", default=None)
     guard = 0
     while feature is not None and guard < 5000:
@@ -424,7 +432,11 @@ def _iter_dimensions(doc: Any, sketch_name: str | None):
                 inner_guard += 1
                 actual = try_com_member(dimension, "GetDimension", default=None)
                 if actual is not None:
-                    yield name, actual
+                    full_name = str(try_com_member(actual, "FullName", default="") or "")
+                    if not full_name or full_name not in seen:
+                        if full_name:
+                            seen.add(full_name)
+                        yield name, actual
                 dimension = try_com_member(
                     feature, "GetNextDisplayDimension", dimension, default=None
                 )
@@ -437,32 +449,101 @@ def _iter_dimensions(doc: Any, sketch_name: str | None):
     domains=("constraint", "sketch"),
     tags=("dimension", "list", "parameters"),
     summary=(
-        "List driving dimensions with their names and values in the requested unit, so "
-        "a parametric change can address a dimension by name rather than by position."
+        "List driving dimensions with their names and values in the requested unit, "
+        "optionally as they stand in one configuration, so a parametric change can "
+        "address a dimension by name rather than by position."
     ),
     safety=ReadSafety(),
-    satisfies=("CON-003",),
+    satisfies=("CON-003", "PAR-001"),
+    partially_satisfies=("PAR-004",),
     precondition="part_or_assembly",
     idempotent=True,
     timeout_s=180.0,
 )
 def dimension_list(ctx: OpContext, args: DimensionListArgs) -> DimensionListResult:
     doc = ctx.require_doc()
+    warnings: list[str] = []
+    if args.configuration:
+        known = configuration_names(doc)
+        if args.configuration not in known:
+            raise SwMcpError(
+                validation_error(
+                    "CONFIGURATION_NOT_FOUND",
+                    f"No configuration named {args.configuration!r}.",
+                    context={"existing": known},
+                    remediation=["List the document's configurations to see what exists."],
+                )
+            )
+
     found = []
     for owner, dimension in _iter_dimensions(doc, args.sketch_name):
         value_m = try_com_member(dimension, "SystemValue", default=None)
+        if args.configuration:
+            # GetSystemValue2 reads one named configuration's value, which can differ
+            # from the active one; that difference is the whole point of PAR-004.
+            scoped = try_com_member(
+                dimension, "GetSystemValue2", args.configuration, default=None
+            )
+            if isinstance(scoped, (int, float)):
+                value_m = scoped
         entry: dict[str, Any] = {
             "name": str(try_com_member(dimension, "FullName", default="") or ""),
             "owner": owner,
             "value_m": value_m,
             "driving": _is_driving(dimension),
+            "applies_to_all_configurations": try_com_member(
+                dimension, "IsAppliedToAllConfigurations", default=None
+            ),
             "tolerance_type": try_com_member(dimension, "GetToleranceType", default=None),
         }
         if isinstance(value_m, (int, float)):
             entry[f"value_{args.unit}"] = from_meters(float(value_m), args.unit)
         found.append(entry)
 
-    return DimensionListResult(unit=args.unit, dimensions=found)
+    return DimensionListResult(
+        unit=args.unit,
+        configuration=args.configuration,
+        dimensions=found,
+        warnings=warnings,
+    )
+
+
+
+
+
+def _dimension_scope(doc: Any, args: DimensionSetArgs) -> tuple[int | None, Any]:
+    """``(swInConfigurationOpts_e, names)``, or ``(None, None)`` for a plain write.
+
+    A single-configuration part is the common case, and writing its one configuration
+    through the scoped API buys nothing, so that path stays on the simple assignment.
+    """
+    known = configuration_names(doc)
+    if args.configuration_scope == "specify":
+        if not args.configurations:
+            raise SwMcpError(
+                validation_error(
+                    "MISSING_ARGUMENT",
+                    "configuration_scope='specify' needs at least one configuration name.",
+                )
+            )
+        unknown = [name for name in args.configurations if name not in known]
+        if unknown:
+            raise SwMcpError(
+                validation_error(
+                    "CONFIGURATION_NOT_FOUND",
+                    f"No configuration named {unknown[0]!r}.",
+                    context={"unknown": unknown, "existing": known},
+                )
+            )
+        return (
+            swconst.value("swInConfigurationOpts_e", "swSpecifyConfiguration"),
+            list(args.configurations),
+        )
+
+    if len(known) <= 1:
+        return None, None
+    member = "swThisConfiguration" if args.configuration_scope == "this" else "swAllConfiguration"
+    return swconst.value("swInConfigurationOpts_e", member), None
 
 
 @op(
@@ -471,11 +552,13 @@ def dimension_list(ctx: OpContext, args: DimensionListArgs) -> DimensionListResu
     domains=("constraint", "sketch"),
     tags=("dimension", "parametric", "set", "value"),
     summary=(
-        "Change a named driving dimension and report its value before and after, plus "
-        "any rebuild errors the change caused."
+        "Change a named driving dimension in the active configuration, in all of them, "
+        "or in named ones, reporting the value before and after plus any rebuild errors "
+        "the change caused."
     ),
     safety=ModelMutation(destructive=False),
-    satisfies=("CON-003",),
+    satisfies=("CON-003", "PAR-001"),
+    partially_satisfies=("PAR-004",),
     precondition="part_or_assembly",
     idempotent=True,
     timeout_s=300.0,
@@ -510,7 +593,28 @@ def dimension_set(ctx: OpContext, args: DimensionSetArgs) -> DimensionSetResult:
             )
         )
 
-    dimension.SystemValue = args.value
+    scope, names = _dimension_scope(doc, args)
+    if scope is None:
+        dimension.SystemValue = args.value
+    else:
+        # SetSystemValue3 returns swSetValueReturnStatus_e; a non-zero code means the
+        # value was refused, which must not be reported as a successful change.
+        status = try_com_member(
+            dimension, "SetSystemValue3", args.value, scope, names, default=None
+        )
+        if isinstance(status, int) and status != 0:
+            raise SwMcpError(
+                make_error(
+                    "DIMENSION_NOT_SET",
+                    "solidworks",
+                    f"SOLIDWORKS refused the new value for {args.name!r} (status {status}).",
+                    context={"status": status, "configuration_scope": args.configuration_scope},
+                    remediation=[
+                        "A driven or design-table dimension cannot be set directly.",
+                        "Check that every named configuration exists.",
+                    ],
+                )
+            )
 
     rebuild_errors: list[str] = []
     # EditRebuild3 is another property-or-method member; call it through the shim.
@@ -523,6 +627,8 @@ def dimension_set(ctx: OpContext, args: DimensionSetArgs) -> DimensionSetResult:
         before_mm=from_meters(float(before_m), "mm"),
         after_mm=from_meters(float(after_m), "mm"),
         requested_mm=from_meters(args.value, "mm"),
+        configuration_scope=args.configuration_scope,
+        configurations=list(args.configurations),
         rebuild_errors=rebuild_errors,
         verification=Verification(
             read_back=True,

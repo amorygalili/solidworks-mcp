@@ -188,3 +188,24 @@ def test_in_scope_coverage_is_reported_honestly():
     )
     assert reported == IN_SCOPE_REQUIREMENTS - covered
     assert coverage["totals"]["tools"] == len(OPS)
+
+
+def test_the_generated_artifacts_match_the_catalog(specs):
+    """The committed manifest, safety policy, coverage, and docs must not lag the code.
+
+    ``solidworks-mcp --check-artifacts`` has always been able to say this, but nothing
+    in the suite asked it, so a schema change could be committed with stale generated
+    files and every test would still pass — which is exactly what happened while adding
+    configuration_scope back to sw_equation_set. A separate script that has to be
+    remembered is not a check; this is the whole point of generating them from one
+    source of truth.
+    """
+    from swmcp.catalog.artifacts import stale_artifacts
+
+    stale = stale_artifacts()
+
+    assert not stale, (
+        "these generated files no longer match the catalog:\n"
+        + "\n".join(f"  {path}" for path in stale)
+        + "\n\nrun: uv run solidworks-mcp --write-artifacts"
+    )

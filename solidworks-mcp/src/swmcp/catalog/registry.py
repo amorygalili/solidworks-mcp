@@ -53,6 +53,7 @@ def op(
     precondition: DocPrecondition = "any",
     idempotent: bool = False,
     timeout_s: float = 120.0,
+    fresh_checkpoint: bool = False,
 ) -> Callable[[F], F]:
     """Register one operation. The decorated function stays directly callable in tests."""
 
@@ -77,6 +78,7 @@ def op(
             handler=fn,
             handler_ref=f"{fn.__module__}:{fn.__qualname__}",
             timeout_s=timeout_s,
+            fresh_checkpoint=fresh_checkpoint,
         )
         existing = OPS.get(name)
         if existing is not None and existing.handler_ref != spec.handler_ref:

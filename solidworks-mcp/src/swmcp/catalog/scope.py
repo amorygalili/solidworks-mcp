@@ -28,8 +28,16 @@ IN_SCOPE_REQUIREMENTS: frozenset[str] = frozenset(
         "CON-001", "CON-002", "CON-003", "CON-004", "CON-005",
         # P1 vertical — reference geometry
         "DAT-001", "DAT-002",
+        # P1 vertical — parameters, configurations, and metadata
+        "PAR-001", "PAR-002", "PAR-003", "PAR-004", "PAR-005", "PAR-006",
+        # Pulled forward from P2: export is how the model reaches anything else, and
+        # an atomic sequence is what the safety layer has been building toward.
+        "IO-002", "IO-003", "REV-006",
+        # P1 vertical — appearance and view
+        "VIEW-003", "VIEW-004",
         # P1 vertical — core features, bodies, measurement
         "FEAT-001", "FEAT-002", "FEAT-003", "FEAT-006", "FEAT-007",
+        "FEAT-009", "FEAT-011", "FEAT-014",
         "FEAT-012", "FEAT-015", "FEAT-016", "FEAT-019",
     }
 )
@@ -57,6 +65,20 @@ DECLARED_PARTIAL: dict[str, str] = {
         "fill, and variable patterns are not implemented and are rejected by the schema "
         "rather than failing at runtime."
     ),
+    "IO-003": (
+        "Tessellation quality, mesh unit, binary/ASCII, and the STEP protocol are "
+        "exposed, and every written file is verified against its format signature. "
+        "Exporting a selected subset of bodies is not implemented; the whole document "
+        "is exported."
+    ),
+    "FEAT-009": (
+        "Shell with a single wall thickness and face removal. Multi-thickness shells "
+        "and the thicken feature are not implemented."
+    ),
+    "FEAT-014": (
+        "Box, cylinder, sphere, cone, frustum, torus, wedge, and prism, each built as "
+        "an ordinary sketch and boss. Helix and spring are not implemented."
+    ),
     "REF-005": (
         "Face, planar-face, cylindrical-face, feature-face, body-ownership, and ray probes "
         "are implemented. Candidate mate entities require the assembly domain (P2)."
@@ -65,6 +87,11 @@ DECLARED_PARTIAL: dict[str, str] = {
         "Implemented structurally via locale-invariant GetTypeName2 tokens and ordinal "
         "standard-plane position. Only an English SOLIDWORKS is installed locally, so "
         "regression on a localized feature tree is outstanding."
+    ),
+    "PAR-004": (
+        "Configuration-specific dimension values are read and written through "
+        "sw_dimension_list and sw_dimension_set. Per-configuration feature suppression "
+        "is not implemented; sw_feature_edit suppresses in the active configuration."
     ),
     "SK-007": (
         "Move, rotate, scale, mirror, offset, and trim are implemented. Extend, split, "

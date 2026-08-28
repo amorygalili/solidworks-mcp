@@ -116,3 +116,40 @@ def reference_error(code: str, message: str, **kwargs: Any) -> ErrorEnvelope:
 
 def timeout_error(code: str, message: str, **kwargs: Any) -> ErrorEnvelope:
     return make_error(code, "timeout", message, **kwargs)
+
+
+def wire_safe_validation_errors(error: Any) -> list[dict[str, Any]]:
+    """Reduce a pydantic ``ValidationError`` to something that can leave the process.
+
+    ``ValidationError.errors()`` looks JSON-safe and is not: when a ``model_validator``
+    raises, pydantic puts the original ``ValueError`` **object** into each entry's
+    ``ctx``, and the input value can be any Python object at all. Handing that straight
+    to the error envelope means the envelope cannot be serialized, so a schema
+    rejection — the most ordinary failure there is — turns into an exception escaping
+    the server instead of a clean INVALID_ARGUMENTS payload.
+
+    Only the four fields a caller can act on survive, each coerced to text.
+    """
+    reduced: list[dict[str, Any]] = []
+    for entry in error.errors(include_url=False):
+        location = entry.get("loc") or ()
+        item: dict[str, Any] = {
+            "loc": [str(part) for part in location],
+            "type": str(entry.get("type", "")),
+            "msg": str(entry.get("msg", "")),
+        }
+        if "input" in entry:
+            item["input"] = _describe_input(entry["input"])
+        reduced.append(item)
+    return reduced
+
+
+def _describe_input(value: Any) -> Any:
+    """Keep JSON primitives as they are; describe anything else without embedding it."""
+    if value is None or isinstance(value, (str, bool, int, float)):
+        return value
+    if isinstance(value, (list, tuple)):
+        return [_describe_input(item) for item in value[:20]]
+    if isinstance(value, dict):
+        return {str(key): _describe_input(item) for key, item in list(value.items())[:20]}
+    return f"<{type(value).__name__}>"

@@ -1,6 +1,6 @@
 # sw_dimension_list
 
-List driving dimensions with their names and values in the requested unit, so a parametric change can address a dimension by name rather than by position.
+List driving dimensions with their names and values in the requested unit, optionally as they stand in one configuration, so a parametric change can address a dimension by name rather than by position.
 
 | | |
 |---|---|
@@ -14,7 +14,8 @@ List driving dimensions with their names and values in the requested unit, so a 
 | Auto-checkpointed | False |
 | Idempotent | True |
 | Timeout | 180s |
-| Satisfies | `CON-003` |
+| Satisfies | `CON-003`, `PAR-001` |
+| Partially satisfies | `PAR-004` |
 
 ## Input schema
 
@@ -58,6 +59,19 @@ List driving dimensions with their names and values in the requested unit, so a 
   },
   "additionalProperties": false,
   "properties": {
+    "configuration": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Read each dimension's value in this configuration rather than the active one. A dimension can hold a different value per configuration.",
+      "title": "Configuration"
+    },
     "document": {
       "$ref": "#/$defs/DocTarget",
       "description": "Which document to act on. Defaults to the active document."
@@ -93,6 +107,18 @@ List driving dimensions with their names and values in the requested unit, so a 
 {
   "additionalProperties": false,
   "properties": {
+    "configuration": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Configuration"
+    },
     "dimensions": {
       "items": {
         "additionalProperties": true,

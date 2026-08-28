@@ -1,0 +1,8 @@
+kind,name,value,unit,configuration,note
+dimension,D1@Body@demo_04_parametric.Part,45.000000,mm,,Body
+dimension,D1@Boss@demo_04_parametric.Part,30.000000,mm,,Boss
+global_variable,WallThickness,30mm,,,"""WallThickness""= 30mm"
+equation,D1@Body@demo_04_parametric.Part,"""WallThickness"" * 1.5",,,"""D1@Body@demo_04_parametric.Part"" = ""WallThickness"" * 1.5"
+property,PartNumber,DEMO-004,,,
+property,Material,6061-T6,,,
+property,Revision,A,,,

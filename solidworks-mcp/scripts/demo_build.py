@@ -32,6 +32,16 @@ FILLET_R = 5.0
 
 WINDOWS_DECOY = "C:\\Windows\\System32\\swmcp_should_never_exist.SLDPRT"
 
+#: The global variable this demo drives a dimension with. Deliberately not
+#: "Thickness": SOLIDWORKS reserves that name and Add2 refuses it outright, returning
+#: -1, while "MyThickness", "Width", "Height", "Depth", "Length", "Radius" and "Angle"
+#: are all accepted. The demo used to pick the one word that does not work.
+DRIVER_NAME = "WallThickness"
+
+#: SOLIDWORKS quotes the names an equation reads, so this is one string with
+#: embedded double quotes rather than a formatting mistake.
+EQUATION_EXPRESSION = f'"{DRIVER_NAME}" * 1.5'
+
 
 class Demo:
     """A recording MCP client."""
@@ -223,7 +233,41 @@ async def part_one_bracket(demo: Demo) -> Path:
         why="overwrite='allow' is the one save path that needs confirmation.",
         highlight=("saved_path", "artifact"),
     )
+    await _publish_the_bracket(demo)
     return target
+
+
+async def _publish_the_bracket(demo: Demo) -> None:
+    """A picture and two neutral files, so the result leaves SOLIDWORKS."""
+    await demo.call(
+        "sw_view_capture",
+        {
+            "output_path": str(OUT_DIR / "demo_01_bracket.png"),
+            "orientation": "isometric",
+            "width": 1280,
+            "height": 960,
+        },
+        why="VIEW-004: the one piece of evidence JSON cannot carry. Open it and look.",
+        highlight=("saved_path", "format", "requested_size", "actual_size", "method"),
+    )
+    await demo.call(
+        "sw_export",
+        {"output_path": str(OUT_DIR / "demo_01_bracket.step"), "step_protocol": "ap214"},
+        why="IO-002: the written file is checked for its own ISO-10303-21 header.",
+        highlight=("saved_path", "format", "signature_verified", "signature_detail", "settings"),
+    )
+    exported = await demo.call(
+        "sw_export",
+        {
+            "output_path": str(OUT_DIR / "demo_01_bracket.stl"),
+            "stl_binary": True,
+            "stl_quality": "fine",
+        },
+        why="IO-003: a binary STL's triangle count is checked against its file size.",
+        highlight=("saved_path", "signature_verified", "signature_detail", "size_bytes"),
+    )
+    if exported.get("ok") and not exported["result"]["signature_verified"]:
+        demo.failures.append("the STL did not verify as an STL")
 
 
 async def _drill_pattern_and_round(demo: Demo) -> None:
@@ -488,6 +532,216 @@ async def part_three_safety(demo: Demo) -> Path:
     return target
 
 
+async def part_four_parametric(demo: Demo) -> Path:
+    """A part driven by names rather than by geometry."""
+    target = OUT_DIR / "demo_04_parametric.SLDPRT"
+    heading("Part 4 - parametric: primitives, equations, configurations, properties")
+
+    await demo.call("sw_doc_new", {"doc_type": "part"}, highlight=("title",))
+    await demo.call("sw_doc_save", {"output_path": str(target)}, highlight=("saved_path",))
+
+    await demo.call(
+        "sw_body_primitive",
+        {"kind": "box", "width": 80, "depth": 50, "height": 20, "name": "Body"},
+        why="FEAT-014: an ordinary sketch and boss, checked against 80*50*20 mm3.",
+        highlight=(
+            "kind",
+            "method",
+            "expected_volume_mm3",
+            "volume_mm3_after",
+            "volume_error_ratio",
+        ),
+    )
+    await demo.call(
+        "sw_body_primitive",
+        {"kind": "cylinder", "radius": 12, "height": 30, "at": [0, 45], "name": "Boss"},
+        why="A second primitive, placed clear of the first so both survive.",
+        highlight=("kind", "expected_volume_mm3", "volume_mm3_after"),
+    )
+
+    dimensions = await demo.call(
+        "sw_dimension_list",
+        why="PAR-001: every driving dimension, sketch and feature alike, by name.",
+        highlight=("unit", "dimensions"),
+    )
+    driving = None
+    if dimensions.get("ok"):
+        for entry in dimensions["result"]["dimensions"]:
+            if entry["owner"] == "Body" and entry.get("value_mm"):
+                driving = entry["name"]
+                break
+
+    if driving:
+        await demo.call(
+            "sw_equation_set",
+            {
+                "equations": [
+                    {
+                        "operation": "add",
+                        "name": DRIVER_NAME,
+                        # Unit-suffixed: an equation is text, and SOLIDWORKS reads a
+                        # bare number in document units, which is inches here.
+                        "expression": "20mm",
+                        "global_variable": True,
+                    },
+                    {"operation": "add", "name": driving, "expression": EQUATION_EXPRESSION},
+                ]
+            },
+            why="PAR-002: a global variable now drives one of the box's dimensions.",
+            highlight=("applied", "failed", "status", "circular_references"),
+        )
+        await demo.call(
+            "sw_equation_list",
+            why="Read the equations back, with what each one reads and any cycle.",
+            highlight=("count", "equations", "global_variables", "circular_references"),
+        )
+        await demo.call(
+            "sw_equation_set",
+            {
+                "equations": [
+                    {"operation": "update", "name": DRIVER_NAME, "expression": "30mm"}
+                ]
+            },
+            why="One value changed; the geometry follows.",
+            highlight=("applied", "failed"),
+        )
+        await demo.call(
+            "sw_measure",
+            why="The proof that the equation drove real geometry.",
+            highlight=("mass_properties", "bounding_box"),
+        )
+
+    await demo.call(
+        "sw_config_create",
+        {"name": "Heavy", "activate": True},
+        why="PAR-003: a variant, confirmed by reading the configuration list back.",
+        highlight=("name", "count_before", "count_after", "active"),
+    )
+    await demo.call("sw_config_list", highlight=("count", "active", "configurations"))
+    await demo.call(
+        "sw_property_set",
+        {
+            "properties": [
+                {"name": "PartNumber", "value": "DEMO-004"},
+                {"name": "Material", "value": "6061-T6"},
+                {"name": "Revision", "value": "A"},
+            ]
+        },
+        why="PAR-006: metadata a BOM would print, written and read back.",
+        highlight=("written", "failed", "verification"),
+    )
+    await demo.call(
+        "sw_property_list",
+        {"configuration": "*"},
+        why="Raw and evaluated values, file level and per configuration.",
+        highlight=("count", "file_properties"),
+    )
+    await demo.call(
+        "sw_parameter_table_export",
+        {"output_path": str(OUT_DIR / "demo_04_parameters.csv")},
+        why="PAR-005: every parameter in one CSV, editable outside SOLIDWORKS.",
+        highlight=("saved_path", "row_count", "kinds"),
+    )
+    await demo.call(
+        "sw_doc_save",
+        {"output_path": str(target), "overwrite": "allow", "confirm": True},
+        highlight=("saved_path",),
+    )
+    return target
+
+
+async def part_five_atomic(demo: Demo) -> Path:
+    """One checkpoint around a whole sequence, and a rollback when it does not hold."""
+    target = OUT_DIR / "demo_05_atomic.SLDPRT"
+    heading("Part 5 - atomic: a sequence that rolls itself back")
+
+    await demo.call("sw_doc_new", {"doc_type": "part"}, highlight=("title",))
+    await demo.call("sw_doc_save", {"output_path": str(target)}, highlight=("saved_path",))
+    await demo.call(
+        "sw_body_primitive",
+        {"kind": "box", "width": 60, "depth": 40, "height": 20, "name": "Block"},
+        highlight=("expected_volume_mm3", "volume_mm3_after"),
+    )
+    await demo.call(
+        "sw_doc_save",
+        {"output_path": str(target), "overwrite": "allow", "confirm": True},
+        why="A saved document is a checkpointable one, which is what rollback needs.",
+        highlight=("saved_path",),
+    )
+
+    baseline = await demo.call("sw_measure", highlight=("mass_properties",))
+    original = (
+        baseline["result"]["mass_properties"]["volume_mm3"] if baseline.get("ok") else None
+    )
+
+    await demo.call(
+        "sw_safe_execute",
+        {
+            "steps": [
+                {"tool": "sw_feature_shell", "args": {"thickness": 2}, "label": "hollow it"},
+                {"tool": "sw_measure", "label": "check the result"},
+            ],
+            "invariants": {"body_count": 1, "volume_change": "decrease"},
+            "confirm": True,
+        },
+        why="REV-006: a sequence whose invariants hold is kept.",
+        highlight=("completed", "invariants_held", "invariants_checked", "rolled_back"),
+    )
+
+    # The kept sequence hollowed the block, so the model is legitimately smaller now.
+    # A rollback undoes *its own* sequence, not every edit ever made, so this is the
+    # figure the recovery below has to match - comparing against the original volume
+    # would be asking the rollback to undo the shell as well.
+    before_failure = await demo.call(
+        "sw_measure",
+        why="The starting point the next sequence will be rolled back to.",
+        highlight=("mass_properties",),
+    )
+    if before_failure.get("ok"):
+        original = before_failure["result"]["mass_properties"]["volume_mm3"]
+
+    rolled = await demo.call(
+        "sw_safe_execute",
+        {
+            "steps": [
+                {
+                    "tool": "sw_feature_delete",
+                    "args": {
+                        "feature_name": "Block",
+                        "confirm": True,
+                        "delete_children": True,
+                    },
+                    "label": "destroy the model",
+                },
+            ],
+            # Deleting the block cannot leave a body, so this invariant must fail.
+            "invariants": {"body_count": 1},
+            "confirm": True,
+        },
+        why="The same machinery with an invariant it cannot meet: everything is undone.",
+        highlight=("completed", "invariants_held", "rolled_back", "rollback", "warnings"),
+    )
+    if rolled.get("ok") and not rolled["result"]["rolled_back"]:
+        demo.failures.append("the failing sequence was not rolled back")
+
+    recovered = await demo.call(
+        "sw_measure",
+        why="The proof: the model measures exactly what it did before the sequence ran.",
+        highlight=("mass_properties",),
+    )
+    if recovered.get("ok") and original is not None:
+        now = recovered["result"]["mass_properties"]["volume_mm3"]
+        if abs(now - original) > 1e-6:
+            demo.failures.append(f"after rollback the model measures {now}, expected {original}")
+
+    await demo.call(
+        "sw_doc_save",
+        {"output_path": str(target), "overwrite": "allow", "confirm": True},
+        highlight=("saved_path",),
+    )
+    return target
+
+
 async def session_probes(demo: Demo) -> None:
     heading("Session - what the server discovered about this machine")
     await demo.call(
@@ -532,6 +786,9 @@ def write_transcript(demo: Demo, files: list[Path]) -> Path:
     for path in files:
         if path.exists():
             lines.append(f"- `{path.name}` - {path.stat().st_size:,} bytes")
+    for pattern in ("demo_*.png", "demo_*.step", "demo_*.stl", "demo_*.csv"):
+        for extra in sorted(OUT_DIR.glob(pattern)):
+            lines.append(f"- `{extra.name}` - {extra.stat().st_size:,} bytes")
     for extra in sorted(OUT_DIR.glob("*_v0*.SLDPRT")):
         lines.append(
             f"- `{extra.name}` - {extra.stat().st_size:,} bytes (written by the versioning policy)"
@@ -583,7 +840,9 @@ async def sweep_previous_run(sweeper: Demo) -> None:
     if stale:
         print(f"closed leftovers from an earlier run: {stale}", flush=True)
 
-    for path in (*OUT_DIR.glob("demo_*.SLDPRT"), *CHECKPOINT_DIR.glob("demo_*.SLDPRT")):
+    patterns = ("demo_*.SLDPRT", "demo_*.png", "demo_*.step", "demo_*.stl", "demo_*.csv")
+    stale_files = [path for pattern in patterns for path in OUT_DIR.glob(pattern)]
+    for path in (*stale_files, *CHECKPOINT_DIR.glob("demo_*.SLDPRT")):
         try:
             path.unlink()
         except OSError as exc:
@@ -623,6 +882,8 @@ async def run() -> int:
             await part_one_bracket(demo),
             await part_two_shaft(demo),
             await part_three_safety(demo),
+            await part_four_parametric(demo),
+            await part_five_atomic(demo),
         ]
 
         heading("Cleanup - closing only what this run created")

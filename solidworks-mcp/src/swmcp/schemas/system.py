@@ -56,6 +56,13 @@ class HealthResult(ReadResult):
     healthy: bool
     worker: dict[str, Any]
     probe: dict[str, Any] | None = None
+    process: dict[str, Any] | None = Field(
+        default=None,
+        description=(
+            "What the SOLIDWORKS process is costing, read through WMI rather than COM "
+            "so it still answers when every COM call is blocked."
+        ),
+    )
     issues: list[str] = Field(default_factory=list)
 
 

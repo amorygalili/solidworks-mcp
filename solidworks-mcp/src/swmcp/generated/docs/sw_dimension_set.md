@@ -1,6 +1,6 @@
 # sw_dimension_set
 
-Change a named driving dimension and report its value before and after, plus any rebuild errors the change caused.
+Change a named driving dimension in the active configuration, in all of them, or in named ones, reporting the value before and after plus any rebuild errors the change caused.
 
 | | |
 |---|---|
@@ -14,7 +14,8 @@ Change a named driving dimension and report its value before and after, plus any
 | Auto-checkpointed | True |
 | Idempotent | True |
 | Timeout | 300s |
-| Satisfies | `CON-003` |
+| Satisfies | `CON-003`, `PAR-001` |
+| Partially satisfies | `PAR-004` |
 
 ## Input schema
 
@@ -58,6 +59,26 @@ Change a named driving dimension and report its value before and after, plus any
   },
   "additionalProperties": false,
   "properties": {
+    "configuration_scope": {
+      "default": "all",
+      "description": "Which configurations take the new value. 'all' is the default because a single-configuration part has only one, and a silent per-configuration write is a common way to change less than you meant to.",
+      "enum": [
+        "this",
+        "all",
+        "specify"
+      ],
+      "title": "Configuration Scope",
+      "type": "string"
+    },
+    "configurations": {
+      "description": "Required when configuration_scope is 'specify'.",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 200,
+      "title": "Configurations",
+      "type": "array"
+    },
     "document": {
       "$ref": "#/$defs/DocTarget",
       "description": "Which document to act on. Defaults to the active document."
@@ -290,6 +311,18 @@ Change a named driving dimension and report its value before and after, plus any
       ],
       "default": null,
       "description": "Populated by the dispatch pipeline, not by handlers."
+    },
+    "configuration_scope": {
+      "default": "all",
+      "title": "Configuration Scope",
+      "type": "string"
+    },
+    "configurations": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Configurations",
+      "type": "array"
     },
     "name": {
       "title": "Name",

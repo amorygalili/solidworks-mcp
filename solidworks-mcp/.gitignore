@@ -16,3 +16,11 @@ build/
 demo-output/*.SLDPRT
 demo-output/demo-log.json
 demo-output/audit.jsonl
+
+# reference/swapi-docs/: Dassault's SOLIDWORKS API Help, vendored for offline use.
+# Not committed for two reasons. It is marked "for personal/educational use only" and
+# the upstream repository carries no license, so redistributing it here would be
+# republishing someone else's copyrighted documentation. And it is a fetched
+# dependency rather than source: scripts/fetch_api_docs.py pins release v3.12.1 and
+# --check verifies the vendored prose still matches the installed type library.
+reference/swapi-docs/
