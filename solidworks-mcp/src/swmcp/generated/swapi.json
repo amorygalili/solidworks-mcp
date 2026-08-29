@@ -1,6 +1,6 @@
 {
  "generated_from": "sldworks.tlb",
- "interface_count": 30,
+ "interface_count": 32,
  "interfaces": {
   "IAssemblyDoc": {
    "ActivateGroundPlane": {
@@ -21312,6 +21312,484 @@
    "Volume": {
     "flags": [],
     "kind": "propget",
+    "params": [],
+    "returns_void": false
+   }
+  },
+  "IMate2": {
+   "AddRef": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "Alignment": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "CanBeFlipped": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "DisplayDimension": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "DisplayDimension2": {
+    "flags": [
+     1
+    ],
+    "kind": "propget",
+    "params": [
+     "Index"
+    ],
+    "returns_void": false
+   },
+   "DistanceFirstArcCondition": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "DistanceSecondArcCondition": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "Flipped": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "ForceMisalignment": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetConcentricAlignmentType": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetCurrentMisalignedDeviation": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetForce": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "Magnitude"
+    ],
+    "returns_void": false
+   },
+   "GetIDsOfNames": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "riid",
+     "rgszNames",
+     "cNames",
+     "lcid",
+     "rgdispid"
+    ],
+    "returns_void": true
+   },
+   "GetLinkedMate": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetMateEntityCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetMaximumMisalignedDeviation": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSupplementalFaces": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "WhichOne"
+    ],
+    "returns_void": false
+   },
+   "GetTorque": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "Angle"
+    ],
+    "returns_void": false
+   },
+   "GetTypeInfo": {
+    "flags": [
+     1,
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "itinfo",
+     "lcid",
+     "pptinfo"
+    ],
+    "returns_void": true
+   },
+   "GetTypeInfoCount": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "pctinfo"
+    ],
+    "returns_void": true
+   },
+   "GetUseMisalignedDeviationDocumentProperty": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "HasLoadBearingFaces": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "HasTreatInterferenceAsShrinkFit": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetSupplementalFaces": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "WhichOne",
+     "FaceCount"
+    ],
+    "returns_void": false
+   },
+   "Invoke": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     2,
+     2,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "dispidMember",
+     "riid",
+     "lcid",
+     "wFlags",
+     "pdispparams",
+     "pvarResult",
+     "pexcepinfo",
+     "puArgErr"
+    ],
+    "returns_void": true
+   },
+   "IsLoadBearingFacesBonded": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "LockMagneticMate": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "MateEntity": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Index"
+    ],
+    "returns_void": false
+   },
+   "MateLoadReference": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "MaximumVariation": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "MinimumVariation": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "QueryInterface": {
+    "flags": [
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "riid",
+     "ppvObj"
+    ],
+    "returns_void": true
+   },
+   "Release": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "RemoveMisalignment": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "SetConcentricAlignmentType": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "PositionType"
+    ],
+    "returns_void": true
+   },
+   "SetForce": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Magnitude",
+     "Direction"
+    ],
+    "returns_void": false
+   },
+   "SetMaximumMisalignedDeviation": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "MaximumDeviation"
+    ],
+    "returns_void": true
+   },
+   "SetTorque": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Angle",
+     "Axis"
+    ],
+    "returns_void": false
+   },
+   "SetUseMisalignedDeviationDocumentProperty": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "UseDocumentProperty"
+    ],
+    "returns_void": true
+   },
+   "Type": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   }
+  },
+  "IMateEntity2": {
+   "AddRef": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "EntityParams": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "GetEntityParamsSize": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetIDsOfNames": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "riid",
+     "rgszNames",
+     "cNames",
+     "lcid",
+     "rgdispid"
+    ],
+    "returns_void": true
+   },
+   "GetTypeInfo": {
+    "flags": [
+     1,
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "itinfo",
+     "lcid",
+     "pptinfo"
+    ],
+    "returns_void": true
+   },
+   "GetTypeInfoCount": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "pctinfo"
+    ],
+    "returns_void": true
+   },
+   "IGetEntityParams": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NParamsSize"
+    ],
+    "returns_void": false
+   },
+   "Invoke": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     2,
+     2,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "dispidMember",
+     "riid",
+     "lcid",
+     "wFlags",
+     "pdispparams",
+     "pvarResult",
+     "pexcepinfo",
+     "puArgErr"
+    ],
+    "returns_void": true
+   },
+   "QueryInterface": {
+    "flags": [
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "riid",
+     "ppvObj"
+    ],
+    "returns_void": true
+   },
+   "Reference": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "ReferenceComponent": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "ReferenceType": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "ReferenceType2": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "Release": {
+    "flags": [],
+    "kind": "method",
     "params": [],
     "returns_void": false
    }
@@ -48203,7 +48681,7 @@
    }
   }
  },
- "member_count": 4059,
+ "member_count": 4113,
  "typelib_iid": "{83A33D31-27C5-11CE-BFD4-00400513BB57}",
  "typelib_major": 34
 }

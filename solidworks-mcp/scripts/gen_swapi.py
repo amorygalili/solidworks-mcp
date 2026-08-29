@@ -63,6 +63,10 @@ INTERFACES = (
     # -> CreateFeature, so the properties that route sets have to be arity-checked and
     # documented like everything else this server calls.
     "ISweepFeatureData",
+    # Mates. Reading a mate's type, alignment, and value back is the only way to verify
+    # AddMate5 did what was asked, so IMate2 has to be arity-checked like the rest.
+    "IMate2",
+    "IMateEntity2",
 )
 
 

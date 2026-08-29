@@ -8,11 +8,13 @@ implementations can never disagree about what exists.
 from __future__ import annotations
 
 from swmcp.handlers import (
+    assembly,
     constraint,
     discovery,
     document,
     exchange,
     feature,
+    mate,
     material,
     parameter,
     reference,
@@ -26,11 +28,13 @@ from swmcp.handlers import (
 )
 
 __all__ = [
+    "assembly",
     "constraint",
     "discovery",
     "document",
     "exchange",
     "feature",
+    "mate",
     "material",
     "parameter",
     "reference",

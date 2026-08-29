@@ -92,6 +92,36 @@ def _find_feature(doc: Any, name: str) -> Any | None:
     return None
 
 
+def _component_bodies(doc: Any) -> list[Any]:
+    """Bodies belonging to an assembly's components.
+
+    An assembly's own feature tree holds components and mates, not geometry — the faces
+    live in each component's model — so walking the document's features finds nothing
+    and every probe in an assembly came back empty. The bodies are reached through the
+    components instead, and a face captured from one resolves back through its
+    persistent reference exactly as a part's face does.
+    """
+    bodies: list[Any] = []
+    seen: set[str] = set()
+    for component in normalize_sequence(try_com_member(doc, "GetComponents", False, default=None)):
+        if component is None:
+            continue
+        body = try_com_member(component, "GetBody2", default=None) or try_com_member(
+            component, "GetBody", default=None
+        )
+        for candidate in normalize_sequence(body):
+            if candidate is None:
+                continue
+            key = (
+                f"{try_com_member(component, 'Name2', default='')}"
+                f"/{try_com_member(candidate, 'Name', default=id(candidate))}"
+            )
+            if key not in seen:
+                seen.add(key)
+                bodies.append(candidate)
+    return bodies
+
+
 def _all_bodies(doc: Any) -> list[Any]:
     """Bodies reachable without an IPartDoc cast, by walking solid-body features."""
     bodies: list[Any] = []
@@ -109,6 +139,11 @@ def _all_bodies(doc: Any) -> list[Any]:
                 seen.add(key)
                 bodies.append(body)
         feature = try_com_member(feature, "GetNextFeature", default=None)
+
+
+    # An assembly has no geometry of its own; fall through to its components.
+    if not bodies:
+        bodies = _component_bodies(doc)
     return bodies
 
 

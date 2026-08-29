@@ -6,7 +6,7 @@ worker thread.
 It implements the P0 foundation and a P1 modelling vertical from
 [`docs/solidworks-target-requirements.md`](../docs/solidworks-target-requirements.md),
 plus neutral-format export and an atomic mutate-and-validate workflow pulled forward
-from P2: **87 operations covering all 85 in-scope requirements**, with coverage
+from P2: **92 operations covering all 92 in-scope requirements**, with coverage
 reported honestly in `src/swmcp/generated/requirements_coverage.json` rather than
 asserted.
 
@@ -124,6 +124,7 @@ Angles default to degrees and accept `"45deg"`, `"1.57rad"`, or `{"value": 0.25,
 | material | assign a part material and read the density and mass it produces |
 | surface | create a surface by planar fill, offset, extend, or knit |
 | exchange | export STEP, IGES, STL, 3MF, OBJ, PLY, Parasolid, SAT, VRML, PDF, DXF, DWG |
+| assembly | insert a component, walk the component tree, set suppression, fixed state, visibility, and configuration, add and list mates |
 | review | safe execute: run a sequence under one checkpoint and roll it back if an invariant fails |
 
 Per-tool reference with full JSON schemas: `src/swmcp/generated/docs/`.
@@ -155,7 +156,7 @@ only the documents the run created are closed, addressed by title.
 ## Development
 
 ```bash
-uv run pytest                       # 446 tests, no SOLIDWORKS needed
+uv run pytest                       # 486 tests, no SOLIDWORKS needed
 uv run pytest -m live tests/live/test_live_sketch.py   # one module: minutes
 uv run pytest -m "live and not slow"  # the quick live pass
 uv run pytest -m live               # the FULL live suite: ~90 minutes
@@ -197,7 +198,7 @@ marked for personal and educational use, and the upstream repository carries no 
 so it is fetched rather than redistributed here.
 
 `--check` cross-checks every vendored signature against the type library registered on
-the machine and fails on any arity mismatch — 3,322 members checked here with none. It
+the machine and fails on any arity mismatch — 3,342 members checked here with none. It
 is the difference between "the docs say 2026" and "the docs describe this install."
 
 Two things it settled that probing had answered correctly but explained wrongly:
@@ -285,6 +286,13 @@ coverage file, rather than left for a user to discover:
   Extend, split, and sketch pattern are not implemented.
 - **`REF-005` (probes)** — face, edge, planar, cylindrical, body-ownership, and ray
   probes. Candidate *mate* entities need the assembly domain, which is P2.
+- **`ASM-001` (component insert)** — insert at a position, with a chosen configuration
+  and optional fixed state. Placing at an arbitrary *transform* is not implemented:
+  `AddComponent5` takes only X/Y/Z, and building a `MathTransform` for
+  `SetTransformAndSolve2` is impossible on this build — `IMathUtility::CreateTransform`
+  answers "Member not found" through IDispatch for every argument form, raw or cast,
+  and `TranslateComponent` takes no arguments and starts the interactive move tool.
+  Orientation is left to mates.
 - **`FEAT-005` (loft)** — loft boss and cut across two or more profiles, with guide
   curves, a centerline, the closed-loop option, start/end tangency, and thin walls. The
   *boundary* feature is a different API (`InsertNetBlend`) and is not implemented.
@@ -293,6 +301,18 @@ coverage file, rather than left for a user to discover:
   neither is mass override: `IMassProperty` on this build does not expose
   `SetOverrideMassValue` or `OverrideMass` through late binding, so a tool for it would
   have nothing to call.
+- **`MATE-001` (mate types)** — coincident, concentric, perpendicular, parallel,
+  tangent, distance, angle, and lock: the types `AddMate5` builds from exactly two
+  selected entities. Width, symmetric, gear, rack-and-pinion, screw, universal joint,
+  slot, cam, hinge, linear coupler, path, and coordinate-system mates need three or
+  more selections or extra arguments, and are rejected by the schema rather than
+  failing at runtime.
+- **`MATE-002` (limit mates)** — limit-distance and limit-angle mates are created with
+  min and max, and `sw_mate_list` reports the range and current value. Updating an
+  existing mate's limits is not implemented; recreate the mate.
+- **`MATE-003` (mate references)** — faces, edges, vertices, planes, and axes go through
+  the same structured references as everything else. Component coordinate systems as
+  mate references are untested and not claimed.
 - **`SK-008` (sketch text)** — alignment, path following, mirroring, width factor, and
   character spacing. Font is not settable: `InsertSketchText` takes no font and
   SOLIDWORKS reads it from the document's text-format preference, so exposing it would
@@ -335,7 +355,9 @@ coverage file, rather than left for a user to discover:
   refused unless `SWMCP_ALLOW_UNCHECKPOINTED=1`.
 
 Export (`IO-002`, `IO-003`) and the atomic mutate-and-validate workflow (`REV-006`)
-are pulled forward from P2 because a model that cannot leave SOLIDWORKS, and a sequence
-that can end half-applied, both undercut everything else. The rest of P2 and P3 —
-assemblies, mates, motion, drawings, import, sheet metal, weldments, simulation — are
-not implemented.
+were pulled forward from P2 because a model that cannot leave SOLIDWORKS, and a sequence
+that can end half-applied, both undercut everything else. P2 proper starts with
+assemblies: `ASM-001` to `ASM-003` cover inserting a component, walking the tree, and
+setting component state. Component transforms (`ASM-004`) and the rest of P2 and P3 —
+mates, motion, drawings, import, sheet metal, weldments, simulation — are not
+implemented.

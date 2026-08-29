@@ -13,6 +13,12 @@
     "SYS-006": "tests/test_units.py::test_every_supported_length_form_reaches_meters"
   },
   "fully_covered": {
+    "ASM-002": [
+      "sw_asm_tree"
+    ],
+    "ASM-003": [
+      "sw_asm_component_set"
+    ],
     "CON-001": [
       "sw_sketch_add_relations"
     ],
@@ -122,6 +128,9 @@
     ],
     "IO-002": [
       "sw_export"
+    ],
+    "MATE-004": [
+      "sw_mate_list"
     ],
     "PAR-001": [
       "sw_dimension_list",
@@ -238,6 +247,12 @@
   },
   "note": "A requirement listed under partially_covered is NOT done. The limitation field says what is missing.",
   "partially_covered": {
+    "ASM-001": {
+      "limitation": "Insert a part or subassembly at a position, with a chosen configuration and optional fixed state. Placing at an arbitrary *transform* is not implemented: AddComponent5 takes only X/Y/Z, and building a MathTransform for SetTransformAndSolve2 is impossible on this build because IMathUtility::CreateTransform answers 'Member not found' through IDispatch for every argument form, raw or cast. Orientation is left to mates.",
+      "tools": [
+        "sw_asm_insert"
+      ]
+    },
     "FEAT-005": {
       "limitation": "Loft boss and cut across two or more profiles, with guide curves, a centerline, the closed-loop option, start/end tangency, and thin-wall thickness. The boundary feature is a different API (InsertNetBlend) and is not implemented.",
       "tools": [
@@ -287,6 +302,24 @@
         "sw_export"
       ]
     },
+    "MATE-001": {
+      "limitation": "Coincident, concentric, perpendicular, parallel, tangent, distance, angle, and lock mates — the types AddMate5 builds from exactly two selected entities. Width, symmetric, gear, rack-and-pinion, screw, universal joint, slot, cam, hinge, linear coupler, path, and coordinate-system mates need three or more selections or extra arguments and are rejected by the schema rather than failing at runtime.",
+      "tools": [
+        "sw_mate_add"
+      ]
+    },
+    "MATE-002": {
+      "limitation": "Limit-distance and limit-angle mates are created with min and max, and sw_mate_list reports the range and the current value. Updating the limits of an existing mate is not implemented; the mate has to be recreated.",
+      "tools": [
+        "sw_mate_add"
+      ]
+    },
+    "MATE-003": {
+      "limitation": "Faces, edges, vertices, planes, and axes are addressed through the same structured references as everywhere else. Component coordinate systems as mate references are untested and are not claimed.",
+      "tools": [
+        "sw_mate_add"
+      ]
+    },
     "PAR-004": {
       "limitation": "Configuration-specific dimension values are read and written through sw_dimension_list and sw_dimension_set. Per-configuration feature suppression is not implemented; sw_feature_edit suppresses in the active configuration.",
       "tools": [
@@ -322,11 +355,11 @@
   },
   "totals": {
     "covered_by_platform": 11,
-    "fully_covered_by_a_tool": 64,
-    "in_scope": 85,
-    "partially_covered": 13,
+    "fully_covered_by_a_tool": 67,
+    "in_scope": 92,
+    "partially_covered": 17,
     "requirements_in_backlog": 152,
-    "tools": 87,
+    "tools": 92,
     "uncovered_in_scope": 0
   },
   "uncovered_in_scope": []

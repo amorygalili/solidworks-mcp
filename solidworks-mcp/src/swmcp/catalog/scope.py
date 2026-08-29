@@ -34,6 +34,12 @@ IN_SCOPE_REQUIREMENTS: frozenset[str] = frozenset(
         # Pulled forward from P2: export is how the model reaches anything else, and
         # an atomic sequence is what the safety layer has been building toward.
         "IO-002", "IO-003", "REV-006",
+        # P2 — assemblies. The first vertical of P2: insert, inspect, and set component
+        # state. Transforms (ASM-004) and the rest of ASM are not claimed yet.
+        "ASM-001", "ASM-002", "ASM-003",
+        # P2 — mates. Add and inspect; editing and the exotic mate types are not
+        # claimed yet.
+        "MATE-001", "MATE-002", "MATE-003", "MATE-004",
         # P1 vertical — appearance and view
         "VIEW-001", "VIEW-002", "VIEW-003", "VIEW-004",
         # P1 vertical — core features, bodies, measurement
@@ -115,6 +121,14 @@ DECLARED_PARTIAL: dict[str, str] = {
         "sw_dimension_list and sw_dimension_set. Per-configuration feature suppression "
         "is not implemented; sw_feature_edit suppresses in the active configuration."
     ),
+    "ASM-001": (
+        "Insert a part or subassembly at a position, with a chosen configuration and "
+        "optional fixed state. Placing at an arbitrary *transform* is not implemented: "
+        "AddComponent5 takes only X/Y/Z, and building a MathTransform for "
+        "SetTransformAndSolve2 is impossible on this build because "
+        "IMathUtility::CreateTransform answers 'Member not found' through IDispatch for "
+        "every argument form, raw or cast. Orientation is left to mates."
+    ),
     "FEAT-005": (
         "Loft boss and cut across two or more profiles, with guide curves, a "
         "centerline, the closed-loop option, start/end tangency, and thin-wall "
@@ -127,6 +141,24 @@ DECLARED_PARTIAL: dict[str, str] = {
         "override is not: IMassProperty on this build does not expose "
         "SetOverrideMassValue or OverrideMass through late binding, so a tool for it "
         "would have nothing to call."
+    ),
+    "MATE-001": (
+        "Coincident, concentric, perpendicular, parallel, tangent, distance, angle, and "
+        "lock mates — the types AddMate5 builds from exactly two selected entities. "
+        "Width, symmetric, gear, rack-and-pinion, screw, universal joint, slot, cam, "
+        "hinge, linear coupler, path, and coordinate-system mates need three or more "
+        "selections or extra arguments and are rejected by the schema rather than "
+        "failing at runtime."
+    ),
+    "MATE-002": (
+        "Limit-distance and limit-angle mates are created with min and max, and "
+        "sw_mate_list reports the range and the current value. Updating the limits of "
+        "an existing mate is not implemented; the mate has to be recreated."
+    ),
+    "MATE-003": (
+        "Faces, edges, vertices, planes, and axes are addressed through the same "
+        "structured references as everywhere else. Component coordinate systems as mate "
+        "references are untested and are not claimed."
     ),
     "SK-007": (
         "Move, rotate, scale, mirror, offset, and trim are implemented. Extend, split, "

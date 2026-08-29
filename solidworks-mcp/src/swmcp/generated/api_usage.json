@@ -1,5 +1,5 @@
 {
-  "call_count": 185,
+  "call_count": 208,
   "calls": [
     {
       "argument_counts": [
@@ -51,6 +51,15 @@
     },
     {
       "argument_counts": [
+        8
+      ],
+      "member": "AddComponent5",
+      "sources": [
+        "swmcp/handlers/assembly.py"
+      ]
+    },
+    {
+      "argument_counts": [
         7
       ],
       "member": "AddConfiguration2",
@@ -65,6 +74,15 @@
       "member": "AddDimension2",
       "sources": [
         "swmcp/handlers/constraint.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "Alignment",
+      "sources": [
+        "swmcp/handlers/mate.py"
       ]
     },
     {
@@ -98,6 +116,15 @@
       "argument_counts": [
         0
       ],
+      "member": "CanBeFlipped",
+      "sources": [
+        "swmcp/handlers/mate.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
       "member": "CircleParams",
       "sources": [
         "swmcp/refs/capture.py"
@@ -109,8 +136,10 @@
       ],
       "member": "ClearSelection2",
       "sources": [
+        "swmcp/handlers/assembly.py",
         "swmcp/handlers/constraint.py",
         "swmcp/handlers/feature.py",
+        "swmcp/handlers/mate.py",
         "swmcp/handlers/reference.py",
         "swmcp/handlers/sketch.py",
         "swmcp/handlers/solid.py",
@@ -360,6 +389,15 @@
     },
     {
       "argument_counts": [
+        1
+      ],
+      "member": "DisplayDimension2",
+      "sources": [
+        "swmcp/handlers/mate.py"
+      ]
+    },
+    {
+      "argument_counts": [
         0
       ],
       "member": "DrivenState",
@@ -478,12 +516,31 @@
         "swmcp/handlers/constraint.py",
         "swmcp/handlers/document.py",
         "swmcp/handlers/feature.py",
+        "swmcp/handlers/mate.py",
         "swmcp/handlers/review.py",
         "swmcp/handlers/sketch.py",
         "swmcp/handlers/surface.py",
         "swmcp/modeling.py",
         "swmcp/refs/resolve.py",
         "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "FixComponent",
+      "sources": [
+        "swmcp/handlers/assembly.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "Flipped",
+      "sources": [
+        "swmcp/handlers/mate.py"
       ]
     },
     {
@@ -589,6 +646,7 @@
       ],
       "member": "GetChildren",
       "sources": [
+        "swmcp/handlers/assembly.py",
         "swmcp/modeling.py"
       ]
     },
@@ -599,6 +657,16 @@
       "member": "GetComponent",
       "sources": [
         "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "GetComponents",
+      "sources": [
+        "swmcp/handlers/assembly.py",
+        "swmcp/refs/resolve.py"
       ]
     },
     {
@@ -690,6 +758,15 @@
       "member": "GetDimension",
       "sources": [
         "swmcp/handlers/constraint.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "GetDimension2",
+      "sources": [
+        "swmcp/handlers/mate.py"
       ]
     },
     {
@@ -786,6 +863,15 @@
       "argument_counts": [
         0
       ],
+      "member": "GetFirstSubFeature",
+      "sources": [
+        "swmcp/handlers/mate.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
       "member": "GetID",
       "sources": [
         "swmcp/sketching.py"
@@ -807,6 +893,15 @@
       "member": "GetMassProperties",
       "sources": [
         "swmcp/modeling.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetMateEntityCount",
+      "sources": [
+        "swmcp/handlers/mate.py"
       ]
     },
     {
@@ -873,12 +968,22 @@
         "swmcp/handlers/constraint.py",
         "swmcp/handlers/document.py",
         "swmcp/handlers/feature.py",
+        "swmcp/handlers/mate.py",
         "swmcp/handlers/review.py",
         "swmcp/handlers/sketch.py",
         "swmcp/handlers/surface.py",
         "swmcp/modeling.py",
         "swmcp/refs/resolve.py",
         "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetNextSubFeature",
+      "sources": [
+        "swmcp/handlers/mate.py"
       ]
     },
     {
@@ -916,7 +1021,8 @@
       ],
       "member": "GetPathName",
       "sources": [
-        "swmcp/com/session.py"
+        "swmcp/com/session.py",
+        "swmcp/handlers/assembly.py"
       ]
     },
     {
@@ -1007,7 +1113,17 @@
       ],
       "member": "GetSpecificFeature2",
       "sources": [
+        "swmcp/handlers/mate.py",
         "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetSuppression2",
+      "sources": [
+        "swmcp/handlers/assembly.py"
       ]
     },
     {
@@ -1078,6 +1194,7 @@
         "swmcp/com/session.py",
         "swmcp/handlers/document.py",
         "swmcp/handlers/feature.py",
+        "swmcp/handlers/mate.py",
         "swmcp/handlers/sketch.py",
         "swmcp/handlers/view.py",
         "swmcp/modeling.py",
@@ -1326,6 +1443,24 @@
       "argument_counts": [
         0
       ],
+      "member": "IsEnvelope",
+      "sources": [
+        "swmcp/handlers/assembly.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "IsFixed",
+      "sources": [
+        "swmcp/handlers/assembly.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
       "member": "IsOpenedReadOnly",
       "sources": [
         "swmcp/com/session.py"
@@ -1337,9 +1472,20 @@
       ],
       "member": "IsSuppressed",
       "sources": [
+        "swmcp/handlers/assembly.py",
         "swmcp/handlers/document.py",
         "swmcp/handlers/feature.py",
+        "swmcp/handlers/mate.py",
         "swmcp/modeling.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "IsVirtual",
+      "sources": [
+        "swmcp/handlers/assembly.py"
       ]
     },
     {
@@ -1364,6 +1510,33 @@
     },
     {
       "argument_counts": [
+        1
+      ],
+      "member": "MateEntity",
+      "sources": [
+        "swmcp/handlers/mate.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "MaximumVariation",
+      "sources": [
+        "swmcp/handlers/mate.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "MinimumVariation",
+      "sources": [
+        "swmcp/handlers/mate.py"
+      ]
+    },
+    {
+      "argument_counts": [
         9
       ],
       "member": "MoveOrCopy",
@@ -1382,6 +1555,7 @@
         "swmcp/handlers/document.py",
         "swmcp/handlers/exchange.py",
         "swmcp/handlers/feature.py",
+        "swmcp/handlers/mate.py",
         "swmcp/handlers/material.py",
         "swmcp/handlers/parameter.py",
         "swmcp/handlers/review.py",
@@ -1402,7 +1576,10 @@
       ],
       "member": "Name2",
       "sources": [
-        "swmcp/refs/capture.py"
+        "swmcp/handlers/assembly.py",
+        "swmcp/handlers/mate.py",
+        "swmcp/refs/capture.py",
+        "swmcp/refs/resolve.py"
       ]
     },
     {
@@ -1430,6 +1607,24 @@
       "member": "PlaneParams",
       "sources": [
         "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "ReferenceComponent",
+      "sources": [
+        "swmcp/handlers/mate.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "ReferencedConfiguration",
+      "sources": [
+        "swmcp/handlers/assembly.py"
       ]
     },
     {
@@ -1495,11 +1690,14 @@
     },
     {
       "argument_counts": [
-        2
+        2,
+        3
       ],
       "member": "Select4",
       "sources": [
+        "swmcp/handlers/assembly.py",
         "swmcp/handlers/feature.py",
+        "swmcp/handlers/mate.py",
         "swmcp/handlers/reference.py",
         "swmcp/handlers/sketch.py",
         "swmcp/handlers/solid.py",
@@ -1558,6 +1756,15 @@
     },
     {
       "argument_counts": [
+        1
+      ],
+      "member": "SetSuppression2",
+      "sources": [
+        "swmcp/handlers/assembly.py"
+      ]
+    },
+    {
+      "argument_counts": [
         3
       ],
       "member": "SetSystemValue3",
@@ -1591,6 +1798,15 @@
       "sources": [
         "swmcp/com/session.py",
         "swmcp/handlers/exchange.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        3
+      ],
+      "member": "SetVisibility",
+      "sources": [
+        "swmcp/handlers/assembly.py"
       ]
     },
     {
@@ -1736,7 +1952,17 @@
       "member": "SystemValue",
       "sources": [
         "swmcp/handlers/constraint.py",
+        "swmcp/handlers/mate.py",
         "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "Type",
+      "sources": [
+        "swmcp/handlers/mate.py"
       ]
     },
     {
@@ -1772,6 +1998,7 @@
       ],
       "member": "Visible",
       "sources": [
+        "swmcp/handlers/assembly.py",
         "swmcp/handlers/view.py",
         "swmcp/modeling.py"
       ]
