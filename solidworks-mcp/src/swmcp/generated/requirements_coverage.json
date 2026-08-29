@@ -93,6 +93,9 @@
     "FEAT-003": [
       "sw_feature_revolve"
     ],
+    "FEAT-004": [
+      "sw_feature_sweep"
+    ],
     "FEAT-006": [
       "sw_feature_chamfer",
       "sw_feature_fillet"
@@ -225,6 +228,12 @@
   },
   "note": "A requirement listed under partially_covered is NOT done. The limitation field says what is missing.",
   "partially_covered": {
+    "FEAT-005": {
+      "limitation": "Loft boss and cut across two or more profiles, with guide curves, a centerline, the closed-loop option, start/end tangency, and thin-wall thickness. The boundary feature is a different API (InsertNetBlend) and is not implemented.",
+      "tools": [
+        "sw_feature_loft"
+      ]
+    },
     "FEAT-007": {
       "limitation": "Linear and circular patterns only. Curve-driven, sketch-driven, table-driven, fill, and variable patterns are not implemented and are rejected by the schema rather than failing at runtime.",
       "tools": [
@@ -278,11 +287,11 @@
   },
   "totals": {
     "covered_by_platform": 11,
-    "fully_covered_by_a_tool": 60,
-    "in_scope": 76,
-    "partially_covered": 8,
+    "fully_covered_by_a_tool": 61,
+    "in_scope": 78,
+    "partially_covered": 9,
     "requirements_in_backlog": 152,
-    "tools": 77,
+    "tools": 79,
     "uncovered_in_scope": 0
   },
   "uncovered_in_scope": []

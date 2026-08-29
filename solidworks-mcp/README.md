@@ -6,7 +6,7 @@ worker thread.
 It implements the P0 foundation and a P1 modelling vertical from
 [`docs/solidworks-target-requirements.md`](../docs/solidworks-target-requirements.md),
 plus neutral-format export and an atomic mutate-and-validate workflow pulled forward
-from P2: **77 operations covering all 76 in-scope requirements**, with coverage
+from P2: **79 operations covering all 78 in-scope requirements**, with coverage
 reported honestly in `src/swmcp/generated/requirements_coverage.json` rather than
 asserted.
 
@@ -118,7 +118,7 @@ Angles default to degrees and accept `"45deg"`, `"1.57rad"`, or `{"value": 0.25,
 | sketch | start, exit, list, add geometry, set construction, delete, convert, modify |
 | constraint | add relations, add dimensions, diagnose, dimension list/set, auto-dimension |
 | datum | list, create plane, axis, point, coordinate system |
-| feature / body / measure | extrude boss/cut, revolve, fillet, chamfer, pattern, hole, shell, rib, primitives, list, edit, delete, body list, measure |
+| feature / body / measure | extrude boss/cut, revolve, sweep, loft, fillet, chamfer, pattern, hole, shell, rib, primitives, list, edit, delete, body list, measure |
 | parameter | equation list/set, configuration list/create/activate/delete, property list/set, parameter table export/import |
 | view | set orientation and display mode, capture a PNG or BMP preview |
 | exchange | export STEP, IGES, STL, 3MF, OBJ, PLY, Parasolid, SAT, VRML, PDF, DXF, DWG |
@@ -154,8 +154,9 @@ only the documents the run created are closed, addressed by title.
 
 ```bash
 uv run pytest                       # 371 tests, no SOLIDWORKS needed
-uv run pytest -m live               # against a running SOLIDWORKS; writes only to .scratch/
+uv run pytest -m live tests/live/test_live_sketch.py   # one module: minutes
 uv run pytest -m "live and not slow"  # the quick live pass
+uv run pytest -m live               # the FULL live suite: ~90 minutes
 uv run ruff check src tests scripts
 uv run solidworks-mcp --check-artifacts
 uv run python scripts/gen_swconst.py --check
@@ -164,20 +165,37 @@ uv run python scripts/fetch_api_docs.py          # vendor the offline API refere
 uv run python scripts/fetch_api_docs.py --check  # does it still match this install?
 ```
 
+### Which tests to run
+
+The full live suite takes about **90 minutes**, and the cost is concentrated rather than
+spread: measured from the audit log, `sw_feature_pattern` (8 calls at 257s) and
+`sw_body_primitive` (27 calls at 66s) are 40% of the run between them. Both live in
+modules marked `slow`, so the quick pass skips them.
+
+So match the gate to the change rather than running everything by reflex. The headless
+suite is 6 seconds and catches most mistakes. For a change that only adds a tool — a new
+handler and its schemas, touching no shared code — the honest gate is the headless suite
+plus the one live module that covers it. Save the full run for changes to `dispatch.py`,
+the STA worker, the session, references, safety, or units, and for release-grade checks.
+
+`CLAUDE.md` carries the same policy for coding agents working in this repo, along with
+the per-tool timing table and the rule that a live module should scope its document
+fixture to the module rather than paying `sw_doc_new` and `sw_doc_close` per test.
+
 ### The offline API reference
 
 The type library says what exists and with how many arguments. It cannot say what a
 call means, what it returns, or what it quietly requires — and that gap is where this
 project's real bugs have lived. `scripts/fetch_api_docs.py` vendors
 [offline-solidworks-api-docs](https://github.com/pedropaulovc/offline-solidworks-api-docs)
-into `reference/swapi-docs/`, curated to the same 29 interfaces as `swapi.json`.
+into `reference/swapi-docs/`, curated to exactly the interfaces `swapi.json` lists.
 
 It is **gitignored, deliberately**: the content is Dassault's SOLIDWORKS API Help,
 marked for personal and educational use, and the upstream repository carries no license,
 so it is fetched rather than redistributed here.
 
 `--check` cross-checks every vendored signature against the type library registered on
-the machine and fails on any arity mismatch — 3,298 members checked here with none. It
+the machine and fails on any arity mismatch — 3,322 members checked here with none. It
 is the difference between "the docs say 2026" and "the docs describe this install."
 
 Two things it settled that probing had answered correctly but explained wrongly:
@@ -265,6 +283,9 @@ coverage file, rather than left for a user to discover:
   Extend, split, and sketch pattern are not implemented.
 - **`REF-005` (probes)** — face, edge, planar, cylindrical, body-ownership, and ray
   probes. Candidate *mate* entities need the assembly domain, which is P2.
+- **`FEAT-005` (loft)** — loft boss and cut across two or more profiles, with guide
+  curves, a centerline, the closed-loop option, start/end tangency, and thin walls. The
+  *boundary* feature is a different API (`InsertNetBlend`) and is not implemented.
 - **`FEAT-009` (shell)** — one wall thickness, with faces removed to open the shell.
   Multi-thickness shells and the thicken feature are not implemented.
 - **`FEAT-014` (primitives)** — box, cylinder, sphere, cone, frustum, torus, wedge, and

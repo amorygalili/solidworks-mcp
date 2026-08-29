@@ -256,6 +256,161 @@ class RevolveResult(MutationResult):
     volume_mm3_after: float | None = None
 
 
+# --- sweep and loft -----------------------------------------------------------
+
+#: Profile orientation along the path. These are the SOLIDWORKS "Profile Twist"
+#: options; the API splits them across TwistControlType and PathAlignmentType, which
+#: is why the caller picks one word and the handler sets both.
+SweepOrientation = Literal[
+    "follow_path",
+    "keep_normal_constant",
+    "follow_path_and_first_guide",
+    "follow_first_and_second_guide",
+    "constant_twist_along_path",
+]
+
+TangencyType = Literal["none", "normal_to_profile", "direction_vector", "all_faces"]
+
+
+class SweepArgs(BaseArgs):
+    mode: Literal["boss", "cut"] = Field(
+        default="boss",
+        description="Add material or remove it. The option set is identical either way.",
+    )
+    profile_sketch: str = Field(
+        min_length=1,
+        description=(
+            "Closed sketch swept along the path. Named explicitly rather than guessed: "
+            "a sweep always has at least two sketches in play, so 'the most recent one' "
+            "would be a coin flip."
+        ),
+    )
+    path_sketch: str | None = Field(
+        default=None, description="Sketch whose curves form the sweep path."
+    )
+    path_ref: EntityRef | None = Field(
+        default=None, description="Model edge used as the path instead of a sketch."
+    )
+    guide_sketches: list[str] = Field(
+        default_factory=list,
+        max_length=8,
+        description="Guide curve sketches. Each must touch the profile or a point on it.",
+    )
+    guide_refs: list[EntityRef] = Field(
+        default_factory=list, max_length=8, description="Guide curves given as entity references."
+    )
+    orientation: SweepOrientation = Field(
+        default="follow_path", description="How the profile is oriented as it travels the path."
+    )
+    twist_angle: Angle | None = Field(
+        default=None,
+        description="End twist angle; only used when orientation is constant_twist_along_path.",
+    )
+    direction: Literal["forward", "reverse", "bidirectional"] = Field(
+        default="forward",
+        description=(
+            "Only meaningful when the path extends through both sides of the profile; "
+            "SOLIDWORKS ignores it otherwise."
+        ),
+    )
+    merge_result: bool = Field(default=True, description="Merge into existing bodies.")
+    merge_smooth_faces: bool = True
+    align_with_end_faces: bool = Field(
+        default=False, description="Run the sweep through end faces rather than stopping square."
+    )
+    tangent_propagation: bool = Field(
+        default=False, description="Propagate the sweep to the next tangent edge."
+    )
+    thin_thickness: Length | None = Field(
+        default=None, description="Wall thickness for a thin sweep. Omit for a solid one."
+    )
+    thin_direction: Literal["outward", "inward", "mid_plane", "both"] = Field(
+        default="outward",
+        description=(
+            "Which side of the profile the wall is added to. Measured, not assumed: "
+            "'outward' grows the wall away from the profile, so a thin sweep of a "
+            "circle r=5 with a 1 mm wall is the annulus between r=5 and r=6, not "
+            "between r=4 and r=5. Use 'inward' to keep the profile as the outer wall."
+        ),
+    )
+    name: str | None = None
+
+    @model_validator(mode="after")
+    def _has_exactly_one_path(self) -> SweepArgs:
+        """No path means SOLIDWORKS sweeps nothing; two means the caller is guessing."""
+        if (self.path_sketch is None) == (self.path_ref is None):
+            raise ValueError("a sweep needs exactly one of path_sketch or path_ref")
+        if self.orientation == "constant_twist_along_path" and self.twist_angle is None:
+            raise ValueError("orientation='constant_twist_along_path' needs a twist_angle")
+        return self
+
+
+class SweepResult(MutationResult):
+    feature_name: str
+    mode: str
+    profile_sketch: str
+    path: str
+    guide_curve_count: int = 0
+    body_count_before: int
+    body_count_after: int
+    volume_mm3_before: float | None = None
+    volume_mm3_after: float | None = None
+    reference: dict[str, Any] | None = None
+
+
+class LoftArgs(BaseArgs):
+    mode: Literal["boss", "cut"] = Field(
+        default="boss", description="Add material or remove it."
+    )
+    profile_sketches: list[str] = Field(
+        min_length=2,
+        max_length=32,
+        description=(
+            "Closed profiles, in the order the loft should run through them. Order is "
+            "the shape: SOLIDWORKS lofts in selection order, not tree order."
+        ),
+    )
+    guide_sketches: list[str] = Field(
+        default_factory=list, max_length=8, description="Guide curve sketches."
+    )
+    centerline_sketch: str | None = Field(
+        default=None, description="Centerline the loft follows between profiles."
+    )
+    closed: bool = Field(
+        default=False, description="Close the loft back to the first profile."
+    )
+    keep_tangency: bool = Field(
+        default=True, description="Keep tangency where the section curves are tangent."
+    )
+    start_tangency: TangencyType = "none"
+    end_tangency: TangencyType = "none"
+    merge_result: bool = True
+    thin_thickness: Length | None = Field(
+        default=None, description="Wall thickness for a thin loft. Omit for a solid one."
+    )
+    name: str | None = None
+
+    @model_validator(mode="after")
+    def _profiles_are_distinct(self) -> LoftArgs:
+        """The same sketch twice cannot define a section, and SOLIDWORKS will not say so."""
+        if len(set(self.profile_sketches)) != len(self.profile_sketches):
+            raise ValueError("profile_sketches must not repeat a sketch")
+        return self
+
+
+class LoftResult(MutationResult):
+    feature_name: str
+    mode: str
+    profile_sketches: list[str] = Field(default_factory=list)
+    guide_curve_count: int = 0
+    centerline: str | None = None
+    body_count_before: int
+    body_count_after: int
+    volume_mm3_before: float | None = None
+    volume_mm3_after: float | None = None
+    reference: dict[str, Any] | None = None
+
+
 class FilletArgs(BaseArgs):
     refs: list[EntityRef] = Field(
         min_length=1, max_length=200, description="Edges or faces to round."

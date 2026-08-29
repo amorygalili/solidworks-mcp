@@ -1,6 +1,6 @@
 {
  "generated_from": "sldworks.tlb",
- "interface_count": 29,
+ "interface_count": 30,
  "interfaces": {
   "IAssemblyDoc": {
    "ActivateGroundPlane": {
@@ -47468,6 +47468,478 @@
     "returns_void": false
    }
   },
+  "ISweepFeatureData": {
+   "AccessSelections": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "TopDoc",
+     "Component"
+    ],
+    "returns_void": false
+   },
+   "AddRef": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "AdvancedSmoothing": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "AlignWithEndFaces": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "AssemblyFeatureScope": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "AutoSelect": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "AutoSelectComponents": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "CircularProfile": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "CircularProfileDiameter": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "D1ReverseTwistDir": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "D2ReverseTwistDir": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "Direction": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "EndDirectionVector": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "EndTangencyType": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "FeatureScope": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "FeatureScopeBodies": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "GetCutSweepOption": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetD2TwistAngle": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFeatureScopeBodiesCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetGuideCurvesCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetGuideCurvesType": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetIDsOfNames": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "riid",
+     "rgszNames",
+     "cNames",
+     "lcid",
+     "rgdispid"
+    ],
+    "returns_void": true
+   },
+   "GetPathAlignmentDirectionVector": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "Type"
+    ],
+    "returns_void": false
+   },
+   "GetPathType": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetProfileType": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetTwistAngle": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetTypeInfo": {
+    "flags": [
+     1,
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "itinfo",
+     "lcid",
+     "pptinfo"
+    ],
+    "returns_void": true
+   },
+   "GetTypeInfoCount": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "pctinfo"
+    ],
+    "returns_void": true
+   },
+   "GetWallThickness": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Forward"
+    ],
+    "returns_void": false
+   },
+   "GuideCurves": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "IAccessSelections": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "TopDoc",
+     "Component"
+    ],
+    "returns_void": false
+   },
+   "IGetFeatureScopeBodies": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Count"
+    ],
+    "returns_void": false
+   },
+   "IGetGuideCurves": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Count"
+    ],
+    "returns_void": false
+   },
+   "IGetGuideCurvesType": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Count"
+    ],
+    "returns_void": false
+   },
+   "ISetFeatureScopeBodies": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Count",
+     "BodyArr"
+    ],
+    "returns_void": true
+   },
+   "ISetGuideCurves": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Count",
+     "PDisp"
+    ],
+    "returns_void": true
+   },
+   "Invoke": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     2,
+     2,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "dispidMember",
+     "riid",
+     "lcid",
+     "wFlags",
+     "pdispparams",
+     "pvarResult",
+     "pexcepinfo",
+     "puArgErr"
+    ],
+    "returns_void": true
+   },
+   "IsBossFeature": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IsThinFeature": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "MaintainTangency": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "Merge": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "MergeSmoothFaces": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "Path": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "PathAlignmentType": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "Profile": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "PropagateFeatureToParts": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "QueryInterface": {
+    "flags": [
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "riid",
+     "ppvObj"
+    ],
+    "returns_void": true
+   },
+   "Release": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "ReleaseSelectionAccess": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "SetD2TwistAngle": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Angle"
+    ],
+    "returns_void": true
+   },
+   "SetPathAlignmentDirectionVector": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Dir"
+    ],
+    "returns_void": true
+   },
+   "SetTwistAngle": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Angle"
+    ],
+    "returns_void": true
+   },
+   "SetWallThickness": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Forward",
+     "WallThickness"
+    ],
+    "returns_void": true
+   },
+   "StartDirectionVector": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "StartTangencyType": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "SweepType": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "TangentPropagation": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "ThinFeature": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "ThinWallType": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "TwistControlType": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   }
+  },
   "IVertex": {
    "AddRef": {
     "flags": [],
@@ -47731,7 +48203,7 @@
    }
   }
  },
- "member_count": 3999,
+ "member_count": 4059,
  "typelib_iid": "{83A33D31-27C5-11CE-BFD4-00400513BB57}",
  "typelib_major": 34
 }

@@ -467,6 +467,17 @@
         "kind": "read"
       }
     },
+    "sw_feature_loft": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
     "sw_feature_pattern": {
       "audited": true,
       "auto_checkpoint": true,
@@ -501,6 +512,17 @@
       }
     },
     "sw_feature_shell": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_feature_sweep": {
       "audited": true,
       "auto_checkpoint": true,
       "confirm_required": false,

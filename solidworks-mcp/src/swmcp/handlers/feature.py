@@ -57,12 +57,16 @@ from swmcp.schemas.feature import (
     FilletArgs,
     HoleArgs,
     HoleResult,
+    LoftArgs,
+    LoftResult,
     MeasureArgs,
     MeasureResult,
     PatternArgs,
     PatternResult,
     RevolveArgs,
     RevolveResult,
+    SweepArgs,
+    SweepResult,
 )
 from swmcp.units import from_meters
 
@@ -956,6 +960,336 @@ def feature_revolve(ctx: OpContext, args: RevolveArgs) -> RevolveResult:
         body_count_after=after["body_count"],
         volume_mm3_before=before["volume_mm3"],
         volume_mm3_after=after["volume_mm3"],
+        verification=Verification(
+            read_back=True,
+            before=before,
+            after=after,
+            checks=_geometry_checks(
+                before, after, expect="less" if args.mode == "cut" else "more"
+            ),
+        ),
+    )
+
+
+# --- sweep and loft -----------------------------------------------------------
+
+#: Selection marks are the entire contract for both features: SOLIDWORKS reads the
+#: role of each selection from its mark, not from argument order. Getting one wrong
+#: does not raise - it builds the wrong shape, or silently builds nothing.
+_SWEEP_MARK_PROFILE = 1
+_SWEEP_MARK_GUIDE = 2
+_SWEEP_MARK_PATH = 4
+
+_LOFT_MARK_PROFILE = 1
+_LOFT_MARK_GUIDE = 2
+_LOFT_MARK_CENTERLINE = 4
+
+_SWEEP_ORIENTATION = {
+    "follow_path": "swTwistControlFollowPath",
+    "keep_normal_constant": "swTwistControlKeepNormalConstant",
+    "follow_path_and_first_guide": "swTwistControlFollowPathFirstGuideCurve",
+    "follow_first_and_second_guide": "swTwistControlFollowFirstSecondGuideCurves",
+    "constant_twist_along_path": "swTwistControlConstantTwistAlongPath",
+}
+
+#: Which side of the profile a thin wall is added to. swThinWallOneDirection grows the
+#: wall *outward*: a 1 mm wall on a circle of r=5 measured as the annulus between r=5
+#: and r=6, not r=4 and r=5. That was found by measuring, not by reading.
+_THIN_WALL_TYPES = {
+    "outward": "swThinWallOneDirection",
+    "inward": "swThinWallOppDirection",
+    "mid_plane": "swThinWallMidPlane",
+    "both": "swThinWallTwoDirection",
+}
+
+_SWEEP_DIRECTION = {
+    "forward": "swSweepDirection1",
+    "reverse": "swSweepDirection2",
+    "bidirectional": "swSweepBidirectional",
+}
+
+#: Loft's StartMatchingType/EndMatchingType are documented as a plain 0-4 scale rather
+#: than as swTangencyType_e, and the two do not agree beyond 0. They are spelled out
+#: here so the mismatch is recorded rather than rediscovered.
+_LOFT_TANGENCY = {
+    "none": 0,
+    "normal_to_profile": 1,
+    "direction_vector": 2,
+    "all_faces": 3,
+}
+
+
+def _select_sketch_marked(doc: Any, name: str, mark: int, *, append: bool) -> bool:
+    return bool(
+        doc.Extension.SelectByID2(name, "SKETCH", 0, 0, 0, append, mark, null_dispatch(), 0)
+    )
+
+
+def _select_named_sketches(
+    doc: Any, names: list[str], mark: int, *, append: bool, role: str
+) -> list[str]:
+    """Select each sketch under one mark, returning the names that would not select."""
+    missing = []
+    for name in names:
+        if not _select_sketch_marked(doc, name, mark, append=append):
+            missing.append(name)
+        append = True
+    if missing:
+        raise SwMcpError(
+            make_error(
+                "SKETCH_NOT_SELECTABLE",
+                "reference",
+                f"These {role} sketches could not be selected: {', '.join(missing)}.",
+                context={"role": role, "missing": missing},
+                remediation=[
+                    "List the document's sketches to check the exact names.",
+                    "A sketch already consumed by another feature cannot be reused.",
+                ],
+            )
+        )
+    return names
+
+
+@op(
+    name="sw_feature_sweep",
+    tier="core",
+    domains=("feature",),
+    tags=("sweep", "boss", "cut", "path", "guide"),
+    summary=(
+        "Sweep a closed profile along a path, with optional guide curves, profile "
+        "orientation, twist, and thin-wall options, verified by measuring the result."
+    ),
+    safety=ModelMutation(destructive=False),
+    satisfies=("FEAT-004",),
+    precondition="part",
+    idempotent=False,
+    timeout_s=300.0,
+)
+def feature_sweep(ctx: OpContext, args: SweepArgs) -> SweepResult:
+    """FEAT-004, built on the post-2018 sweep architecture.
+
+    ``IFeatureManager::InsertProtrusionSwept4`` still works on this build and was
+    measured exact, but the API help marks it obsolete from 2018 in favour of
+    ``CreateDefinition(swFmSweep)`` -> ``ISweepFeatureData`` -> ``CreateFeature``. The
+    supported route is also the faster one here - 12.9s against 23.2s for the same
+    solid - so it is the one used, and ``ISweepFeatureData`` was added to the curated
+    interface list so its properties are arity-checked like everything else.
+    """
+    doc = ctx.require_doc()
+    before = model_snapshot(doc)
+
+    try_com_member(doc, "ClearSelection2", True, default=None)
+    _select_named_sketches(
+        doc, [args.profile_sketch], _SWEEP_MARK_PROFILE, append=False, role="profile"
+    )
+    if args.path_sketch is not None:
+        _select_named_sketches(doc, [args.path_sketch], _SWEEP_MARK_PATH, append=True, role="path")
+        path_label = args.path_sketch
+    else:
+        if _select_refs(ctx, doc, [args.path_ref], mark=_SWEEP_MARK_PATH) != 1:
+            raise SwMcpError(
+                make_error(
+                    "REFERENCE_NOT_SELECTABLE",
+                    "reference",
+                    "The sweep path reference could not be selected.",
+                    remediation=["Re-capture the edge; the model may have changed."],
+                )
+            )
+        path_label = "path_ref"
+
+    _select_named_sketches(doc, args.guide_sketches, _SWEEP_MARK_GUIDE, append=True, role="guide")
+    guides = len(args.guide_sketches)
+    if args.guide_refs:
+        guides += _select_refs(ctx, doc, args.guide_refs, mark=_SWEEP_MARK_GUIDE)
+
+    manager = doc.FeatureManager
+    kind = "swFmSweepCut" if args.mode == "cut" else "swFmSweep"
+    definition = try_com_member(
+        manager, "CreateDefinition", swconst.value("swFeatureNameID_e", kind), default=None
+    )
+    if definition is None:
+        raise SwMcpError(
+            make_error(
+                "SWEEP_DEFINITION_FAILED",
+                "solidworks",
+                f"SOLIDWORKS would not create a {args.mode} sweep definition.",
+                context={"feature_type": kind},
+            )
+        )
+
+    definition.TwistControlType = swconst.value(
+        "swTwistControlType_e", _SWEEP_ORIENTATION[args.orientation]
+    )
+    definition.PathAlignmentType = swconst.value("swTangencyType_e", "swTangencyNone")
+    if args.twist_angle is not None:
+        # Angles reach handlers already in radians, which is what SOLIDWORKS wants.
+        try_com_member(definition, "SetTwistAngle", float(args.twist_angle), default=None)
+    definition.Direction = swconst.value("swSweepDirection_e", _SWEEP_DIRECTION[args.direction])
+    definition.Merge = args.merge_result
+    definition.MergeSmoothFaces = args.merge_smooth_faces
+    definition.AlignWithEndFaces = args.align_with_end_faces
+    definition.TangentPropagation = args.tangent_propagation
+    if args.thin_thickness is not None:
+        definition.ThinFeature = True
+        definition.ThinWallType = swconst.value(
+            "swThinWallType_e", _THIN_WALL_TYPES[args.thin_direction]
+        )
+        try_com_member(
+            definition, "SetWallThickness", True, float(args.thin_thickness), default=None
+        )
+
+    feature = try_com_member(manager, "CreateFeature", definition, default=None)
+    if feature is None:
+        try_com_member(doc, "ClearSelection2", True, default=None)
+        raise SwMcpError(
+            make_error(
+                "SWEEP_FAILED",
+                "solidworks",
+                f"SOLIDWORKS could not sweep {args.profile_sketch!r} along {path_label!r}.",
+                context={"mode": args.mode, "guide_curves": guides},
+                remediation=[
+                    "The path must start on the plane of the profile for a one-directional "
+                    "sweep.",
+                    "A boss sweep needs a closed profile, and each guide curve must touch "
+                    "the profile or a point on it.",
+                    "A cut sweep needs existing material along the path to remove.",
+                ],
+            )
+        )
+
+    if args.name:
+        feature.Name = args.name
+    after = model_snapshot(doc)
+    reference = capture(ctx.session, doc, feature)
+
+    return SweepResult(
+        feature_name=str(try_com_member(feature, "Name", default="") or ""),
+        mode=args.mode,
+        profile_sketch=args.profile_sketch,
+        path=path_label,
+        guide_curve_count=guides,
+        body_count_before=before["body_count"],
+        body_count_after=after["body_count"],
+        volume_mm3_before=before["volume_mm3"],
+        volume_mm3_after=after["volume_mm3"],
+        reference={
+            **reference.model_dump(mode="json", exclude_none=True),
+            "tool_args": reference.tool_args(),
+        },
+        verification=Verification(
+            read_back=True,
+            before=before,
+            after=after,
+            checks=_geometry_checks(
+                before, after, expect="less" if args.mode == "cut" else "more"
+            ),
+        ),
+    )
+
+
+@op(
+    name="sw_feature_loft",
+    tier="core",
+    domains=("feature",),
+    tags=("loft", "boss", "cut", "profile", "guide"),
+    summary=(
+        "Loft between two or more closed profiles in the order given, with optional "
+        "guide curves, a centerline, a closed loop, and start/end tangency."
+    ),
+    safety=ModelMutation(destructive=False),
+    partially_satisfies=("FEAT-005",),
+    precondition="part",
+    idempotent=False,
+    timeout_s=300.0,
+)
+def feature_loft(ctx: OpContext, args: LoftArgs) -> LoftResult:
+    """FEAT-005 for loft. The boundary feature is a different API and is not built here.
+
+    Note for anyone writing a test against this: a loft between two circles is *not*
+    an exact frustum. SOLIDWORKS builds a B-spline surface through the sections, and
+    the measured volume came out 0.0036% under the closed-form figure. Compare with a
+    relative tolerance; asserting exact equality here would be asserting something that
+    is not true.
+    """
+    doc = ctx.require_doc()
+    before = model_snapshot(doc)
+
+    try_com_member(doc, "ClearSelection2", True, default=None)
+    # Order is the shape: SOLIDWORKS lofts through the profiles in selection order.
+    _select_named_sketches(
+        doc, args.profile_sketches, _LOFT_MARK_PROFILE, append=False, role="profile"
+    )
+    _select_named_sketches(doc, args.guide_sketches, _LOFT_MARK_GUIDE, append=True, role="guide")
+    if args.centerline_sketch is not None:
+        _select_named_sketches(
+            doc, [args.centerline_sketch], _LOFT_MARK_CENTERLINE, append=True, role="centerline"
+        )
+
+    thin = args.thin_thickness is not None
+    thickness = float(args.thin_thickness or 0.0)
+    thin_type = swconst.value("swThinWallType_e", "swThinWallOneDirection")
+    start_tangency = _LOFT_TANGENCY[args.start_tangency]
+    end_tangency = _LOFT_TANGENCY[args.end_tangency]
+    manager = doc.FeatureManager
+
+    if args.mode == "cut":
+        feature = try_com_member(
+            manager, "InsertCutBlend",
+            args.closed, args.keep_tangency, False, 1.0,
+            start_tangency, end_tangency,
+            thin, thickness, 0.0, thin_type,
+            True, True,
+            default=None,
+        )
+    else:
+        feature = try_com_member(
+            manager, "InsertProtrusionBlend2",
+            args.closed, args.keep_tangency, False, 1.0,
+            start_tangency, end_tangency,
+            0.0, 0.0, True, True,
+            thin, thickness, 0.0, thin_type,
+            args.merge_result, True, True,
+            swconst.value("swGuideCurveInfluence_e", "swGuideCurveInfluenceNextGuide"),
+            default=None,
+        )
+
+    if feature is None:
+        try_com_member(doc, "ClearSelection2", True, default=None)
+        raise SwMcpError(
+            make_error(
+                "LOFT_FAILED",
+                "solidworks",
+                f"SOLIDWORKS could not loft through {len(args.profile_sketches)} profiles.",
+                context={"mode": args.mode, "profiles": args.profile_sketches},
+                remediation=[
+                    "A solid loft needs closed profiles, listed in the order the loft "
+                    "should run through them.",
+                    "Profiles that cross each other, or a guide curve that misses a "
+                    "profile, will refuse to build.",
+                    "A cut loft needs existing material between the profiles to remove.",
+                ],
+            )
+        )
+
+    if args.name:
+        feature.Name = args.name
+    after = model_snapshot(doc)
+    reference = capture(ctx.session, doc, feature)
+
+    return LoftResult(
+        feature_name=str(try_com_member(feature, "Name", default="") or ""),
+        mode=args.mode,
+        profile_sketches=list(args.profile_sketches),
+        guide_curve_count=len(args.guide_sketches),
+        centerline=args.centerline_sketch,
+        body_count_before=before["body_count"],
+        body_count_after=after["body_count"],
+        volume_mm3_before=before["volume_mm3"],
+        volume_mm3_after=after["volume_mm3"],
+        reference={
+            **reference.model_dump(mode="json", exclude_none=True),
+            "tool_args": reference.tool_args(),
+        },
         verification=Verification(
             read_back=True,
             before=before,

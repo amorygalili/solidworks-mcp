@@ -36,7 +36,8 @@ IN_SCOPE_REQUIREMENTS: frozenset[str] = frozenset(
         # P1 vertical — appearance and view
         "VIEW-003", "VIEW-004",
         # P1 vertical — core features, bodies, measurement
-        "FEAT-001", "FEAT-002", "FEAT-003", "FEAT-006", "FEAT-007",
+        "FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004", "FEAT-005",
+        "FEAT-006", "FEAT-007",
         "FEAT-009", "FEAT-011", "FEAT-014",
         "FEAT-012", "FEAT-015", "FEAT-016", "FEAT-019",
     }
@@ -92,6 +93,12 @@ DECLARED_PARTIAL: dict[str, str] = {
         "Configuration-specific dimension values are read and written through "
         "sw_dimension_list and sw_dimension_set. Per-configuration feature suppression "
         "is not implemented; sw_feature_edit suppresses in the active configuration."
+    ),
+    "FEAT-005": (
+        "Loft boss and cut across two or more profiles, with guide curves, a "
+        "centerline, the closed-loop option, start/end tangency, and thin-wall "
+        "thickness. The boundary feature is a different API (InsertNetBlend) and is "
+        "not implemented."
     ),
     "SK-007": (
         "Move, rotate, scale, mirror, offset, and trim are implemented. Extend, split, "

@@ -58,6 +58,11 @@ INTERFACES = (
     "ICustomPropertyManager",
     "IModelView",
     "IMathUtility",
+    # The sweep feature-data object. IFeatureManager::InsertProtrusionSwept4 is marked
+    # obsolete from 2018 in favour of CreateDefinition(swFmSweep) -> ISweepFeatureData
+    # -> CreateFeature, so the properties that route sets have to be arity-checked and
+    # documented like everything else this server calls.
+    "ISweepFeatureData",
 )
 
 

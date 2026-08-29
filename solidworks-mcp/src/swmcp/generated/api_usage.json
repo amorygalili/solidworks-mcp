@@ -1,5 +1,5 @@
 {
-  "call_count": 168,
+  "call_count": 174,
   "calls": [
     {
       "argument_counts": [
@@ -220,11 +220,29 @@
     },
     {
       "argument_counts": [
+        1
+      ],
+      "member": "CreateDefinition",
+      "sources": [
+        "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
         9
       ],
       "member": "CreateEllipse",
       "sources": [
         "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "CreateFeature",
+      "sources": [
+        "swmcp/handlers/feature.py"
       ]
     },
     {
@@ -1118,6 +1136,15 @@
     },
     {
       "argument_counts": [
+        12
+      ],
+      "member": "InsertCutBlend",
+      "sources": [
+        "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
         8
       ],
       "member": "InsertFeatureChamfer",
@@ -1132,6 +1159,15 @@
       "member": "InsertFeatureShell",
       "sources": [
         "swmcp/handlers/solid.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        18
+      ],
+      "member": "InsertProtrusionBlend2",
+      "sources": [
+        "swmcp/handlers/feature.py"
       ]
     },
     {
@@ -1419,6 +1455,15 @@
     },
     {
       "argument_counts": [
+        1
+      ],
+      "member": "SetTwistAngle",
+      "sources": [
+        "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
         2
       ],
       "member": "SetUserPreferenceIntegerValue",
@@ -1434,6 +1479,15 @@
       "sources": [
         "swmcp/com/session.py",
         "swmcp/handlers/exchange.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        2
+      ],
+      "member": "SetWallThickness",
+      "sources": [
+        "swmcp/handlers/feature.py"
       ]
     },
     {

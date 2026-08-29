@@ -66,8 +66,8 @@ def download() -> zipfile.ZipFile:
 def extract(archive: zipfile.ZipFile) -> None:
     """Keep the interfaces this server actually calls, plus the enums and indexes.
 
-    The whole corpus is 31.8 MB across 16,254 files. Curating it to the 29 interfaces
-    in ``swapi.json`` keeps the reference aligned with the surface the code can reach —
+    The whole corpus is 31.8 MB across 16,254 files. Curating it to the interfaces
+    ``swapi.json`` lists keeps the reference aligned with the surface the code can reach —
     the same curation the generated API table already applies.
     """
     wanted = set(interfaces())
