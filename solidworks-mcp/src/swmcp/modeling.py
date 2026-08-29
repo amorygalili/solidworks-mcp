@@ -10,7 +10,13 @@ from __future__ import annotations
 from typing import Any
 
 from swmcp.com import swconst
-from swmcp.com.marshal import get_com_member, normalize_sequence, try_com_member
+from swmcp.com.marshal import (
+    call_with_outparams,
+    get_com_member,
+    normalize_sequence,
+    out_long,
+    try_com_member,
+)
 from swmcp.units import area_from_m2, from_meters
 
 #: A cubic-metre value converted to the cube of a display unit.
@@ -66,9 +72,56 @@ def bodies(doc: Any) -> list[Any]:
     return found
 
 
-def body_mass_properties(body: Any) -> dict[str, Any]:
-    """``IBody2.GetMassProperties`` returns [cx, cy, cz, volume, area, mass, ...]."""
-    raw = normalize_sequence(try_com_member(body, "GetMassProperties", 0.0, default=None))
+def document_mass_properties(doc: Any) -> dict[str, Any]:
+    """Mass properties that respect the document's material.
+
+    ``IModelDocExtension::GetMassProperties(Accuracy, out Status)`` returns thirteen
+    doubles — ``[cx, cy, cz, volume, area, mass, Ixx, Iyy, Izz, Ixy, Izx, Iyz,
+    accuracy]`` — and, unlike :func:`body_mass_properties`, it uses the density of the
+    material actually assigned to the part. Where no material is set, SOLIDWORKS uses a
+    density of 1.0 and the mass equals the volume; that is SOLIDWORKS' own convention
+    and is reported as it stands rather than hidden.
+    """
+    status = out_long(0)
+    try:
+        raw, _ = call_with_outparams(
+            doc.Extension.GetMassProperties, 2, status, outparams=[status]
+        )
+    except Exception:  # pragma: no cover - COM refusal is reported as "unavailable"
+        return {}
+    values = [float(v) for v in normalize_sequence(raw)]
+    if len(values) < 6:
+        return {}
+    volume = values[3]
+    mass = values[5]
+    return {
+        "center_of_mass_m": values[0:3],
+        "volume_m3": volume,
+        "surface_area_m2": values[4],
+        "mass_kg": mass,
+        "density_kg_m3": (mass / volume) if volume else None,
+    }
+
+
+def document_density(doc: Any) -> float | None:
+    """The density SOLIDWORKS is actually using, derived from mass over volume."""
+    return document_mass_properties(doc).get("density_kg_m3")
+
+
+def body_mass_properties(body: Any, density: float = 1.0) -> dict[str, Any]:
+    """``IBody2.GetMassProperties`` returns [cx, cy, cz, volume, area, mass, ...].
+
+    The ``density`` argument is not a hint: index 5 is documented as
+    ``Mass(Volume*density)``, computed from the number *passed in*, so this call knows
+    nothing about the material on the part. Passing ``0.0`` — as this did until the
+    material tools were built — makes SOLIDWORKS fall back to 1.0 and yields a "mass"
+    numerically equal to the volume, identical for a steel part and an aluminium one.
+    Callers that want the real figure pass :func:`document_density`, or read
+    :func:`document_mass_properties` directly.
+    """
+    raw = normalize_sequence(
+        try_com_member(body, "GetMassProperties", float(density), default=None)
+    )
     if len(raw) < 6:
         return {}
     return {
@@ -76,12 +129,17 @@ def body_mass_properties(body: Any) -> dict[str, Any]:
         "volume_m3": float(raw[3]),
         "surface_area_m2": float(raw[4]),
         "mass_kg": float(raw[5]),
+        "density_kg_m3": float(density),
     }
 
 
-def body_summary(body: Any) -> dict[str, Any]:
-    """Everything FEAT-016 asks for about one body."""
-    properties = body_mass_properties(body)
+def body_summary(body: Any, density: float = 1.0) -> dict[str, Any]:
+    """Everything FEAT-016 asks for about one body.
+
+    ``density`` comes from the document so the reported mass is the model's, not
+    volume-times-one. See :func:`body_mass_properties`.
+    """
+    properties = body_mass_properties(body, density)
     box = normalize_sequence(try_com_member(body, "GetBodyBox", default=None))
     faces = normalize_sequence(get_com_member(body, "GetFaces", default=None))
     edges = normalize_sequence(get_com_member(body, "GetEdges", default=None))

@@ -1,6 +1,6 @@
 {
   "generated_from": "swmcp.catalog.registry.OPS",
-  "tool_count": 79,
+  "tool_count": 87,
   "tools": [
     {
       "domains": [
@@ -1961,6 +1961,510 @@
       ],
       "tier": "extended",
       "timeout_s": 120.0
+    },
+    {
+      "domains": [
+        "view"
+      ],
+      "fresh_checkpoint": false,
+      "handler_ref": "swmcp.handlers.view:appearance_get",
+      "idempotent": true,
+      "input_schema": {
+        "$defs": {
+          "DocTarget": {
+            "additionalProperties": false,
+            "description": "Which document an operation acts on.\n\nWith neither field set the active document is used. Naming both is refused rather\nthan silently preferring one.",
+            "properties": {
+              "path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Full path of an already-open document. Takes precedence over title.",
+                "title": "Path"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Window title of an open document. Refused if more than one matches.",
+                "title": "Title"
+              }
+            },
+            "title": "DocTarget",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "body_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Body Name"
+          },
+          "document": {
+            "$ref": "#/$defs/DocTarget",
+            "description": "Which document to act on. Defaults to the active document."
+          },
+          "face_ref": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Face Ref"
+          },
+          "feature_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Feature Name"
+          },
+          "target": {
+            "default": "document",
+            "enum": [
+              "document",
+              "body",
+              "feature",
+              "face"
+            ],
+            "title": "Target",
+            "type": "string"
+          }
+        },
+        "title": "AppearanceGetArgs",
+        "type": "object"
+      },
+      "name": "sw_appearance_get",
+      "partially_satisfies": [],
+      "precondition": "part_or_assembly",
+      "projection": {
+        "audited": false,
+        "auto_checkpoint": false,
+        "confirm_required": false,
+        "destructive": false,
+        "read_only": true
+      },
+      "result_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "appearance": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Appearance",
+            "type": "object"
+          },
+          "applied_to": {
+            "title": "Applied To",
+            "type": "string"
+          },
+          "inherited": {
+            "default": false,
+            "description": "True when the entity has no appearance of its own and shows the document's.",
+            "title": "Inherited",
+            "type": "boolean"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          },
+          "warnings": {
+            "description": "Non-fatal problems the caller should see (degraded evidence, fallbacks used).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "target",
+          "applied_to"
+        ],
+        "title": "AppearanceGetResult",
+        "type": "object"
+      },
+      "safety": {
+        "kind": "read"
+      },
+      "satisfies": [
+        "VIEW-001"
+      ],
+      "summary": "Read the colour, transparency, and shading of the document, a body, a feature, or a face, reporting whether the value is its own or inherited.",
+      "tags": [
+        "appearance",
+        "colour",
+        "transparency",
+        "inspect"
+      ],
+      "tier": "core",
+      "timeout_s": 120.0
+    },
+    {
+      "domains": [
+        "view"
+      ],
+      "fresh_checkpoint": false,
+      "handler_ref": "swmcp.handlers.view:appearance_set",
+      "idempotent": true,
+      "input_schema": {
+        "$defs": {
+          "DocTarget": {
+            "additionalProperties": false,
+            "description": "Which document an operation acts on.\n\nWith neither field set the active document is used. Naming both is refused rather\nthan silently preferring one.",
+            "properties": {
+              "path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Full path of an already-open document. Takes precedence over title.",
+                "title": "Path"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Window title of an open document. Refused if more than one matches.",
+                "title": "Title"
+              }
+            },
+            "title": "DocTarget",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "ambient": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Ambient"
+          },
+          "body_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Required when target is 'body'.",
+            "title": "Body Name"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "maxItems": 3,
+                "minItems": 3,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "RGB, each 0.0-1.0. Omit to leave the colour alone.",
+            "title": "Color"
+          },
+          "diffuse": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Diffuse"
+          },
+          "document": {
+            "$ref": "#/$defs/DocTarget",
+            "description": "Which document to act on. Defaults to the active document."
+          },
+          "emission": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Emission"
+          },
+          "face_ref": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Entity reference to a face; required when target is 'face'.",
+            "title": "Face Ref"
+          },
+          "feature_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Required when target is 'feature'.",
+            "title": "Feature Name"
+          },
+          "shininess": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Shininess"
+          },
+          "specular": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Specular"
+          },
+          "target": {
+            "default": "document",
+            "description": "What the appearance is applied to.",
+            "enum": [
+              "document",
+              "body",
+              "feature",
+              "face"
+            ],
+            "title": "Target",
+            "type": "string"
+          },
+          "transparency": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "0 is opaque, 1 is fully transparent.",
+            "title": "Transparency"
+          }
+        },
+        "title": "AppearanceSetArgs",
+        "type": "object"
+      },
+      "name": "sw_appearance_set",
+      "partially_satisfies": [],
+      "precondition": "part_or_assembly",
+      "projection": {
+        "audited": true,
+        "auto_checkpoint": false,
+        "confirm_required": false,
+        "destructive": false,
+        "read_only": false
+      },
+      "result_schema": {
+        "$defs": {
+          "ArtifactEvidence": {
+            "additionalProperties": false,
+            "description": "Proof that a file the operation claims to have written actually exists.",
+            "properties": {
+              "exists": {
+                "title": "Exists",
+                "type": "boolean"
+              },
+              "modified_utc": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Modified Utc"
+              },
+              "path": {
+                "title": "Path",
+                "type": "string"
+              },
+              "sha256": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Sha256"
+              },
+              "size_bytes": {
+                "title": "Size Bytes",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "path",
+              "exists",
+              "size_bytes"
+            ],
+            "title": "ArtifactEvidence",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "appearance": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Appearance",
+            "type": "object"
+          },
+          "applied_to": {
+            "title": "Applied To",
+            "type": "string"
+          },
+          "artifacts": {
+            "items": {
+              "$ref": "#/$defs/ArtifactEvidence"
+            },
+            "title": "Artifacts",
+            "type": "array"
+          },
+          "changed": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Changed",
+            "type": "array"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          },
+          "warnings": {
+            "description": "Non-fatal problems the caller should see (degraded evidence, fallbacks used).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "target",
+          "applied_to"
+        ],
+        "title": "AppearanceResult",
+        "type": "object"
+      },
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "Changes how the model is displayed and is stored in the document. No geometry, feature, or dimension is created, changed, or removed."
+      },
+      "satisfies": [
+        "VIEW-001"
+      ],
+      "summary": "Set the colour, transparency, and shading of the document, a body, a feature, or a face, changing only the values given and reading the result back.",
+      "tags": [
+        "appearance",
+        "colour",
+        "transparency",
+        "display"
+      ],
+      "tier": "core",
+      "timeout_s": 180.0
     },
     {
       "domains": [
@@ -12538,6 +13042,863 @@
         "feature"
       ],
       "fresh_checkpoint": false,
+      "handler_ref": "swmcp.handlers.feature:feature_draft",
+      "idempotent": false,
+      "input_schema": {
+        "$defs": {
+          "DocTarget": {
+            "additionalProperties": false,
+            "description": "Which document an operation acts on.\n\nWith neither field set the active document is used. Naming both is refused rather\nthan silently preferring one.",
+            "properties": {
+              "path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Full path of an already-open document. Takes precedence over title.",
+                "title": "Path"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Window title of an open document. Refused if more than one matches.",
+                "title": "Title"
+              }
+            },
+            "title": "DocTarget",
+            "type": "object"
+          },
+          "DocumentRef": {
+            "additionalProperties": false,
+            "properties": {
+              "configuration": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Configuration"
+              },
+              "path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Path"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Title"
+              }
+            },
+            "title": "DocumentRef",
+            "type": "object"
+          },
+          "EntityRef": {
+            "additionalProperties": false,
+            "description": "A reference to one SOLIDWORKS entity, in every addressing mode at once.",
+            "properties": {
+              "captured_at": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Captured At"
+              },
+              "document": {
+                "$ref": "#/$defs/DocumentRef"
+              },
+              "kind": {
+                "default": "unknown",
+                "enum": [
+                  "face",
+                  "edge",
+                  "vertex",
+                  "body",
+                  "feature",
+                  "sketch",
+                  "sketch_segment",
+                  "plane",
+                  "axis",
+                  "point",
+                  "coordinate_system",
+                  "component",
+                  "unknown"
+                ],
+                "title": "Kind",
+                "type": "string"
+              },
+              "label": {
+                "default": "",
+                "description": "A human sentence describing the entity.",
+                "title": "Label",
+                "type": "string"
+              },
+              "persistent": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/PersistentRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null
+              },
+              "ref_version": {
+                "default": 1,
+                "title": "Ref Version",
+                "type": "integer"
+              },
+              "select_hint": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/SelectHint"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null
+              },
+              "semantic": {
+                "$ref": "#/$defs/SemanticRef"
+              },
+              "warnings": {
+                "items": {
+                  "type": "string"
+                },
+                "title": "Warnings",
+                "type": "array"
+              }
+            },
+            "title": "EntityRef",
+            "type": "object"
+          },
+          "PersistentRef": {
+            "additionalProperties": false,
+            "properties": {
+              "captured_revision": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Captured Revision"
+              },
+              "data_b64": {
+                "title": "Data B64",
+                "type": "string"
+              },
+              "scheme": {
+                "default": "GetPersistReference3",
+                "title": "Scheme",
+                "type": "string"
+              }
+            },
+            "required": [
+              "data_b64"
+            ],
+            "title": "PersistentRef",
+            "type": "object"
+          },
+          "RefMeasurements": {
+            "additionalProperties": false,
+            "description": "Geometry sampled at capture time, in API units (metres).",
+            "properties": {
+              "area_m2": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Area M2"
+              },
+              "bbox_m": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "[xmin, ymin, zmin, xmax, ymax, zmax].",
+                "title": "Bbox M"
+              },
+              "direction": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Plane normal, cylinder axis, or edge tangent at the midpoint.",
+                "title": "Direction"
+              },
+              "length_m": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Length M"
+              },
+              "point_m": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "A point on the entity: face centre, edge midpoint, or vertex.",
+                "title": "Point M"
+              },
+              "radius_m": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Radius M"
+              }
+            },
+            "title": "RefMeasurements",
+            "type": "object"
+          },
+          "RefTolerance": {
+            "additionalProperties": false,
+            "properties": {
+              "angular_rad": {
+                "default": 1e-06,
+                "title": "Angular Rad",
+                "type": "number"
+              },
+              "linear_m": {
+                "default": 1e-06,
+                "title": "Linear M",
+                "type": "number"
+              },
+              "relative": {
+                "default": 0.0001,
+                "title": "Relative",
+                "type": "number"
+              }
+            },
+            "title": "RefTolerance",
+            "type": "object"
+          },
+          "SelectHint": {
+            "additionalProperties": false,
+            "description": "Last-resort geometric re-pick information.",
+            "properties": {
+              "mark": {
+                "default": 0,
+                "title": "Mark",
+                "type": "integer"
+              },
+              "ray_direction": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Ray Direction"
+              },
+              "ray_origin_m": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Ray Origin M"
+              },
+              "sw_select_type": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Sw Select Type"
+              }
+            },
+            "title": "SelectHint",
+            "type": "object"
+          },
+          "SemanticRef": {
+            "additionalProperties": false,
+            "description": "The fallback that survives when a persistent reference does not.",
+            "properties": {
+              "body_name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Body Name"
+              },
+              "component_path": {
+                "items": {
+                  "type": "string"
+                },
+                "title": "Component Path",
+                "type": "array"
+              },
+              "feature_ancestry": {
+                "description": "Display names, outermost last.",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Feature Ancestry",
+                "type": "array"
+              },
+              "feature_type_names": {
+                "description": "Locale-invariant GetTypeName2 tokens for the same ancestry.",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Feature Type Names",
+                "type": "array"
+              },
+              "geometry_type": {
+                "default": "unknown",
+                "title": "Geometry Type",
+                "type": "string"
+              },
+              "measurements": {
+                "$ref": "#/$defs/RefMeasurements"
+              },
+              "signature": {
+                "default": "",
+                "description": "Hash of the rounded geometry.",
+                "title": "Signature",
+                "type": "string"
+              },
+              "tolerance": {
+                "$ref": "#/$defs/RefTolerance"
+              }
+            },
+            "title": "SemanticRef",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "angle": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                "type": "string"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "unit": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "value"
+                ],
+                "type": "object"
+              }
+            ],
+            "description": "Draft angle. Positive tapers away from the neutral plane.",
+            "title": "Angle"
+          },
+          "body_draft": {
+            "default": false,
+            "description": "Draft the whole body.",
+            "title": "Body Draft",
+            "type": "boolean"
+          },
+          "document": {
+            "$ref": "#/$defs/DocTarget",
+            "description": "Which document to act on. Defaults to the active document."
+          },
+          "edge_refs": {
+            "description": "Edges defining the parting line. Required for parting_line.",
+            "items": {
+              "$ref": "#/$defs/EntityRef"
+            },
+            "maxItems": 64,
+            "title": "Edge Refs",
+            "type": "array"
+          },
+          "face_refs": {
+            "description": "Faces to draft. Required for neutral_plane and step.",
+            "items": {
+              "$ref": "#/$defs/EntityRef"
+            },
+            "maxItems": 64,
+            "title": "Face Refs",
+            "type": "array"
+          },
+          "flip": {
+            "default": false,
+            "description": "Reverse the taper. Unflipped, SOLIDWORKS drafts outward and the part gains material; measured, not assumed.",
+            "title": "Flip",
+            "type": "boolean"
+          },
+          "method": {
+            "default": "neutral_plane",
+            "description": "Neutral plane tapers faces away from a reference; parting line drafts from selected edges; step draft adds a step at the parting line.",
+            "enum": [
+              "neutral_plane",
+              "parting_line",
+              "step"
+            ],
+            "title": "Method",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "neutral_ref": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/EntityRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Planar face or plane the draft is measured from, or the pull direction."
+          },
+          "neutral_standard_plane": {
+            "anyOf": [
+              {
+                "enum": [
+                  "front",
+                  "top",
+                  "right"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Use a standard plane as the neutral reference instead.",
+            "title": "Neutral Standard Plane"
+          },
+          "propagation": {
+            "default": "none",
+            "description": "How far the draft spreads from the selected faces.",
+            "enum": [
+              "none",
+              "tangent",
+              "all_loops",
+              "inner_loops",
+              "outer_loops"
+            ],
+            "title": "Propagation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "angle"
+        ],
+        "title": "DraftArgs",
+        "type": "object"
+      },
+      "name": "sw_feature_draft",
+      "partially_satisfies": [],
+      "precondition": "part",
+      "projection": {
+        "audited": true,
+        "auto_checkpoint": true,
+        "confirm_required": false,
+        "destructive": false,
+        "read_only": false
+      },
+      "result_schema": {
+        "$defs": {
+          "Check": {
+            "additionalProperties": false,
+            "description": "One named invariant asserted after a mutation.",
+            "properties": {
+              "detail": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Detail"
+              },
+              "name": {
+                "title": "Name",
+                "type": "string"
+              },
+              "passed": {
+                "title": "Passed",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "name",
+              "passed"
+            ],
+            "title": "Check",
+            "type": "object"
+          },
+          "CheckpointRecord": {
+            "additionalProperties": false,
+            "description": "What the auto-checkpoint layer did before a mutation ran.",
+            "properties": {
+              "checkpoint_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Checkpoint Path"
+              },
+              "created_utc": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Created Utc"
+              },
+              "method": {
+                "description": "Never optional: the caller must be able to tell a real snapshot from a skipped one. 'file_copy' does not capture unsaved session state.",
+                "enum": [
+                  "save_as_copy",
+                  "file_copy",
+                  "skipped",
+                  "reused"
+                ],
+                "title": "Method",
+                "type": "string"
+              },
+              "reason": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Why the checkpoint was skipped or reused.",
+                "title": "Reason"
+              },
+              "size_bytes": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Size Bytes"
+              },
+              "source_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Source Path"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "title": "CheckpointRecord",
+            "type": "object"
+          },
+          "Verification": {
+            "additionalProperties": false,
+            "description": "Evidence that a mutation actually happened, read back out of the model.",
+            "properties": {
+              "after": {
+                "additionalProperties": true,
+                "title": "After",
+                "type": "object"
+              },
+              "before": {
+                "additionalProperties": true,
+                "title": "Before",
+                "type": "object"
+              },
+              "checks": {
+                "description": "At least one invariant must be asserted.",
+                "items": {
+                  "$ref": "#/$defs/Check"
+                },
+                "minItems": 1,
+                "title": "Checks",
+                "type": "array"
+              },
+              "read_back": {
+                "description": "True only when the post-state was re-read from SOLIDWORKS, not assumed.",
+                "title": "Read Back",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "read_back",
+              "checks"
+            ],
+            "title": "Verification",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "body_count_after": {
+            "title": "Body Count After",
+            "type": "integer"
+          },
+          "body_count_before": {
+            "title": "Body Count Before",
+            "type": "integer"
+          },
+          "checkpoint": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/CheckpointRecord"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Populated by the dispatch pipeline, not by handlers."
+          },
+          "edges_used": {
+            "default": 0,
+            "title": "Edges Used",
+            "type": "integer"
+          },
+          "faces_drafted": {
+            "default": 0,
+            "title": "Faces Drafted",
+            "type": "integer"
+          },
+          "feature_name": {
+            "title": "Feature Name",
+            "type": "string"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          },
+          "rebuild_errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rebuild Errors",
+            "type": "array"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reference"
+          },
+          "verification": {
+            "$ref": "#/$defs/Verification"
+          },
+          "volume_mm3_after": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Volume Mm3 After"
+          },
+          "volume_mm3_before": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Volume Mm3 Before"
+          },
+          "warnings": {
+            "description": "Non-fatal problems the caller should see (degraded evidence, fallbacks used).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "verification",
+          "feature_name",
+          "method",
+          "body_count_before",
+          "body_count_after"
+        ],
+        "title": "DraftResult",
+        "type": "object"
+      },
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      },
+      "satisfies": [
+        "FEAT-010"
+      ],
+      "summary": "Taper faces by a draft angle from a neutral plane, a parting line, or as a step draft, verified by measuring the material the taper added or removed.",
+      "tags": [
+        "draft",
+        "taper",
+        "mold",
+        "parting-line"
+      ],
+      "tier": "core",
+      "timeout_s": 300.0
+    },
+    {
+      "domains": [
+        "feature"
+      ],
+      "fresh_checkpoint": false,
       "handler_ref": "swmcp.handlers.feature:feature_edit",
       "idempotent": true,
       "input_schema": {
@@ -20212,6 +21573,544 @@
     },
     {
       "domains": [
+        "material",
+        "feature"
+      ],
+      "fresh_checkpoint": false,
+      "handler_ref": "swmcp.handlers.material:material_get",
+      "idempotent": true,
+      "input_schema": {
+        "$defs": {
+          "DocTarget": {
+            "additionalProperties": false,
+            "description": "Which document an operation acts on.\n\nWith neither field set the active document is used. Naming both is refused rather\nthan silently preferring one.",
+            "properties": {
+              "path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Full path of an already-open document. Takes precedence over title.",
+                "title": "Path"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Window title of an open document. Refused if more than one matches.",
+                "title": "Title"
+              }
+            },
+            "title": "DocTarget",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "configuration": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Configuration to read. Defaults to the active one.",
+            "title": "Configuration"
+          },
+          "document": {
+            "$ref": "#/$defs/DocTarget",
+            "description": "Which document to act on. Defaults to the active document."
+          }
+        },
+        "title": "MaterialGetArgs",
+        "type": "object"
+      },
+      "name": "sw_material_get",
+      "partially_satisfies": [
+        "FEAT-020"
+      ],
+      "precondition": "part",
+      "projection": {
+        "audited": false,
+        "auto_checkpoint": false,
+        "confirm_required": false,
+        "destructive": false,
+        "read_only": true
+      },
+      "result_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "bodies": {
+            "description": "Per-body material names, which are empty unless set on the body itself.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Bodies",
+            "type": "array"
+          },
+          "configuration": {
+            "title": "Configuration",
+            "type": "string"
+          },
+          "database": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Database"
+          },
+          "density_kg_m3": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Density Kg M3"
+          },
+          "mass_kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Mass Kg"
+          },
+          "material": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "None when the part has no material assigned.",
+            "title": "Material"
+          },
+          "volume_m3": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Volume M3"
+          },
+          "warnings": {
+            "description": "Non-fatal problems the caller should see (degraded evidence, fallbacks used).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "configuration"
+        ],
+        "title": "MaterialGetResult",
+        "type": "object"
+      },
+      "safety": {
+        "kind": "read"
+      },
+      "satisfies": [],
+      "summary": "Read the part's material, the density SOLIDWORKS is actually using, and the mass that follows from it, plus any per-body material overrides.",
+      "tags": [
+        "material",
+        "density",
+        "mass",
+        "inspect"
+      ],
+      "tier": "core",
+      "timeout_s": 120.0
+    },
+    {
+      "domains": [
+        "material",
+        "feature"
+      ],
+      "fresh_checkpoint": false,
+      "handler_ref": "swmcp.handlers.material:material_set",
+      "idempotent": true,
+      "input_schema": {
+        "$defs": {
+          "DocTarget": {
+            "additionalProperties": false,
+            "description": "Which document an operation acts on.\n\nWith neither field set the active document is used. Naming both is refused rather\nthan silently preferring one.",
+            "properties": {
+              "path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Full path of an already-open document. Takes precedence over title.",
+                "title": "Path"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Window title of an open document. Refused if more than one matches.",
+                "title": "Title"
+              }
+            },
+            "title": "DocTarget",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "configuration": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Configuration to apply it to. Defaults to the active one.",
+            "title": "Configuration"
+          },
+          "database": {
+            "default": "SOLIDWORKS Materials",
+            "description": "Material library holding the name. Defaults to the stock library.",
+            "title": "Database",
+            "type": "string"
+          },
+          "document": {
+            "$ref": "#/$defs/DocTarget",
+            "description": "Which document to act on. Defaults to the active document."
+          },
+          "name": {
+            "description": "Material name exactly as the library spells it, e.g. '6061 Alloy' or 'Plain Carbon Steel'. An empty string removes the material, which returns the part to SOLIDWORKS' density of 1.0.",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "MaterialSetArgs",
+        "type": "object"
+      },
+      "name": "sw_material_set",
+      "partially_satisfies": [
+        "FEAT-020"
+      ],
+      "precondition": "part",
+      "projection": {
+        "audited": true,
+        "auto_checkpoint": true,
+        "confirm_required": false,
+        "destructive": false,
+        "read_only": false
+      },
+      "result_schema": {
+        "$defs": {
+          "Check": {
+            "additionalProperties": false,
+            "description": "One named invariant asserted after a mutation.",
+            "properties": {
+              "detail": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Detail"
+              },
+              "name": {
+                "title": "Name",
+                "type": "string"
+              },
+              "passed": {
+                "title": "Passed",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "name",
+              "passed"
+            ],
+            "title": "Check",
+            "type": "object"
+          },
+          "CheckpointRecord": {
+            "additionalProperties": false,
+            "description": "What the auto-checkpoint layer did before a mutation ran.",
+            "properties": {
+              "checkpoint_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Checkpoint Path"
+              },
+              "created_utc": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Created Utc"
+              },
+              "method": {
+                "description": "Never optional: the caller must be able to tell a real snapshot from a skipped one. 'file_copy' does not capture unsaved session state.",
+                "enum": [
+                  "save_as_copy",
+                  "file_copy",
+                  "skipped",
+                  "reused"
+                ],
+                "title": "Method",
+                "type": "string"
+              },
+              "reason": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Why the checkpoint was skipped or reused.",
+                "title": "Reason"
+              },
+              "size_bytes": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Size Bytes"
+              },
+              "source_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Source Path"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "title": "CheckpointRecord",
+            "type": "object"
+          },
+          "Verification": {
+            "additionalProperties": false,
+            "description": "Evidence that a mutation actually happened, read back out of the model.",
+            "properties": {
+              "after": {
+                "additionalProperties": true,
+                "title": "After",
+                "type": "object"
+              },
+              "before": {
+                "additionalProperties": true,
+                "title": "Before",
+                "type": "object"
+              },
+              "checks": {
+                "description": "At least one invariant must be asserted.",
+                "items": {
+                  "$ref": "#/$defs/Check"
+                },
+                "minItems": 1,
+                "title": "Checks",
+                "type": "array"
+              },
+              "read_back": {
+                "description": "True only when the post-state was re-read from SOLIDWORKS, not assumed.",
+                "title": "Read Back",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "read_back",
+              "checks"
+            ],
+            "title": "Verification",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "checkpoint": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/CheckpointRecord"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Populated by the dispatch pipeline, not by handlers."
+          },
+          "configuration": {
+            "title": "Configuration",
+            "type": "string"
+          },
+          "database": {
+            "title": "Database",
+            "type": "string"
+          },
+          "density_kg_m3": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Density Kg M3"
+          },
+          "mass_kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Mass Kg"
+          },
+          "material": {
+            "title": "Material",
+            "type": "string"
+          },
+          "rebuild_errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rebuild Errors",
+            "type": "array"
+          },
+          "verification": {
+            "$ref": "#/$defs/Verification"
+          },
+          "volume_m3": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Volume M3"
+          },
+          "warnings": {
+            "description": "Non-fatal problems the caller should see (degraded evidence, fallbacks used).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "verification",
+          "material",
+          "database",
+          "configuration"
+        ],
+        "title": "MaterialSetResult",
+        "type": "object"
+      },
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      },
+      "satisfies": [],
+      "summary": "Assign a material to the part and prove it took by reading the material back and reporting the density and mass it now has.",
+      "tags": [
+        "material",
+        "density",
+        "mass"
+      ],
+      "tier": "core",
+      "timeout_s": 180.0
+    },
+    {
+      "domains": [
         "measure",
         "body"
       ],
@@ -26202,9 +28101,16 @@
             "title": "RectCornerEntity",
             "type": "object"
           },
-          "SlotStraightEntity": {
+          "SlotArc3PointEntity": {
             "additionalProperties": false,
+            "description": "An arc slot through three points on its centreline.",
             "properties": {
+              "add_dimension": {
+                "default": false,
+                "description": "Add SOLIDWORKS' automatic slot dimension, expressed the way length_type says. Without this the slot is under-defined and length_type does nothing.",
+                "title": "Add Dimension",
+                "type": "boolean"
+              },
               "construction": {
                 "default": false,
                 "description": "Create as construction geometry rather than profile geometry.",
@@ -26243,6 +28149,495 @@
                 "minItems": 2,
                 "title": "End",
                 "type": "array"
+              },
+              "length_type": {
+                "default": "center_to_center",
+                "enum": [
+                  "center_to_center",
+                  "overall"
+                ],
+                "title": "Length Type",
+                "type": "string"
+              },
+              "start": {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                      "type": "string"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "unit": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "value"
+                      ],
+                      "type": "object"
+                    }
+                  ],
+                  "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+                },
+                "maxItems": 2,
+                "minItems": 2,
+                "title": "Start",
+                "type": "array"
+              },
+              "through": {
+                "description": "A point the slot centreline passes through.",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                      "type": "string"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "unit": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "value"
+                      ],
+                      "type": "object"
+                    }
+                  ],
+                  "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+                },
+                "maxItems": 2,
+                "minItems": 2,
+                "title": "Through",
+                "type": "array"
+              },
+              "type": {
+                "const": "slot_3point_arc",
+                "default": "slot_3point_arc",
+                "title": "Type",
+                "type": "string"
+              },
+              "width": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                    "type": "string"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "unit": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "value"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft.",
+                "title": "Width"
+              }
+            },
+            "required": [
+              "start",
+              "end",
+              "through",
+              "width"
+            ],
+            "title": "SlotArc3PointEntity",
+            "type": "object"
+          },
+          "SlotArcEntity": {
+            "additionalProperties": false,
+            "description": "An arc slot swept about a centre point.\n\nA semicircular slot is this with ``start`` and ``end`` diametrically opposite the\ncentre; SOLIDWORKS has no separate semicircular slot type.",
+            "properties": {
+              "add_dimension": {
+                "default": false,
+                "description": "Add SOLIDWORKS' automatic slot dimension, expressed the way length_type says. Without this the slot is under-defined and length_type does nothing.",
+                "title": "Add Dimension",
+                "type": "boolean"
+              },
+              "center": {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                      "type": "string"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "unit": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "value"
+                      ],
+                      "type": "object"
+                    }
+                  ],
+                  "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+                },
+                "maxItems": 2,
+                "minItems": 2,
+                "title": "Center",
+                "type": "array"
+              },
+              "construction": {
+                "default": false,
+                "description": "Create as construction geometry rather than profile geometry.",
+                "title": "Construction",
+                "type": "boolean"
+              },
+              "direction": {
+                "default": "counterclockwise",
+                "enum": [
+                  "clockwise",
+                  "counterclockwise"
+                ],
+                "title": "Direction",
+                "type": "string"
+              },
+              "end": {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                      "type": "string"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "unit": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "value"
+                      ],
+                      "type": "object"
+                    }
+                  ],
+                  "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+                },
+                "maxItems": 2,
+                "minItems": 2,
+                "title": "End",
+                "type": "array"
+              },
+              "length_type": {
+                "default": "center_to_center",
+                "enum": [
+                  "center_to_center",
+                  "overall"
+                ],
+                "title": "Length Type",
+                "type": "string"
+              },
+              "start": {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                      "type": "string"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "unit": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "value"
+                      ],
+                      "type": "object"
+                    }
+                  ],
+                  "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+                },
+                "maxItems": 2,
+                "minItems": 2,
+                "title": "Start",
+                "type": "array"
+              },
+              "type": {
+                "const": "slot_arc",
+                "default": "slot_arc",
+                "title": "Type",
+                "type": "string"
+              },
+              "width": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                    "type": "string"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "unit": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "value"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft.",
+                "title": "Width"
+              }
+            },
+            "required": [
+              "center",
+              "start",
+              "end",
+              "width"
+            ],
+            "title": "SlotArcEntity",
+            "type": "object"
+          },
+          "SlotCenterpointEntity": {
+            "additionalProperties": false,
+            "description": "A straight slot given its middle and one end, rather than both ends.",
+            "properties": {
+              "add_dimension": {
+                "default": false,
+                "description": "Add SOLIDWORKS' automatic slot dimension, expressed the way length_type says. Without this the slot is under-defined and length_type does nothing.",
+                "title": "Add Dimension",
+                "type": "boolean"
+              },
+              "center": {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                      "type": "string"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "unit": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "value"
+                      ],
+                      "type": "object"
+                    }
+                  ],
+                  "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+                },
+                "maxItems": 2,
+                "minItems": 2,
+                "title": "Center",
+                "type": "array"
+              },
+              "construction": {
+                "default": false,
+                "description": "Create as construction geometry rather than profile geometry.",
+                "title": "Construction",
+                "type": "boolean"
+              },
+              "end": {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                      "type": "string"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "unit": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "value"
+                      ],
+                      "type": "object"
+                    }
+                  ],
+                  "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+                },
+                "maxItems": 2,
+                "minItems": 2,
+                "title": "End",
+                "type": "array"
+              },
+              "length_type": {
+                "default": "center_to_center",
+                "enum": [
+                  "center_to_center",
+                  "overall"
+                ],
+                "title": "Length Type",
+                "type": "string"
+              },
+              "type": {
+                "const": "slot_centerpoint",
+                "default": "slot_centerpoint",
+                "title": "Type",
+                "type": "string"
+              },
+              "width": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                    "type": "string"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "unit": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "value"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft.",
+                "title": "Width"
+              }
+            },
+            "required": [
+              "center",
+              "end",
+              "width"
+            ],
+            "title": "SlotCenterpointEntity",
+            "type": "object"
+          },
+          "SlotStraightEntity": {
+            "additionalProperties": false,
+            "description": "A straight slot between two centre points.",
+            "properties": {
+              "add_dimension": {
+                "default": false,
+                "description": "Add SOLIDWORKS' automatic slot dimension, expressed the way length_type says. Without this the slot is under-defined and length_type does nothing.",
+                "title": "Add Dimension",
+                "type": "boolean"
+              },
+              "construction": {
+                "default": false,
+                "description": "Create as construction geometry rather than profile geometry.",
+                "title": "Construction",
+                "type": "boolean"
+              },
+              "end": {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                      "type": "string"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "unit": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "value"
+                      ],
+                      "type": "object"
+                    }
+                  ],
+                  "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+                },
+                "maxItems": 2,
+                "minItems": 2,
+                "title": "End",
+                "type": "array"
+              },
+              "length_type": {
+                "default": "center_to_center",
+                "enum": [
+                  "center_to_center",
+                  "overall"
+                ],
+                "title": "Length Type",
+                "type": "string"
               },
               "start": {
                 "items": {
@@ -26402,6 +28797,9 @@
                   "polygon": "#/$defs/PolygonEntity",
                   "rect_center": "#/$defs/RectCenterEntity",
                   "rect_corner": "#/$defs/RectCornerEntity",
+                  "slot_3point_arc": "#/$defs/SlotArc3PointEntity",
+                  "slot_arc": "#/$defs/SlotArcEntity",
+                  "slot_centerpoint": "#/$defs/SlotCenterpointEntity",
                   "slot_straight": "#/$defs/SlotStraightEntity",
                   "spline": "#/$defs/SplineEntity"
                 },
@@ -26442,6 +28840,15 @@
                   "$ref": "#/$defs/SlotStraightEntity"
                 },
                 {
+                  "$ref": "#/$defs/SlotCenterpointEntity"
+                },
+                {
+                  "$ref": "#/$defs/SlotArcEntity"
+                },
+                {
+                  "$ref": "#/$defs/SlotArc3PointEntity"
+                },
+                {
                   "$ref": "#/$defs/SplineEntity"
                 }
               ]
@@ -26478,7 +28885,9 @@
         "type": "object"
       },
       "name": "sw_sketch_add_geometry",
-      "partially_satisfies": [],
+      "partially_satisfies": [
+        "FEAT-013"
+      ],
       "precondition": "part_or_assembly",
       "projection": {
         "audited": true,
@@ -30844,6 +33253,1277 @@
     },
     {
       "domains": [
+        "sketch"
+      ],
+      "fresh_checkpoint": false,
+      "handler_ref": "swmcp.handlers.sketch:sketch_text",
+      "idempotent": false,
+      "input_schema": {
+        "$defs": {
+          "DocTarget": {
+            "additionalProperties": false,
+            "description": "Which document an operation acts on.\n\nWith neither field set the active document is used. Naming both is refused rather\nthan silently preferring one.",
+            "properties": {
+              "path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Full path of an already-open document. Takes precedence over title.",
+                "title": "Path"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Window title of an open document. Refused if more than one matches.",
+                "title": "Title"
+              }
+            },
+            "title": "DocTarget",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "description": "SK-008. Font is deliberately absent — see the handler for why.",
+        "properties": {
+          "alignment": {
+            "default": "left",
+            "enum": [
+              "left",
+              "center",
+              "right",
+              "justified"
+            ],
+            "title": "Alignment",
+            "type": "string"
+          },
+          "at": {
+            "description": "Start of the text block. Ignored when the text follows a path.",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                  "type": "string"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "unit": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "value"
+                  ],
+                  "type": "object"
+                }
+              ],
+              "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "At",
+            "type": "array"
+          },
+          "char_spacing": {
+            "default": 100,
+            "description": "Percentage spacing between characters. SOLIDWORKS ignores it when alignment is 'justified'.",
+            "maximum": 10000,
+            "minimum": 1,
+            "title": "Char Spacing",
+            "type": "integer"
+          },
+          "document": {
+            "$ref": "#/$defs/DocTarget",
+            "description": "Which document to act on. Defaults to the active document."
+          },
+          "flip_vertical": {
+            "default": false,
+            "title": "Flip Vertical",
+            "type": "boolean"
+          },
+          "mirror_horizontal": {
+            "default": false,
+            "title": "Mirror Horizontal",
+            "type": "boolean"
+          },
+          "path_segment_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Sketch segment in this sketch for the text to run along. Alignment and flip only mean anything with a path; without one the text sits horizontally.",
+            "title": "Path Segment Id"
+          },
+          "sketch_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Sketch to draw into. Defaults to the open one.",
+            "title": "Sketch Name"
+          },
+          "text": {
+            "description": "The characters to draw.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          },
+          "width_factor": {
+            "default": 100,
+            "description": "Percentage width of each character.",
+            "maximum": 1667,
+            "minimum": 6,
+            "title": "Width Factor",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "SketchTextArgs",
+        "type": "object"
+      },
+      "name": "sw_sketch_text",
+      "partially_satisfies": [
+        "SK-008"
+      ],
+      "precondition": "part_or_assembly",
+      "projection": {
+        "audited": true,
+        "auto_checkpoint": true,
+        "confirm_required": false,
+        "destructive": false,
+        "read_only": false
+      },
+      "result_schema": {
+        "$defs": {
+          "Check": {
+            "additionalProperties": false,
+            "description": "One named invariant asserted after a mutation.",
+            "properties": {
+              "detail": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Detail"
+              },
+              "name": {
+                "title": "Name",
+                "type": "string"
+              },
+              "passed": {
+                "title": "Passed",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "name",
+              "passed"
+            ],
+            "title": "Check",
+            "type": "object"
+          },
+          "CheckpointRecord": {
+            "additionalProperties": false,
+            "description": "What the auto-checkpoint layer did before a mutation ran.",
+            "properties": {
+              "checkpoint_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Checkpoint Path"
+              },
+              "created_utc": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Created Utc"
+              },
+              "method": {
+                "description": "Never optional: the caller must be able to tell a real snapshot from a skipped one. 'file_copy' does not capture unsaved session state.",
+                "enum": [
+                  "save_as_copy",
+                  "file_copy",
+                  "skipped",
+                  "reused"
+                ],
+                "title": "Method",
+                "type": "string"
+              },
+              "reason": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Why the checkpoint was skipped or reused.",
+                "title": "Reason"
+              },
+              "size_bytes": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Size Bytes"
+              },
+              "source_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Source Path"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "title": "CheckpointRecord",
+            "type": "object"
+          },
+          "SketchState": {
+            "additionalProperties": false,
+            "description": "CON-005, carried on every relation and dimension result so it cannot be skipped.",
+            "properties": {
+              "dangling_relations": {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "title": "Dangling Relations",
+                "type": "array"
+              },
+              "fully_defined": {
+                "title": "Fully Defined",
+                "type": "boolean"
+              },
+              "over_defined": {
+                "title": "Over Defined",
+                "type": "boolean"
+              },
+              "over_defining_relations": {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "title": "Over Defining Relations",
+                "type": "array"
+              },
+              "relation_count": {
+                "title": "Relation Count",
+                "type": "integer"
+              },
+              "status": {
+                "description": "fully_defined, under_defined, over_defined, or no_solution.",
+                "title": "Status",
+                "type": "string"
+              },
+              "status_code": {
+                "title": "Status Code",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "status",
+              "status_code",
+              "fully_defined",
+              "over_defined",
+              "relation_count"
+            ],
+            "title": "SketchState",
+            "type": "object"
+          },
+          "Verification": {
+            "additionalProperties": false,
+            "description": "Evidence that a mutation actually happened, read back out of the model.",
+            "properties": {
+              "after": {
+                "additionalProperties": true,
+                "title": "After",
+                "type": "object"
+              },
+              "before": {
+                "additionalProperties": true,
+                "title": "Before",
+                "type": "object"
+              },
+              "checks": {
+                "description": "At least one invariant must be asserted.",
+                "items": {
+                  "$ref": "#/$defs/Check"
+                },
+                "minItems": 1,
+                "title": "Checks",
+                "type": "array"
+              },
+              "read_back": {
+                "description": "True only when the post-state was re-read from SOLIDWORKS, not assumed.",
+                "title": "Read Back",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "read_back",
+              "checks"
+            ],
+            "title": "Verification",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "alignment": {
+            "title": "Alignment",
+            "type": "string"
+          },
+          "checkpoint": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/CheckpointRecord"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Populated by the dispatch pipeline, not by handlers."
+          },
+          "on_path": {
+            "title": "On Path",
+            "type": "boolean"
+          },
+          "rebuild_errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rebuild Errors",
+            "type": "array"
+          },
+          "sketch_name": {
+            "title": "Sketch Name",
+            "type": "string"
+          },
+          "sketch_state": {
+            "$ref": "#/$defs/SketchState"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "text_segment_count": {
+            "title": "Text Segment Count",
+            "type": "integer"
+          },
+          "verification": {
+            "$ref": "#/$defs/Verification"
+          },
+          "warnings": {
+            "description": "Non-fatal problems the caller should see (degraded evidence, fallbacks used).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "verification",
+          "sketch_name",
+          "text",
+          "on_path",
+          "text_segment_count",
+          "alignment",
+          "sketch_state"
+        ],
+        "title": "SketchTextResult",
+        "type": "object"
+      },
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      },
+      "satisfies": [],
+      "summary": "Draw sketch text, optionally running along a sketch segment, so engraving and embossing do not need a macro. Verified by counting the text back out.",
+      "tags": [
+        "text",
+        "engrave",
+        "emboss",
+        "sketch"
+      ],
+      "tier": "core",
+      "timeout_s": 180.0
+    },
+    {
+      "domains": [
+        "feature"
+      ],
+      "fresh_checkpoint": false,
+      "handler_ref": "swmcp.handlers.surface:surface_create",
+      "idempotent": false,
+      "input_schema": {
+        "$defs": {
+          "DocTarget": {
+            "additionalProperties": false,
+            "description": "Which document an operation acts on.\n\nWith neither field set the active document is used. Naming both is refused rather\nthan silently preferring one.",
+            "properties": {
+              "path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Full path of an already-open document. Takes precedence over title.",
+                "title": "Path"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Window title of an open document. Refused if more than one matches.",
+                "title": "Title"
+              }
+            },
+            "title": "DocTarget",
+            "type": "object"
+          },
+          "DocumentRef": {
+            "additionalProperties": false,
+            "properties": {
+              "configuration": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Configuration"
+              },
+              "path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Path"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Title"
+              }
+            },
+            "title": "DocumentRef",
+            "type": "object"
+          },
+          "EntityRef": {
+            "additionalProperties": false,
+            "description": "A reference to one SOLIDWORKS entity, in every addressing mode at once.",
+            "properties": {
+              "captured_at": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Captured At"
+              },
+              "document": {
+                "$ref": "#/$defs/DocumentRef"
+              },
+              "kind": {
+                "default": "unknown",
+                "enum": [
+                  "face",
+                  "edge",
+                  "vertex",
+                  "body",
+                  "feature",
+                  "sketch",
+                  "sketch_segment",
+                  "plane",
+                  "axis",
+                  "point",
+                  "coordinate_system",
+                  "component",
+                  "unknown"
+                ],
+                "title": "Kind",
+                "type": "string"
+              },
+              "label": {
+                "default": "",
+                "description": "A human sentence describing the entity.",
+                "title": "Label",
+                "type": "string"
+              },
+              "persistent": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/PersistentRef"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null
+              },
+              "ref_version": {
+                "default": 1,
+                "title": "Ref Version",
+                "type": "integer"
+              },
+              "select_hint": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/SelectHint"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null
+              },
+              "semantic": {
+                "$ref": "#/$defs/SemanticRef"
+              },
+              "warnings": {
+                "items": {
+                  "type": "string"
+                },
+                "title": "Warnings",
+                "type": "array"
+              }
+            },
+            "title": "EntityRef",
+            "type": "object"
+          },
+          "PersistentRef": {
+            "additionalProperties": false,
+            "properties": {
+              "captured_revision": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Captured Revision"
+              },
+              "data_b64": {
+                "title": "Data B64",
+                "type": "string"
+              },
+              "scheme": {
+                "default": "GetPersistReference3",
+                "title": "Scheme",
+                "type": "string"
+              }
+            },
+            "required": [
+              "data_b64"
+            ],
+            "title": "PersistentRef",
+            "type": "object"
+          },
+          "RefMeasurements": {
+            "additionalProperties": false,
+            "description": "Geometry sampled at capture time, in API units (metres).",
+            "properties": {
+              "area_m2": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Area M2"
+              },
+              "bbox_m": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "[xmin, ymin, zmin, xmax, ymax, zmax].",
+                "title": "Bbox M"
+              },
+              "direction": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Plane normal, cylinder axis, or edge tangent at the midpoint.",
+                "title": "Direction"
+              },
+              "length_m": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Length M"
+              },
+              "point_m": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "A point on the entity: face centre, edge midpoint, or vertex.",
+                "title": "Point M"
+              },
+              "radius_m": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Radius M"
+              }
+            },
+            "title": "RefMeasurements",
+            "type": "object"
+          },
+          "RefTolerance": {
+            "additionalProperties": false,
+            "properties": {
+              "angular_rad": {
+                "default": 1e-06,
+                "title": "Angular Rad",
+                "type": "number"
+              },
+              "linear_m": {
+                "default": 1e-06,
+                "title": "Linear M",
+                "type": "number"
+              },
+              "relative": {
+                "default": 0.0001,
+                "title": "Relative",
+                "type": "number"
+              }
+            },
+            "title": "RefTolerance",
+            "type": "object"
+          },
+          "SelectHint": {
+            "additionalProperties": false,
+            "description": "Last-resort geometric re-pick information.",
+            "properties": {
+              "mark": {
+                "default": 0,
+                "title": "Mark",
+                "type": "integer"
+              },
+              "ray_direction": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Ray Direction"
+              },
+              "ray_origin_m": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "number"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Ray Origin M"
+              },
+              "sw_select_type": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Sw Select Type"
+              }
+            },
+            "title": "SelectHint",
+            "type": "object"
+          },
+          "SemanticRef": {
+            "additionalProperties": false,
+            "description": "The fallback that survives when a persistent reference does not.",
+            "properties": {
+              "body_name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Body Name"
+              },
+              "component_path": {
+                "items": {
+                  "type": "string"
+                },
+                "title": "Component Path",
+                "type": "array"
+              },
+              "feature_ancestry": {
+                "description": "Display names, outermost last.",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Feature Ancestry",
+                "type": "array"
+              },
+              "feature_type_names": {
+                "description": "Locale-invariant GetTypeName2 tokens for the same ancestry.",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Feature Type Names",
+                "type": "array"
+              },
+              "geometry_type": {
+                "default": "unknown",
+                "title": "Geometry Type",
+                "type": "string"
+              },
+              "measurements": {
+                "$ref": "#/$defs/RefMeasurements"
+              },
+              "signature": {
+                "default": "",
+                "description": "Hash of the rounded geometry.",
+                "title": "Signature",
+                "type": "string"
+              },
+              "tolerance": {
+                "$ref": "#/$defs/RefTolerance"
+              }
+            },
+            "title": "SemanticRef",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "distance": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                    "type": "string"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "unit": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "value"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Offset or extend distance. An offset of 0 copies the faces in place.",
+            "title": "Distance"
+          },
+          "document": {
+            "$ref": "#/$defs/DocTarget",
+            "description": "Which document to act on. Defaults to the active document."
+          },
+          "edge_refs": {
+            "description": "Surface edges to extend.",
+            "items": {
+              "$ref": "#/$defs/EntityRef"
+            },
+            "maxItems": 64,
+            "title": "Edge Refs",
+            "type": "array"
+          },
+          "extend_linear": {
+            "default": true,
+            "description": "Extend along the surface's tangent rather than following its curvature.",
+            "title": "Extend Linear",
+            "type": "boolean"
+          },
+          "face_refs": {
+            "description": "Faces to offset, or the surfaces to knit.",
+            "items": {
+              "$ref": "#/$defs/EntityRef"
+            },
+            "maxItems": 64,
+            "title": "Face Refs",
+            "type": "array"
+          },
+          "method": {
+            "description": "'planar' fills a closed sketch, 'offset' copies faces at a distance (0 copies them in place), 'extend' stretches surface edges, and 'knit' sews touching surfaces into one.",
+            "enum": [
+              "planar",
+              "offset",
+              "extend",
+              "knit"
+            ],
+            "title": "Method",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "reverse": {
+            "default": false,
+            "description": "Offset the other way.",
+            "title": "Reverse",
+            "type": "boolean"
+          },
+          "sketch_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Closed profile for 'planar'. Defaults to the newest unused.",
+            "title": "Sketch Name"
+          }
+        },
+        "required": [
+          "method"
+        ],
+        "title": "SurfaceCreateArgs",
+        "type": "object"
+      },
+      "name": "sw_surface_create",
+      "partially_satisfies": [
+        "FEAT-018"
+      ],
+      "precondition": "part",
+      "projection": {
+        "audited": true,
+        "auto_checkpoint": true,
+        "confirm_required": false,
+        "destructive": false,
+        "read_only": false
+      },
+      "result_schema": {
+        "$defs": {
+          "Check": {
+            "additionalProperties": false,
+            "description": "One named invariant asserted after a mutation.",
+            "properties": {
+              "detail": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Detail"
+              },
+              "name": {
+                "title": "Name",
+                "type": "string"
+              },
+              "passed": {
+                "title": "Passed",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "name",
+              "passed"
+            ],
+            "title": "Check",
+            "type": "object"
+          },
+          "CheckpointRecord": {
+            "additionalProperties": false,
+            "description": "What the auto-checkpoint layer did before a mutation ran.",
+            "properties": {
+              "checkpoint_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Checkpoint Path"
+              },
+              "created_utc": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Created Utc"
+              },
+              "method": {
+                "description": "Never optional: the caller must be able to tell a real snapshot from a skipped one. 'file_copy' does not capture unsaved session state.",
+                "enum": [
+                  "save_as_copy",
+                  "file_copy",
+                  "skipped",
+                  "reused"
+                ],
+                "title": "Method",
+                "type": "string"
+              },
+              "reason": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Why the checkpoint was skipped or reused.",
+                "title": "Reason"
+              },
+              "size_bytes": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Size Bytes"
+              },
+              "source_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Source Path"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "title": "CheckpointRecord",
+            "type": "object"
+          },
+          "Verification": {
+            "additionalProperties": false,
+            "description": "Evidence that a mutation actually happened, read back out of the model.",
+            "properties": {
+              "after": {
+                "additionalProperties": true,
+                "title": "After",
+                "type": "object"
+              },
+              "before": {
+                "additionalProperties": true,
+                "title": "Before",
+                "type": "object"
+              },
+              "checks": {
+                "description": "At least one invariant must be asserted.",
+                "items": {
+                  "$ref": "#/$defs/Check"
+                },
+                "minItems": 1,
+                "title": "Checks",
+                "type": "array"
+              },
+              "read_back": {
+                "description": "True only when the post-state was re-read from SOLIDWORKS, not assumed.",
+                "title": "Read Back",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "read_back",
+              "checks"
+            ],
+            "title": "Verification",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "checkpoint": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/CheckpointRecord"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Populated by the dispatch pipeline, not by handlers."
+          },
+          "feature_name": {
+            "title": "Feature Name",
+            "type": "string"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          },
+          "rebuild_errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rebuild Errors",
+            "type": "array"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Reference"
+          },
+          "sheet_bodies_after": {
+            "title": "Sheet Bodies After",
+            "type": "integer"
+          },
+          "sheet_bodies_before": {
+            "title": "Sheet Bodies Before",
+            "type": "integer"
+          },
+          "solid_bodies_after": {
+            "title": "Solid Bodies After",
+            "type": "integer"
+          },
+          "verification": {
+            "$ref": "#/$defs/Verification"
+          },
+          "warnings": {
+            "description": "Non-fatal problems the caller should see (degraded evidence, fallbacks used).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "verification",
+          "feature_name",
+          "method",
+          "sheet_bodies_before",
+          "sheet_bodies_after",
+          "solid_bodies_after"
+        ],
+        "title": "SurfaceCreateResult",
+        "type": "object"
+      },
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      },
+      "satisfies": [],
+      "summary": "Create a surface body by filling a closed sketch, offsetting faces, extending surface edges, or knitting touching surfaces, verified by counting sheet bodies.",
+      "tags": [
+        "surface",
+        "planar",
+        "offset",
+        "extend",
+        "knit"
+      ],
+      "tier": "core",
+      "timeout_s": 300.0
+    },
+    {
+      "domains": [
         "system"
       ],
       "fresh_checkpoint": false,
@@ -31481,6 +35161,210 @@
       ],
       "tier": "extended",
       "timeout_s": 120.0
+    },
+    {
+      "domains": [
+        "view"
+      ],
+      "fresh_checkpoint": false,
+      "handler_ref": "swmcp.handlers.view:visibility_set",
+      "idempotent": true,
+      "input_schema": {
+        "$defs": {
+          "DocTarget": {
+            "additionalProperties": false,
+            "description": "Which document an operation acts on.\n\nWith neither field set the active document is used. Naming both is refused rather\nthan silently preferring one.",
+            "properties": {
+              "path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Full path of an already-open document. Takes precedence over title.",
+                "title": "Path"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Window title of an open document. Refused if more than one matches.",
+                "title": "Title"
+              }
+            },
+            "title": "DocTarget",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocTarget",
+            "description": "Which document to act on. Defaults to the active document."
+          },
+          "name": {
+            "description": "Body or feature name.",
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "target": {
+            "description": "Bodies hide through IBody2; reference geometry and sketches blank.",
+            "enum": [
+              "body",
+              "feature"
+            ],
+            "title": "Target",
+            "type": "string"
+          },
+          "visible": {
+            "description": "True to show, false to hide.",
+            "title": "Visible",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "target",
+          "name",
+          "visible"
+        ],
+        "title": "VisibilitySetArgs",
+        "type": "object"
+      },
+      "name": "sw_visibility_set",
+      "partially_satisfies": [],
+      "precondition": "part_or_assembly",
+      "projection": {
+        "audited": true,
+        "auto_checkpoint": false,
+        "confirm_required": false,
+        "destructive": false,
+        "read_only": false
+      },
+      "result_schema": {
+        "$defs": {
+          "ArtifactEvidence": {
+            "additionalProperties": false,
+            "description": "Proof that a file the operation claims to have written actually exists.",
+            "properties": {
+              "exists": {
+                "title": "Exists",
+                "type": "boolean"
+              },
+              "modified_utc": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Modified Utc"
+              },
+              "path": {
+                "title": "Path",
+                "type": "string"
+              },
+              "sha256": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Sha256"
+              },
+              "size_bytes": {
+                "title": "Size Bytes",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "path",
+              "exists",
+              "size_bytes"
+            ],
+            "title": "ArtifactEvidence",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "artifacts": {
+            "items": {
+              "$ref": "#/$defs/ArtifactEvidence"
+            },
+            "title": "Artifacts",
+            "type": "array"
+          },
+          "method": {
+            "description": "Which SOLIDWORKS call was used, since they differ by type.",
+            "title": "Method",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "target": {
+            "title": "Target",
+            "type": "string"
+          },
+          "visible": {
+            "title": "Visible",
+            "type": "boolean"
+          },
+          "warnings": {
+            "description": "Non-fatal problems the caller should see (degraded evidence, fallbacks used).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "target",
+          "name",
+          "visible",
+          "method"
+        ],
+        "title": "VisibilitySetResult",
+        "type": "object"
+      },
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "Changes what is drawn and is stored in the document. Hidden geometry is still present and still measured; nothing is created or removed."
+      },
+      "satisfies": [
+        "VIEW-002"
+      ],
+      "summary": "Hide or show a solid body, or blank a reference plane, axis, point, or sketch, verified by reading the visibility back rather than trusting the call.",
+      "tags": [
+        "visibility",
+        "hide",
+        "show",
+        "body",
+        "feature"
+      ],
+      "tier": "core",
+      "timeout_s": 180.0
     }
   ],
   "version": 1

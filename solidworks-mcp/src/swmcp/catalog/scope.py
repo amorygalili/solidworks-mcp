@@ -24,6 +24,7 @@ IN_SCOPE_REQUIREMENTS: frozenset[str] = frozenset(
         "DOC-001", "DOC-002", "DOC-003", "DOC-004", "DOC-005", "DOC-006", "DOC-007",
         # P1 vertical — sketches
         "SK-001", "SK-002", "SK-003", "SK-004", "SK-005", "SK-006", "SK-007",
+        "SK-008",
         # P1 vertical — constraints and dimensions
         "CON-001", "CON-002", "CON-003", "CON-004", "CON-005",
         # P1 vertical — reference geometry
@@ -34,12 +35,12 @@ IN_SCOPE_REQUIREMENTS: frozenset[str] = frozenset(
         # an atomic sequence is what the safety layer has been building toward.
         "IO-002", "IO-003", "REV-006",
         # P1 vertical — appearance and view
-        "VIEW-003", "VIEW-004",
+        "VIEW-001", "VIEW-002", "VIEW-003", "VIEW-004",
         # P1 vertical — core features, bodies, measurement
         "FEAT-001", "FEAT-002", "FEAT-003", "FEAT-004", "FEAT-005",
-        "FEAT-006", "FEAT-007",
+        "FEAT-006", "FEAT-007", "FEAT-010", "FEAT-013",
         "FEAT-009", "FEAT-011", "FEAT-014",
-        "FEAT-012", "FEAT-015", "FEAT-016", "FEAT-019",
+        "FEAT-012", "FEAT-015", "FEAT-016", "FEAT-018", "FEAT-019", "FEAT-020",
     }
 )
 
@@ -76,6 +77,13 @@ DECLARED_PARTIAL: dict[str, str] = {
         "Shell with a single wall thickness and face removal. Multi-thickness shells "
         "and the thicken feature are not implemented."
     ),
+    "FEAT-013": (
+        "Straight, centre-point straight, centre-point arc, and three-point arc slots, "
+        "each with centre-to-centre or overall length. A semicircular slot is an arc "
+        "slot spanning 180 degrees; SOLIDWORKS has no separate type for it. Patterning "
+        "a slot goes through sw_feature_pattern once the slot is cut, so it inherits "
+        "that tool's linear-and-circular limitation."
+    ),
     "FEAT-014": (
         "Box, cylinder, sphere, cone, frustum, torus, wedge, and prism, each built as "
         "an ordinary sketch and boss. Helix and spring are not implemented."
@@ -83,6 +91,19 @@ DECLARED_PARTIAL: dict[str, str] = {
     "REF-005": (
         "Face, planar-face, cylindrical-face, feature-face, body-ownership, and ray probes "
         "are implemented. Candidate mate entities require the assembly domain (P2)."
+    ),
+    "SK-008": (
+        "Sketch text with alignment, path following, mirroring, width factor, and "
+        "character spacing. Font is not settable: InsertSketchText takes no font and "
+        "SOLIDWORKS reads it from the document's text-format preference, so exposing it "
+        "would mean changing a document-wide setting as a side effect of drawing one "
+        "string. Emboss and wrap are separate features and are not implemented."
+    ),
+    "FEAT-018": (
+        "Planar fill, offset (including a zero offset to copy faces), extend, and knit "
+        "surfaces. Trimming is not implemented: SOLIDWORKS exposes no InsertTrimSurface, "
+        "and InsertCutSurface cuts a solid with a surface rather than trimming one "
+        "surface against another. Knit only sews surfaces that touch along an edge."
     ),
     "SYS-007": (
         "Implemented structurally via locale-invariant GetTypeName2 tokens and ordinal "
@@ -99,6 +120,13 @@ DECLARED_PARTIAL: dict[str, str] = {
         "centerline, the closed-loop option, start/end tangency, and thin-wall "
         "thickness. The boundary feature is a different API (InsertNetBlend) and is "
         "not implemented."
+    ),
+    "FEAT-020": (
+        "Part-level material assignment and read-back, with the density and mass it "
+        "produces. Per-body and per-component materials are not implemented, and mass "
+        "override is not: IMassProperty on this build does not expose "
+        "SetOverrideMassValue or OverrideMass through late binding, so a tool for it "
+        "would have nothing to call."
     ),
     "SK-007": (
         "Move, rotate, scale, mirror, offset, and trim are implemented. Extend, split, "

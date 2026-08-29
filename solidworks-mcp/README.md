@@ -6,7 +6,7 @@ worker thread.
 It implements the P0 foundation and a P1 modelling vertical from
 [`docs/solidworks-target-requirements.md`](../docs/solidworks-target-requirements.md),
 plus neutral-format export and an atomic mutate-and-validate workflow pulled forward
-from P2: **79 operations covering all 78 in-scope requirements**, with coverage
+from P2: **87 operations covering all 85 in-scope requirements**, with coverage
 reported honestly in `src/swmcp/generated/requirements_coverage.json` rather than
 asserted.
 
@@ -115,12 +115,14 @@ Angles default to degrees and accept `"45deg"`, `"1.57rad"`, or `{"value": 0.25,
 | discovery | search tools, API search, API invoke, batch invoke, gated write |
 | document | new, open, list, activate, save, close, rebuild, undo |
 | selection / reference | selection get/set, ref capture/resolve, probe faces, probe ray |
-| sketch | start, exit, list, add geometry, set construction, delete, convert, modify |
+| sketch | start, exit, list, add geometry (lines, arcs, slots, splines), text, set construction, delete, convert, modify |
 | constraint | add relations, add dimensions, diagnose, dimension list/set, auto-dimension |
 | datum | list, create plane, axis, point, coordinate system |
-| feature / body / measure | extrude boss/cut, revolve, sweep, loft, fillet, chamfer, pattern, hole, shell, rib, primitives, list, edit, delete, body list, measure |
+| feature / body / measure | extrude boss/cut, revolve, sweep, loft, draft, fillet, chamfer, pattern, hole, shell, rib, primitives, list, edit, delete, body list, measure |
 | parameter | equation list/set, configuration list/create/activate/delete, property list/set, parameter table export/import |
-| view | set orientation and display mode, capture a PNG or BMP preview |
+| view | set orientation and display mode, capture a PNG or BMP preview, get/set appearance, hide or show bodies and datums |
+| material | assign a part material and read the density and mass it produces |
+| surface | create a surface by planar fill, offset, extend, or knit |
 | exchange | export STEP, IGES, STL, 3MF, OBJ, PLY, Parasolid, SAT, VRML, PDF, DXF, DWG |
 | review | safe execute: run a sequence under one checkpoint and roll it back if an invariant fails |
 
@@ -153,7 +155,7 @@ only the documents the run created are closed, addressed by title.
 ## Development
 
 ```bash
-uv run pytest                       # 371 tests, no SOLIDWORKS needed
+uv run pytest                       # 446 tests, no SOLIDWORKS needed
 uv run pytest -m live tests/live/test_live_sketch.py   # one module: minutes
 uv run pytest -m "live and not slow"  # the quick live pass
 uv run pytest -m live               # the FULL live suite: ~90 minutes
@@ -286,8 +288,27 @@ coverage file, rather than left for a user to discover:
 - **`FEAT-005` (loft)** — loft boss and cut across two or more profiles, with guide
   curves, a centerline, the closed-loop option, start/end tangency, and thin walls. The
   *boundary* feature is a different API (`InsertNetBlend`) and is not implemented.
+- **`FEAT-020` (materials)** — part-level assignment and read-back, with the density
+  and mass that follow. Per-body and per-component materials are not implemented, and
+  neither is mass override: `IMassProperty` on this build does not expose
+  `SetOverrideMassValue` or `OverrideMass` through late binding, so a tool for it would
+  have nothing to call.
+- **`SK-008` (sketch text)** — alignment, path following, mirroring, width factor, and
+  character spacing. Font is not settable: `InsertSketchText` takes no font and
+  SOLIDWORKS reads it from the document's text-format preference, so exposing it would
+  mean changing a document-wide setting as a side effect of drawing one string. Emboss
+  and wrap are separate features and are not implemented.
+- **`FEAT-018` (surfaces)** — planar fill, offset (a zero offset copies faces), extend,
+  and knit. Trimming is not implemented: SOLIDWORKS exposes no `InsertTrimSurface`, and
+  `InsertCutSurface` cuts a solid *with* a surface rather than trimming one surface
+  against another. Knit only sews surfaces that touch along an edge.
 - **`FEAT-009` (shell)** — one wall thickness, with faces removed to open the shell.
   Multi-thickness shells and the thicken feature are not implemented.
+- **`FEAT-013` (slots)** — straight, centre-point straight, centre-point arc, and
+  three-point arc slots, each with centre-to-centre or overall length. A semicircular
+  slot is an arc slot spanning 180°; SOLIDWORKS has no separate type for it. Patterning
+  a slot goes through `sw_feature_pattern` once it is cut, so it inherits that tool's
+  linear-and-circular limitation.
 - **`FEAT-014` (primitives)** — box, cylinder, sphere, cone, frustum, torus, wedge, and
   prism, each built as an ordinary sketch and boss so the tree stays editable. Helix
   and spring are not implemented.

@@ -29,6 +29,8 @@ from swmcp.schemas.sketch import (
     SketchSetConstructionResult,
     SketchStartArgs,
     SketchStartResult,
+    SketchTextArgs,
+    SketchTextResult,
 )
 from swmcp.sketching import (
     active_sketch,
@@ -60,6 +62,63 @@ def _resolve_sketch(ctx: OpContext, doc: Any, name: str | None) -> Any:
 
 
 # --- geometry creation --------------------------------------------------------
+
+
+_SLOT_LENGTH_TYPES = {"center_to_center": 0, "overall": 1}
+
+#: ``swSketchSlotCreationType_e``. Each form reads the three points differently, which
+#: is why they are separate entity types rather than one type with flags.
+_SLOT_CREATION_TYPES = {
+    "slot_straight": 0,
+    "slot_centerpoint": 1,
+    "slot_arc": 2,
+    "slot_3point_arc": 3,
+}
+
+
+def _create_slot(manager: Any, entity: Any, kind: str) -> list[Any]:
+    """Drive ``CreateSketchSlot`` and return the segments it actually added.
+
+    Points the chosen form does not use are passed as zeros, which SOLIDWORKS ignores.
+    ``CenterArcDirection`` is only read for the centre-point arc slot.
+
+    The call hands back one ``ISketchSlot`` rather than the arcs and lines it built, and
+    describing that wrapper produced a "created" entry with no type and no length while
+    the sketch really held three or four new segments. So the sketch is diffed either
+    side of the call and the new segments are what gets reported.
+    """
+    direction = 1
+    if kind == "slot_straight":
+        first, second, third = entity.start, entity.end, (0.0, 0.0)
+    elif kind == "slot_centerpoint":
+        first, second, third = entity.center, entity.end, (0.0, 0.0)
+    elif kind == "slot_arc":
+        first, second, third = entity.center, entity.start, entity.end
+        direction = -1 if entity.direction == "clockwise" else 1
+    else:  # slot_3point_arc
+        first, second, third = entity.start, entity.end, entity.through
+
+    sketch = try_com_member(manager, "ActiveSketch", default=None)
+    before = set(segments_by_id(sketch)) if sketch is not None else set()
+
+    made = manager.CreateSketchSlot(
+        _SLOT_CREATION_TYPES[kind],
+        _SLOT_LENGTH_TYPES[entity.length_type],
+        entity.width,
+        first[0], first[1], 0.0,
+        second[0], second[1], 0.0,
+        third[0], third[1], 0.0,
+        direction,
+        False,
+    )
+    if sketch is None:
+        return normalize_sequence(made)
+
+    after = segments_by_id(sketch)
+    fresh = [segment for key, segment in after.items() if key not in before]
+    # If the diff finds nothing but the call returned something, report the wrapper
+    # rather than claiming the slot failed.
+    return fresh or normalize_sequence(made)
 
 
 def _create_entity(manager: Any, entity: Any) -> list[Any]:
@@ -119,20 +178,8 @@ def _create_entity(manager: Any, entity: Any) -> list[Any]:
             )
         )
 
-    if kind == "slot_straight":
-        (sx, sy), (ex, ey) = entity.start, entity.end
-        return normalize_sequence(
-            manager.CreateSketchSlot(
-                0,  # swSketchSlotCreationType_e: straight slot from two centre points
-                0,  # swSketchSlotLengthType_e: centre-to-centre
-                entity.width,
-                sx, sy, 0.0,
-                ex, ey, 0.0,
-                0.0, 0.0, 0.0,
-                1,
-                False,
-            )
-        )
+    if kind.startswith("slot_"):
+        return _create_slot(manager, entity, kind)
 
     if kind == "spline":
         flattened: list[float] = []
@@ -371,6 +418,7 @@ def sketch_list(ctx: OpContext, args: SketchListArgs) -> SketchListResult:
     ),
     safety=ModelMutation(destructive=False),
     satisfies=("SK-003", "SK-004"),
+    partially_satisfies=("FEAT-013",),
     precondition="part_or_assembly",
     idempotent=False,
     timeout_s=300.0,
@@ -754,3 +802,125 @@ def _require(value: Any, field: str, operation: str) -> None:
                 context={"operation": operation, "missing": field},
             )
         )
+
+
+_TEXT_ALIGNMENT = {"left": 0, "center": 1, "right": 2, "justified": 3}
+
+
+@op(
+    name="sw_sketch_text",
+    tier="core",
+    domains=("sketch",),
+    tags=("text", "engrave", "emboss", "sketch"),
+    summary=(
+        "Draw sketch text, optionally running along a sketch segment, so engraving and "
+        "embossing do not need a macro. Verified by counting the text back out."
+    ),
+    safety=ModelMutation(destructive=False),
+    partially_satisfies=("SK-008",),
+    precondition="part_or_assembly",
+    idempotent=False,
+    timeout_s=180.0,
+)
+def sketch_text(ctx: OpContext, args: SketchTextArgs) -> SketchTextResult:
+    """SK-008.
+
+    Font is not an argument, and that is a limitation rather than an oversight:
+    ``InsertSketchText`` takes no font, and SOLIDWORKS reads it from the *document's*
+    text-format preference. Exposing it here would mean changing a document-wide setting
+    as a side effect of drawing one string, and leaving it changed afterwards. So the
+    text is drawn in whatever font the document uses, and the limitation is declared.
+
+    Alignment and flip only apply when a path is selected — with mark 1, which is why
+    the segment is selected rather than passed as an argument.
+    """
+    doc = ctx.require_doc()
+    sketch = _resolve_sketch(ctx, doc, args.sketch_name)
+    name = str(try_com_member(sketch, "Name", default="") or "")
+    before = len(normalize_sequence(
+        try_com_member(sketch, "GetSketchTextSegments", default=None)
+    ))
+
+    try_com_member(doc, "ClearSelection2", True, default=None)
+    on_path = False
+    if args.path_segment_id is not None:
+        segment = segments_by_id(sketch).get(args.path_segment_id)
+        if segment is None:
+            raise SwMcpError(
+                make_error(
+                    "SEGMENT_NOT_FOUND",
+                    "validation",
+                    f"Sketch {name!r} has no segment {args.path_segment_id!r}.",
+                    remediation=["List the sketch to see the ids it actually holds."],
+                )
+            )
+        # Mark 1 is the whole contract for a text path; anything else and SOLIDWORKS
+        # silently lays the text out horizontally instead.
+        on_path = bool(try_com_member(segment, "Select2", True, 1, default=False))
+        if not on_path:
+            raise SwMcpError(
+                make_error(
+                    "SEGMENT_NOT_SELECTABLE",
+                    "reference",
+                    f"Could not select {args.path_segment_id!r} as the text path.",
+                )
+            )
+
+    made = try_com_member(
+        doc,
+        "InsertSketchText",
+        float(args.at[0]),
+        float(args.at[1]),
+        0.0,
+        args.text,
+        _TEXT_ALIGNMENT[args.alignment],
+        int(args.flip_vertical),
+        int(args.mirror_horizontal),
+        args.width_factor,
+        args.char_spacing,
+        default=None,
+    )
+    try_com_member(doc, "ClearSelection2", True, default=None)
+
+    after = len(normalize_sequence(
+        try_com_member(sketch, "GetSketchTextSegments", default=None)
+    ))
+    if made is None or after <= before:
+        raise SwMcpError(
+            make_error(
+                "SKETCH_TEXT_FAILED",
+                "solidworks",
+                f"SOLIDWORKS did not add the text to {name!r}.",
+                context={"text": args.text, "on_path": on_path},
+                remediation=[
+                    "A sketch must be open; start one first.",
+                    "Text on a path needs a segment in the same sketch.",
+                ],
+            )
+        )
+
+    return SketchTextResult(
+        sketch_name=name,
+        text=args.text,
+        on_path=on_path,
+        text_segment_count=after,
+        alignment=args.alignment,
+        sketch_state=sketch_state(sketch),
+        verification=Verification(
+            read_back=True,
+            before={"text_segment_count": before},
+            after={"text_segment_count": after},
+            checks=[
+                Check(
+                    name="text_added",
+                    passed=after > before,
+                    detail=f"{before} -> {after} text segment(s)",
+                ),
+                Check(
+                    name="path_selected_when_requested",
+                    passed=on_path == (args.path_segment_id is not None),
+                    detail="text follows the given segment" if on_path else "horizontal text",
+                ),
+            ],
+        ),
+    )

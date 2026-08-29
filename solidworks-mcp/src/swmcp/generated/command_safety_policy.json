@@ -42,6 +42,28 @@
         "kind": "read"
       }
     },
+    "sw_appearance_get": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_appearance_set": {
+      "audited": true,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "Changes how the model is displayed and is stored in the document. No geometry, feature, or dimension is created, changed, or removed."
+      }
+    },
     "sw_audit_tail": {
       "audited": false,
       "auto_checkpoint": false,
@@ -402,6 +424,17 @@
         "kind": "model_mutation"
       }
     },
+    "sw_feature_draft": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
     "sw_feature_edit": {
       "audited": true,
       "auto_checkpoint": true,
@@ -541,6 +574,27 @@
       "read_only": true,
       "safety": {
         "kind": "read"
+      }
+    },
+    "sw_material_get": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_material_set": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
       }
     },
     "sw_measure": {
@@ -820,6 +874,28 @@
         "kind": "model_mutation"
       }
     },
+    "sw_sketch_text": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_surface_create": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
     "sw_system_info": {
       "audited": false,
       "auto_checkpoint": false,
@@ -852,6 +928,18 @@
         "destructive": false,
         "kind": "non_model_side_effect",
         "rationale": "Changes what the SOLIDWORKS window displays and the view orientation stored with the document. No geometry, feature, or parameter is altered, but the application's visible state is, which a user watching the screen will see."
+      }
+    },
+    "sw_visibility_set": {
+      "audited": true,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "Changes what is drawn and is stored in the document. Hidden geometry is still present and still measured; nothing is created or removed."
       }
     }
   }

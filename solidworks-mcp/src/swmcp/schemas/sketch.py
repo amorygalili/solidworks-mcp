@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from swmcp.envelope import MutationResult, ReadResult
 from swmcp.refs.model import EntityRef
@@ -92,11 +92,85 @@ class PolygonEntity(_Segment):
     inscribed: bool = True
 
 
+#: ``swSketchSlotLengthType_e``. This selects how SOLIDWORKS *dimensions* the slot, not
+#: how it is shaped: measured either way, the same points and width produce identical
+#: geometry, and the setting only becomes visible once ``add_dimension`` is true.
+SlotLength = Literal["center_to_center", "overall"]
+
+
 class SlotStraightEntity(_Segment):
+    """A straight slot between two centre points."""
+
     type: Literal["slot_straight"] = "slot_straight"
     start: Point2D
     end: Point2D
     width: Length = Field(gt=0)
+    length_type: SlotLength = "center_to_center"
+    add_dimension: bool = Field(
+        default=False,
+        description=(
+            "Add SOLIDWORKS' automatic slot dimension, expressed the way length_type "
+            "says. Without this the slot is under-defined and length_type does nothing."
+        ),
+    )
+
+
+class SlotCenterpointEntity(_Segment):
+    """A straight slot given its middle and one end, rather than both ends."""
+
+    type: Literal["slot_centerpoint"] = "slot_centerpoint"
+    center: Point2D
+    end: Point2D
+    width: Length = Field(gt=0)
+    length_type: SlotLength = "center_to_center"
+    add_dimension: bool = Field(
+        default=False,
+        description=(
+            "Add SOLIDWORKS' automatic slot dimension, expressed the way length_type "
+            "says. Without this the slot is under-defined and length_type does nothing."
+        ),
+    )
+
+
+class SlotArcEntity(_Segment):
+    """An arc slot swept about a centre point.
+
+    A semicircular slot is this with ``start`` and ``end`` diametrically opposite the
+    centre; SOLIDWORKS has no separate semicircular slot type.
+    """
+
+    type: Literal["slot_arc"] = "slot_arc"
+    center: Point2D
+    start: Point2D
+    end: Point2D
+    width: Length = Field(gt=0)
+    direction: Literal["clockwise", "counterclockwise"] = "counterclockwise"
+    length_type: SlotLength = "center_to_center"
+    add_dimension: bool = Field(
+        default=False,
+        description=(
+            "Add SOLIDWORKS' automatic slot dimension, expressed the way length_type "
+            "says. Without this the slot is under-defined and length_type does nothing."
+        ),
+    )
+
+
+class SlotArc3PointEntity(_Segment):
+    """An arc slot through three points on its centreline."""
+
+    type: Literal["slot_3point_arc"] = "slot_3point_arc"
+    start: Point2D
+    end: Point2D
+    through: Point2D = Field(description="A point the slot centreline passes through.")
+    width: Length = Field(gt=0)
+    length_type: SlotLength = "center_to_center"
+    add_dimension: bool = Field(
+        default=False,
+        description=(
+            "Add SOLIDWORKS' automatic slot dimension, expressed the way length_type "
+            "says. Without this the slot is under-defined and length_type does nothing."
+        ),
+    )
 
 
 class SplineEntity(_Segment):
@@ -116,9 +190,66 @@ SketchEntity = Annotated[
     | EllipseEntity
     | PolygonEntity
     | SlotStraightEntity
+    | SlotCenterpointEntity
+    | SlotArcEntity
+    | SlotArc3PointEntity
     | SplineEntity,
     Field(discriminator="type"),
 ]
+
+
+class SketchTextArgs(BaseArgs):
+    """SK-008. Font is deliberately absent — see the handler for why."""
+
+    text: str = Field(min_length=1, max_length=1000, description="The characters to draw.")
+    at: Point2D = Field(
+        default_factory=lambda: [0.0, 0.0],
+        description="Start of the text block. Ignored when the text follows a path.",
+    )
+    path_segment_id: str | None = Field(
+        default=None,
+        description=(
+            "Sketch segment in this sketch for the text to run along. Alignment and "
+            "flip only mean anything with a path; without one the text sits horizontally."
+        ),
+    )
+    alignment: Literal["left", "center", "right", "justified"] = "left"
+    flip_vertical: bool = False
+    mirror_horizontal: bool = False
+    width_factor: int = Field(
+        default=100, ge=6, le=1667, description="Percentage width of each character."
+    )
+    char_spacing: int = Field(
+        default=100,
+        ge=1,
+        le=10000,
+        description="Percentage spacing between characters. SOLIDWORKS ignores it when "
+        "alignment is 'justified'.",
+    )
+    sketch_name: str | None = Field(
+        default=None, description="Sketch to draw into. Defaults to the open one."
+    )
+
+    @model_validator(mode="after")
+    def _alignment_needs_a_path(self) -> SketchTextArgs:
+        """Without a path SOLIDWORKS ignores alignment, so asking for it is a mistake."""
+        if self.path_segment_id is None and self.alignment != "left":
+            raise ValueError(
+                "alignment only applies to text on a path; give path_segment_id or "
+                "leave alignment as 'left'"
+            )
+        if self.path_segment_id is None and self.flip_vertical:
+            raise ValueError("flip_vertical only applies to text on a path")
+        return self
+
+
+class SketchTextResult(MutationResult):
+    sketch_name: str
+    text: str
+    on_path: bool
+    text_segment_count: int
+    alignment: str
+    sketch_state: SketchState
 
 
 class SketchPlaneTarget(StrictModel):

@@ -15,6 +15,7 @@ Create sketch primitives in one batch — lines, centerlines, points, rectangles
 | Idempotent | False |
 | Timeout | 300s |
 | Satisfies | `SK-003`, `SK-004` |
+| Partially satisfies | `FEAT-013` |
 
 ## Input schema
 
@@ -1024,9 +1025,16 @@ Create sketch primitives in one batch — lines, centerlines, points, rectangles
       "title": "RectCornerEntity",
       "type": "object"
     },
-    "SlotStraightEntity": {
+    "SlotArc3PointEntity": {
       "additionalProperties": false,
+      "description": "An arc slot through three points on its centreline.",
       "properties": {
+        "add_dimension": {
+          "default": false,
+          "description": "Add SOLIDWORKS' automatic slot dimension, expressed the way length_type says. Without this the slot is under-defined and length_type does nothing.",
+          "title": "Add Dimension",
+          "type": "boolean"
+        },
         "construction": {
           "default": false,
           "description": "Create as construction geometry rather than profile geometry.",
@@ -1065,6 +1073,495 @@ Create sketch primitives in one batch — lines, centerlines, points, rectangles
           "minItems": 2,
           "title": "End",
           "type": "array"
+        },
+        "length_type": {
+          "default": "center_to_center",
+          "enum": [
+            "center_to_center",
+            "overall"
+          ],
+          "title": "Length Type",
+          "type": "string"
+        },
+        "start": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                "type": "string"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "unit": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "value"
+                ],
+                "type": "object"
+              }
+            ],
+            "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "title": "Start",
+          "type": "array"
+        },
+        "through": {
+          "description": "A point the slot centreline passes through.",
+          "items": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                "type": "string"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "unit": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "value"
+                ],
+                "type": "object"
+              }
+            ],
+            "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "title": "Through",
+          "type": "array"
+        },
+        "type": {
+          "const": "slot_3point_arc",
+          "default": "slot_3point_arc",
+          "title": "Type",
+          "type": "string"
+        },
+        "width": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+              "type": "string"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "unit": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "value"
+              ],
+              "type": "object"
+            }
+          ],
+          "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft.",
+          "title": "Width"
+        }
+      },
+      "required": [
+        "start",
+        "end",
+        "through",
+        "width"
+      ],
+      "title": "SlotArc3PointEntity",
+      "type": "object"
+    },
+    "SlotArcEntity": {
+      "additionalProperties": false,
+      "description": "An arc slot swept about a centre point.\n\nA semicircular slot is this with ``start`` and ``end`` diametrically opposite the\ncentre; SOLIDWORKS has no separate semicircular slot type.",
+      "properties": {
+        "add_dimension": {
+          "default": false,
+          "description": "Add SOLIDWORKS' automatic slot dimension, expressed the way length_type says. Without this the slot is under-defined and length_type does nothing.",
+          "title": "Add Dimension",
+          "type": "boolean"
+        },
+        "center": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                "type": "string"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "unit": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "value"
+                ],
+                "type": "object"
+              }
+            ],
+            "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "title": "Center",
+          "type": "array"
+        },
+        "construction": {
+          "default": false,
+          "description": "Create as construction geometry rather than profile geometry.",
+          "title": "Construction",
+          "type": "boolean"
+        },
+        "direction": {
+          "default": "counterclockwise",
+          "enum": [
+            "clockwise",
+            "counterclockwise"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "end": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                "type": "string"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "unit": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "value"
+                ],
+                "type": "object"
+              }
+            ],
+            "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "title": "End",
+          "type": "array"
+        },
+        "length_type": {
+          "default": "center_to_center",
+          "enum": [
+            "center_to_center",
+            "overall"
+          ],
+          "title": "Length Type",
+          "type": "string"
+        },
+        "start": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                "type": "string"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "unit": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "value"
+                ],
+                "type": "object"
+              }
+            ],
+            "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "title": "Start",
+          "type": "array"
+        },
+        "type": {
+          "const": "slot_arc",
+          "default": "slot_arc",
+          "title": "Type",
+          "type": "string"
+        },
+        "width": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+              "type": "string"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "unit": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "value"
+              ],
+              "type": "object"
+            }
+          ],
+          "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft.",
+          "title": "Width"
+        }
+      },
+      "required": [
+        "center",
+        "start",
+        "end",
+        "width"
+      ],
+      "title": "SlotArcEntity",
+      "type": "object"
+    },
+    "SlotCenterpointEntity": {
+      "additionalProperties": false,
+      "description": "A straight slot given its middle and one end, rather than both ends.",
+      "properties": {
+        "add_dimension": {
+          "default": false,
+          "description": "Add SOLIDWORKS' automatic slot dimension, expressed the way length_type says. Without this the slot is under-defined and length_type does nothing.",
+          "title": "Add Dimension",
+          "type": "boolean"
+        },
+        "center": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                "type": "string"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "unit": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "value"
+                ],
+                "type": "object"
+              }
+            ],
+            "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "title": "Center",
+          "type": "array"
+        },
+        "construction": {
+          "default": false,
+          "description": "Create as construction geometry rather than profile geometry.",
+          "title": "Construction",
+          "type": "boolean"
+        },
+        "end": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                "type": "string"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "unit": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "value"
+                ],
+                "type": "object"
+              }
+            ],
+            "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "title": "End",
+          "type": "array"
+        },
+        "length_type": {
+          "default": "center_to_center",
+          "enum": [
+            "center_to_center",
+            "overall"
+          ],
+          "title": "Length Type",
+          "type": "string"
+        },
+        "type": {
+          "const": "slot_centerpoint",
+          "default": "slot_centerpoint",
+          "title": "Type",
+          "type": "string"
+        },
+        "width": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+              "type": "string"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "unit": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "value"
+              ],
+              "type": "object"
+            }
+          ],
+          "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft.",
+          "title": "Width"
+        }
+      },
+      "required": [
+        "center",
+        "end",
+        "width"
+      ],
+      "title": "SlotCenterpointEntity",
+      "type": "object"
+    },
+    "SlotStraightEntity": {
+      "additionalProperties": false,
+      "description": "A straight slot between two centre points.",
+      "properties": {
+        "add_dimension": {
+          "default": false,
+          "description": "Add SOLIDWORKS' automatic slot dimension, expressed the way length_type says. Without this the slot is under-defined and length_type does nothing.",
+          "title": "Add Dimension",
+          "type": "boolean"
+        },
+        "construction": {
+          "default": false,
+          "description": "Create as construction geometry rather than profile geometry.",
+          "title": "Construction",
+          "type": "boolean"
+        },
+        "end": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                "type": "string"
+              },
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "unit": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "value"
+                ],
+                "type": "object"
+              }
+            ],
+            "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "title": "End",
+          "type": "array"
+        },
+        "length_type": {
+          "default": "center_to_center",
+          "enum": [
+            "center_to_center",
+            "overall"
+          ],
+          "title": "Length Type",
+          "type": "string"
         },
         "start": {
           "items": {
@@ -1224,6 +1721,9 @@ Create sketch primitives in one batch — lines, centerlines, points, rectangles
             "polygon": "#/$defs/PolygonEntity",
             "rect_center": "#/$defs/RectCenterEntity",
             "rect_corner": "#/$defs/RectCornerEntity",
+            "slot_3point_arc": "#/$defs/SlotArc3PointEntity",
+            "slot_arc": "#/$defs/SlotArcEntity",
+            "slot_centerpoint": "#/$defs/SlotCenterpointEntity",
             "slot_straight": "#/$defs/SlotStraightEntity",
             "spline": "#/$defs/SplineEntity"
           },
@@ -1262,6 +1762,15 @@ Create sketch primitives in one batch — lines, centerlines, points, rectangles
           },
           {
             "$ref": "#/$defs/SlotStraightEntity"
+          },
+          {
+            "$ref": "#/$defs/SlotCenterpointEntity"
+          },
+          {
+            "$ref": "#/$defs/SlotArcEntity"
+          },
+          {
+            "$ref": "#/$defs/SlotArc3PointEntity"
           },
           {
             "$ref": "#/$defs/SplineEntity"

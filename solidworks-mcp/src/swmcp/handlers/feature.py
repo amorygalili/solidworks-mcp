@@ -22,6 +22,8 @@ from swmcp.modeling import (
     body_mass_properties,
     body_summary,
     describe_feature,
+    document_density,
+    document_mass_properties,
     feature_count,
     find_feature,
     latest_unused_sketch,
@@ -45,6 +47,8 @@ from swmcp.schemas.feature import (
     DatumPlaneCreateResult,
     DatumPointCreateArgs,
     DatumPointCreateResult,
+    DraftArgs,
+    DraftResult,
     EdgeFeatureResult,
     ExtrudeArgs,
     ExtrudeResult,
@@ -967,6 +971,140 @@ def feature_revolve(ctx: OpContext, args: RevolveArgs) -> RevolveResult:
             checks=_geometry_checks(
                 before, after, expect="less" if args.mode == "cut" else "more"
             ),
+        ),
+    )
+
+
+# --- draft --------------------------------------------------------------------
+
+#: ``InsertMultiFaceDraft`` reads its three roles from selection marks, like sweep and
+#: the coordinate system: 1 the neutral plane or pull direction, 2 the faces to draft,
+#: 4 the parting-line edges.
+_DRAFT_MARK_NEUTRAL = 1
+_DRAFT_MARK_FACE = 2
+_DRAFT_MARK_EDGE = 4
+
+_DRAFT_PROPAGATION = {
+    "none": "swFacePropNone",
+    "tangent": "swFacePropTangent",
+    "all_loops": "swFacePropAllLoops",
+    "inner_loops": "swFacePropInnerLoops",
+    "outer_loops": "swFacePropOuterLoops",
+}
+
+
+@op(
+    name="sw_feature_draft",
+    tier="core",
+    domains=("feature",),
+    tags=("draft", "taper", "mold", "parting-line"),
+    summary=(
+        "Taper faces by a draft angle from a neutral plane, a parting line, or as a step "
+        "draft, verified by measuring the material the taper added or removed."
+    ),
+    safety=ModelMutation(destructive=False),
+    satisfies=("FEAT-010",),
+    precondition="part",
+    idempotent=False,
+    timeout_s=300.0,
+)
+def feature_draft(ctx: OpContext, args: DraftArgs) -> DraftResult:
+    """FEAT-010.
+
+    The draft direction is worth stating because it is the opposite of what most people
+    expect: with ``flip`` false SOLIDWORKS tapers *outward*, so a box drafted on all four
+    sides gains material. Measured against the closed form for a drafted prism,
+    ``W*D*h + tan(a)*(W+D)*h^2 + (4/3)*tan(a)^2*h^3``, it agreed to twelve significant
+    figures — so this is the documented behaviour rather than a quirk of one model.
+    """
+    doc = ctx.require_doc()
+    before = model_snapshot(doc)
+
+    try_com_member(doc, "ClearSelection2", True, default=None)
+    if args.neutral_standard_plane:
+        plane = ctx.session.find_standard_plane(doc, args.neutral_standard_plane)
+        plane.Select2(True, _DRAFT_MARK_NEUTRAL)
+    elif _select_refs(ctx, doc, [args.neutral_ref], mark=_DRAFT_MARK_NEUTRAL) != 1:
+        raise SwMcpError(
+            make_error(
+                "REFERENCE_NOT_SELECTABLE",
+                "reference",
+                "The neutral reference could not be selected.",
+                remediation=["Re-capture the face or plane; the model may have changed."],
+            )
+        )
+
+    faces = _select_refs(ctx, doc, args.face_refs, mark=_DRAFT_MARK_FACE)
+    edges = _select_refs(ctx, doc, args.edge_refs, mark=_DRAFT_MARK_EDGE)
+    if faces != len(args.face_refs) or edges != len(args.edge_refs):
+        raise SwMcpError(
+            make_error(
+                "REFERENCE_NOT_SELECTABLE",
+                "reference",
+                f"Selected {faces} of {len(args.face_refs)} faces and {edges} of "
+                f"{len(args.edge_refs)} edges.",
+                remediation=["Re-capture the references with sw_probe_faces."],
+            )
+        )
+
+    feature = try_com_member(
+        doc.FeatureManager,
+        "InsertMultiFaceDraft",
+        float(args.angle),
+        args.flip,
+        args.method == "parting_line",
+        swconst.value("swDraftFacePropagationType_e", _DRAFT_PROPAGATION[args.propagation]),
+        args.method == "step",
+        args.body_draft,
+        default=None,
+    )
+    if feature is None:
+        try_com_member(doc, "ClearSelection2", True, default=None)
+        raise SwMcpError(
+            make_error(
+                "DRAFT_FAILED",
+                "solidworks",
+                f"SOLIDWORKS could not apply a {args.method} draft.",
+                context={
+                    "method": args.method,
+                    "faces": faces,
+                    "edges": edges,
+                    "propagation": args.propagation,
+                },
+                remediation=[
+                    "The neutral reference must be planar, and the drafted faces must "
+                    "meet it rather than lie parallel to it.",
+                    "An angle steep enough to collapse a face will refuse to build; try "
+                    "a smaller one.",
+                ],
+            )
+        )
+
+    if args.name:
+        feature.Name = args.name
+    after = model_snapshot(doc)
+    reference = capture(ctx.session, doc, feature)
+
+    return DraftResult(
+        feature_name=str(try_com_member(feature, "Name", default="") or ""),
+        method=args.method,
+        faces_drafted=faces,
+        edges_used=edges,
+        body_count_before=before["body_count"],
+        body_count_after=after["body_count"],
+        volume_mm3_before=before["volume_mm3"],
+        volume_mm3_after=after["volume_mm3"],
+        reference={
+            **reference.model_dump(mode="json", exclude_none=True),
+            "tool_args": reference.tool_args(),
+        },
+        verification=Verification(
+            read_back=True,
+            before=before,
+            after=after,
+            # A draft adds material one way and removes it the other, so "changed" is
+            # the honest invariant; the caller sees which way from the volumes.
+            checks=_geometry_checks(before, after, expect="any"),
         ),
     )
 
@@ -1999,8 +2137,77 @@ def feature_delete(ctx: OpContext, args: FeatureDeleteArgs) -> FeatureDeleteResu
 def body_list(ctx: OpContext, args: BodyListArgs) -> BodyListResult:
     _ = args
     doc = ctx.require_doc()
-    summaries = [body_summary(body) for body in bodies(doc)]
+    density = document_density(doc) or 1.0
+    summaries = [body_summary(body, density) for body in bodies(doc)]
     return BodyListResult(count=len(summaries), bodies=summaries)
+
+
+def _aggregate_bodies(chosen: list[Any], density: float) -> dict[str, Any]:
+    """Sum volume, area, mass, bounding box, and topology over the chosen bodies."""
+    total_volume = total_area = total_mass = 0.0
+    weighted_center = [0.0, 0.0, 0.0]
+    box: list[float] | None = None
+    faces = edges = 0
+
+    for body in chosen:
+        properties = body_mass_properties(body, density)
+        volume = properties.get("volume_m3") or 0.0
+        total_volume += volume
+        total_area += properties.get("surface_area_m2") or 0.0
+        mass = properties.get("mass_kg") or 0.0
+        total_mass += mass
+        center = properties.get("center_of_mass_m") or [0.0, 0.0, 0.0]
+        for index in range(3):
+            weighted_center[index] += center[index] * (mass or volume or 1.0)
+
+        raw_box = normalize_sequence(try_com_member(body, "GetBodyBox", default=None))
+        if len(raw_box) == 6:
+            values = [float(v) for v in raw_box]
+            if box is None:
+                box = values
+            else:
+                box = [
+                    *[min(a, b) for a, b in zip(box[0:3], values[0:3], strict=True)],
+                    *[max(a, b) for a, b in zip(box[3:6], values[3:6], strict=True)],
+                ]
+        faces += len(normalize_sequence(get_com_member(body, "GetFaces", default=None)))
+        edges += len(normalize_sequence(get_com_member(body, "GetEdges", default=None)))
+
+    divisor = total_mass or total_volume or 1.0
+    return {
+        "volume_m3": total_volume,
+        "surface_area_m2": total_area,
+        "mass_kg": total_mass,
+        "center_of_mass_m": [value / divisor for value in weighted_center],
+        "box": box,
+        "face_count": faces,
+        "edge_count": edges,
+    }
+
+
+def _mass_caveats(
+    whole_document: dict[str, Any], density: float, *, measuring_everything: bool
+) -> list[str]:
+    """Say when a reported mass is not the model's real mass.
+
+    ``IBody2::GetMassProperties`` computes ``volume * density`` from the density handed
+    to it, so it knows nothing about the assigned material: before this, a steel part
+    and an aluminium one of the same size both reported the same mass and a density of
+    1.0. The document figure comes from ``IModelDocExtension::GetMassProperties``, which
+    uses the material, and anything short of that is flagged here rather than presented
+    as fact.
+    """
+    if not whole_document:
+        return [
+            "SOLIDWORKS did not return document mass properties, so mass assumes a "
+            "density of 1.0 kg/m3 and is not the model's real mass."
+        ]
+    if not measuring_everything:
+        return [
+            f"Mass is volume x {density:.6g} kg/m3, the density of the whole document. "
+            "If bodies carry different materials, this subset's mass is approximate."
+        ]
+    return []
 
 
 @op(
@@ -2077,39 +2284,27 @@ def measure(ctx: OpContext, args: MeasureArgs) -> MeasureResult:
             )
         )
 
-    total_volume = 0.0
-    total_area = 0.0
-    total_mass = 0.0
-    weighted_center = [0.0, 0.0, 0.0]
-    box: list[float] | None = None
-    faces = edges = 0
+    # The material's density, not the 1.0 IBody2::GetMassProperties assumes.
+    whole_document = document_mass_properties(doc)
+    density = whole_document.get("density_kg_m3") or 1.0
+    measuring_everything = len(chosen) == len(bodies(doc))
 
-    for body in chosen:
-        properties = body_mass_properties(body)
-        volume = properties.get("volume_m3") or 0.0
-        total_volume += volume
-        total_area += properties.get("surface_area_m2") or 0.0
-        mass = properties.get("mass_kg") or 0.0
-        total_mass += mass
-        center = properties.get("center_of_mass_m") or [0.0, 0.0, 0.0]
-        for index in range(3):
-            weighted_center[index] += center[index] * (mass or volume or 1.0)
+    totals = _aggregate_bodies(chosen, density)
+    total_volume = totals["volume_m3"]
+    total_area = totals["surface_area_m2"]
+    total_mass = totals["mass_kg"]
+    box = totals["box"]
+    faces, edges = totals["face_count"], totals["edge_count"]
+    center_of_mass = totals["center_of_mass_m"]
 
-        raw_box = normalize_sequence(try_com_member(body, "GetBodyBox", default=None))
-        if len(raw_box) == 6:
-            values = [float(v) for v in raw_box]
-            if box is None:
-                box = values
-            else:
-                box = [
-                    *[min(a, b) for a, b in zip(box[0:3], values[0:3], strict=True)],
-                    *[max(a, b) for a, b in zip(box[3:6], values[3:6], strict=True)],
-                ]
-        faces += len(normalize_sequence(get_com_member(body, "GetFaces", default=None)))
-        edges += len(normalize_sequence(get_com_member(body, "GetEdges", default=None)))
-
-    divisor = total_mass or total_volume or 1.0
-    center_of_mass = [value / divisor for value in weighted_center]
+    # Measuring the whole document has an exact answer straight from SOLIDWORKS, so
+    # prefer it over the per-body sum. A subset has to be summed, and its mass is only
+    # right while every body shares the document's material - which is said out loud
+    # rather than left for the caller to discover.
+    warnings = _mass_caveats(whole_document, density, measuring_everything=measuring_everything)
+    if measuring_everything and whole_document:
+        total_mass = whole_document["mass_kg"]
+        center_of_mass = whole_document["center_of_mass_m"]
 
     return MeasureResult(
         unit=unit,
@@ -2140,7 +2335,10 @@ def measure(ctx: OpContext, args: MeasureArgs) -> MeasureResult:
             "has_volume": total_volume > 0,
             "features_in_error": _errored_feature_names(doc),
         },
-        warnings=["The model has zero volume."] if total_volume <= 0 else [],
+        warnings=[
+            *warnings,
+            *(["The model has zero volume."] if total_volume <= 0 else []),
+        ],
     )
 
 

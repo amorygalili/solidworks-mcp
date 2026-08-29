@@ -11,7 +11,7 @@ from typing import Any, Literal
 
 from pydantic import Field
 
-from swmcp.envelope import SideEffectResult
+from swmcp.envelope import ReadResult, SideEffectResult
 from swmcp.safety.overwrite import OverwritePolicy
 from swmcp.schemas.common import BaseArgs
 
@@ -100,3 +100,88 @@ class ViewCaptureResult(SideEffectResult):
     overwrite_action: Literal["create", "overwrite", "versioned"]
     method: str = Field(description="Which SOLIDWORKS call produced the file.")
     details: dict[str, Any] = Field(default_factory=dict)
+
+
+# --- appearance and visibility (VIEW-001, VIEW-002) ---------------------------
+
+#: ``MaterialPropertyValues`` is nine doubles in a fixed order. Naming them here is the
+#: difference between a caller setting transparency and a caller setting index 7.
+APPEARANCE_FIELDS = (
+    "red",
+    "green",
+    "blue",
+    "ambient",
+    "diffuse",
+    "specular",
+    "shininess",
+    "transparency",
+    "emission",
+)
+
+AppearanceTarget = Literal["document", "body", "feature", "face"]
+
+
+class AppearanceSetArgs(BaseArgs):
+    target: AppearanceTarget = Field(
+        default="document", description="What the appearance is applied to."
+    )
+    body_name: str | None = Field(default=None, description="Required when target is 'body'.")
+    feature_name: str | None = Field(
+        default=None, description="Required when target is 'feature'."
+    )
+    face_ref: dict[str, Any] | None = Field(
+        default=None, description="Entity reference to a face; required when target is 'face'."
+    )
+    color: list[float] | None = Field(
+        default=None,
+        min_length=3,
+        max_length=3,
+        description="RGB, each 0.0-1.0. Omit to leave the colour alone.",
+    )
+    ambient: float | None = Field(default=None, ge=0.0, le=1.0)
+    diffuse: float | None = Field(default=None, ge=0.0, le=1.0)
+    specular: float | None = Field(default=None, ge=0.0, le=1.0)
+    shininess: float | None = Field(default=None, ge=0.0, le=1.0)
+    transparency: float | None = Field(
+        default=None, ge=0.0, le=1.0, description="0 is opaque, 1 is fully transparent."
+    )
+    emission: float | None = Field(default=None, ge=0.0, le=1.0)
+
+
+class AppearanceResult(SideEffectResult):
+    target: str
+    applied_to: str
+    appearance: dict[str, float] = Field(default_factory=dict)
+    changed: list[str] = Field(default_factory=list)
+
+
+class AppearanceGetArgs(BaseArgs):
+    target: AppearanceTarget = "document"
+    body_name: str | None = None
+    feature_name: str | None = None
+    face_ref: dict[str, Any] | None = None
+
+
+class AppearanceGetResult(ReadResult):
+    target: str
+    applied_to: str
+    appearance: dict[str, float] = Field(default_factory=dict)
+    inherited: bool = Field(
+        default=False,
+        description="True when the entity has no appearance of its own and shows the document's.",
+    )
+
+
+class VisibilitySetArgs(BaseArgs):
+    target: Literal["body", "feature"] = Field(
+        description="Bodies hide through IBody2; reference geometry and sketches blank."
+    )
+    name: str = Field(min_length=1, description="Body or feature name.")
+    visible: bool = Field(description="True to show, false to hide.")
+
+
+class VisibilitySetResult(SideEffectResult):
+    target: str
+    name: str
+    visible: bool
+    method: str = Field(description="Which SOLIDWORKS call was used, since they differ by type.")

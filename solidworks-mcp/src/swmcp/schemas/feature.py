@@ -256,6 +256,76 @@ class RevolveResult(MutationResult):
     volume_mm3_after: float | None = None
 
 
+# --- draft --------------------------------------------------------------------
+
+DraftPropagation = Literal["none", "tangent", "all_loops", "inner_loops", "outer_loops"]
+
+
+class DraftArgs(BaseArgs):
+    method: Literal["neutral_plane", "parting_line", "step"] = Field(
+        default="neutral_plane",
+        description=(
+            "Neutral plane tapers faces away from a reference; parting line drafts from "
+            "selected edges; step draft adds a step at the parting line."
+        ),
+    )
+    angle: Angle = Field(description="Draft angle. Positive tapers away from the neutral plane.")
+    neutral_ref: EntityRef | None = Field(
+        default=None,
+        description="Planar face or plane the draft is measured from, or the pull direction.",
+    )
+    neutral_standard_plane: Literal["front", "top", "right"] | None = Field(
+        default=None, description="Use a standard plane as the neutral reference instead."
+    )
+    face_refs: list[EntityRef] = Field(
+        default_factory=list,
+        max_length=64,
+        description="Faces to draft. Required for neutral_plane and step.",
+    )
+    edge_refs: list[EntityRef] = Field(
+        default_factory=list,
+        max_length=64,
+        description="Edges defining the parting line. Required for parting_line.",
+    )
+    flip: bool = Field(
+        default=False,
+        description=(
+            "Reverse the taper. Unflipped, SOLIDWORKS drafts outward and the part gains "
+            "material; measured, not assumed."
+        ),
+    )
+    propagation: DraftPropagation = Field(
+        default="none", description="How far the draft spreads from the selected faces."
+    )
+    body_draft: bool = Field(default=False, description="Draft the whole body.")
+    name: str | None = None
+
+    @model_validator(mode="after")
+    def _selection_matches_the_method(self) -> DraftArgs:
+        """Each method reads a different selection, and the wrong one builds nothing."""
+        if self.neutral_ref is None and self.neutral_standard_plane is None:
+            raise ValueError("a draft needs neutral_ref or neutral_standard_plane")
+        if self.neutral_ref is not None and self.neutral_standard_plane is not None:
+            raise ValueError("give either neutral_ref or neutral_standard_plane, not both")
+        if self.method == "parting_line" and not self.edge_refs:
+            raise ValueError("parting_line drafting needs edge_refs")
+        if self.method != "parting_line" and not self.face_refs and not self.body_draft:
+            raise ValueError(f"{self.method!r} drafting needs face_refs, or body_draft=true")
+        return self
+
+
+class DraftResult(MutationResult):
+    feature_name: str
+    method: str
+    faces_drafted: int = 0
+    edges_used: int = 0
+    body_count_before: int
+    body_count_after: int
+    volume_mm3_before: float | None = None
+    volume_mm3_after: float | None = None
+    reference: dict[str, Any] | None = None
+
+
 # --- sweep and loft -----------------------------------------------------------
 
 #: Profile orientation along the path. These are the SOLIDWORKS "Profile Twist"

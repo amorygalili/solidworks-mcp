@@ -1,5 +1,5 @@
 {
-  "call_count": 174,
+  "call_count": 185,
   "calls": [
     {
       "argument_counts": [
@@ -7,7 +7,8 @@
       ],
       "member": "ActiveConfiguration",
       "sources": [
-        "swmcp/com/session.py"
+        "swmcp/com/session.py",
+        "swmcp/handlers/material.py"
       ]
     },
     {
@@ -25,6 +26,7 @@
       ],
       "member": "ActiveSketch",
       "sources": [
+        "swmcp/handlers/sketch.py",
         "swmcp/sketching.py"
       ]
     },
@@ -112,6 +114,7 @@
         "swmcp/handlers/reference.py",
         "swmcp/handlers/sketch.py",
         "swmcp/handlers/solid.py",
+        "swmcp/handlers/surface.py",
         "swmcp/handlers/view.py",
         "swmcp/sketching.py"
       ]
@@ -159,7 +162,8 @@
       ],
       "member": "ConfigurationManager",
       "sources": [
-        "swmcp/com/session.py"
+        "swmcp/com/session.py",
+        "swmcp/handlers/material.py"
       ]
     },
     {
@@ -476,6 +480,7 @@
         "swmcp/handlers/feature.py",
         "swmcp/handlers/review.py",
         "swmcp/handlers/sketch.py",
+        "swmcp/handlers/surface.py",
         "swmcp/modeling.py",
         "swmcp/refs/resolve.py",
         "swmcp/sketching.py"
@@ -536,6 +541,15 @@
       "member": "GetArea",
       "sources": [
         "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        2
+      ],
+      "member": "GetBodies2",
+      "sources": [
+        "swmcp/handlers/surface.py"
       ]
     },
     {
@@ -808,6 +822,15 @@
       "argument_counts": [
         0
       ],
+      "member": "GetMaterialUserName2",
+      "sources": [
+        "swmcp/handlers/material.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
       "member": "GetName",
       "sources": [
         "swmcp/sketching.py"
@@ -852,6 +875,7 @@
         "swmcp/handlers/feature.py",
         "swmcp/handlers/review.py",
         "swmcp/handlers/sketch.py",
+        "swmcp/handlers/surface.py",
         "swmcp/modeling.py",
         "swmcp/refs/resolve.py",
         "swmcp/sketching.py"
@@ -972,6 +996,15 @@
       "argument_counts": [
         0
       ],
+      "member": "GetSketchTextSegments",
+      "sources": [
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
       "member": "GetSpecificFeature2",
       "sources": [
         "swmcp/sketching.py"
@@ -1046,6 +1079,7 @@
         "swmcp/handlers/document.py",
         "swmcp/handlers/feature.py",
         "swmcp/handlers/sketch.py",
+        "swmcp/handlers/view.py",
         "swmcp/modeling.py",
         "swmcp/refs/capture.py"
       ]
@@ -1100,6 +1134,15 @@
     },
     {
       "argument_counts": [
+        1
+      ],
+      "member": "HideBody",
+      "sources": [
+        "swmcp/handlers/view.py"
+      ]
+    },
+    {
+      "argument_counts": [
         27
       ],
       "member": "HoleWizard5",
@@ -1145,6 +1188,15 @@
     },
     {
       "argument_counts": [
+        3
+      ],
+      "member": "InsertExtendSurface",
+      "sources": [
+        "swmcp/handlers/surface.py"
+      ]
+    },
+    {
+      "argument_counts": [
         8
       ],
       "member": "InsertFeatureChamfer",
@@ -1159,6 +1211,33 @@
       "member": "InsertFeatureShell",
       "sources": [
         "swmcp/handlers/solid.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        6
+      ],
+      "member": "InsertMultiFaceDraft",
+      "sources": [
+        "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        2
+      ],
+      "member": "InsertOffsetSurface",
+      "sources": [
+        "swmcp/handlers/surface.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "InsertPlanarRefSurface",
+      "sources": [
+        "swmcp/handlers/surface.py"
       ]
     },
     {
@@ -1199,11 +1278,29 @@
     },
     {
       "argument_counts": [
+        0
+      ],
+      "member": "InsertSewRefSurface",
+      "sources": [
+        "swmcp/handlers/surface.py"
+      ]
+    },
+    {
+      "argument_counts": [
         1
       ],
       "member": "InsertSketch",
       "sources": [
         "swmcp/handlers/feature.py",
+        "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        9
+      ],
+      "member": "InsertSketchText",
+      "sources": [
         "swmcp/handlers/sketch.py"
       ]
     },
@@ -1285,10 +1382,13 @@
         "swmcp/handlers/document.py",
         "swmcp/handlers/exchange.py",
         "swmcp/handlers/feature.py",
+        "swmcp/handlers/material.py",
         "swmcp/handlers/parameter.py",
         "swmcp/handlers/review.py",
         "swmcp/handlers/sketch.py",
         "swmcp/handlers/solid.py",
+        "swmcp/handlers/surface.py",
+        "swmcp/handlers/view.py",
         "swmcp/modeling.py",
         "swmcp/refs/capture.py",
         "swmcp/refs/probes.py",
@@ -1389,6 +1489,7 @@
       "sources": [
         "swmcp/handlers/feature.py",
         "swmcp/handlers/sketch.py",
+        "swmcp/handlers/view.py",
         "swmcp/sketching.py"
       ]
     },
@@ -1402,6 +1503,7 @@
         "swmcp/handlers/reference.py",
         "swmcp/handlers/sketch.py",
         "swmcp/handlers/solid.py",
+        "swmcp/handlers/surface.py",
         "swmcp/sketching.py"
       ]
     },
@@ -1414,7 +1516,8 @@
         "swmcp/handlers/feature.py",
         "swmcp/handlers/reference.py",
         "swmcp/handlers/sketch.py",
-        "swmcp/handlers/solid.py"
+        "swmcp/handlers/solid.py",
+        "swmcp/handlers/surface.py"
       ]
     },
     {
@@ -1442,6 +1545,15 @@
       "member": "SetEquationAndConfigurationOption",
       "sources": [
         "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        3
+      ],
+      "member": "SetMaterialPropertyName2",
+      "sources": [
+        "swmcp/handlers/material.py"
       ]
     },
     {
@@ -1660,6 +1772,7 @@
       ],
       "member": "Visible",
       "sources": [
+        "swmcp/handlers/view.py",
         "swmcp/modeling.py"
       ]
     }

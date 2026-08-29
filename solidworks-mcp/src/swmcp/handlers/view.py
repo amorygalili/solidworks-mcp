@@ -15,19 +15,34 @@ from pathlib import Path
 from typing import Any
 
 from swmcp.catalog.registry import op
-from swmcp.catalog.spec import NonModelSideEffect
+from swmcp.catalog.spec import NonModelSideEffect, ReadSafety
 from swmcp.com import swconst
-from swmcp.com.marshal import null_dispatch, out_long, try_com_member
+from swmcp.com.marshal import (
+    array_of_doubles,
+    normalize_sequence,
+    null_dispatch,
+    out_long,
+    try_com_member,
+)
 from swmcp.context import OpContext
 from swmcp.envelope import ArtifactEvidence
 from swmcp.errors import SwMcpError, make_error, validation_error
+from swmcp.modeling import bodies, find_feature
+from swmcp.refs.resolve import resolve
 from swmcp.safety.overwrite import resolve_output_path
 from swmcp.safety.paths import assert_output_path
 from swmcp.schemas.view import (
+    APPEARANCE_FIELDS,
+    AppearanceGetArgs,
+    AppearanceGetResult,
+    AppearanceResult,
+    AppearanceSetArgs,
     ViewCaptureArgs,
     ViewCaptureResult,
     ViewSetArgs,
     ViewSetResult,
+    VisibilitySetArgs,
+    VisibilitySetResult,
 )
 
 _ORIENTATIONS = {
@@ -239,4 +254,296 @@ def view_capture(ctx: OpContext, args: ViewCaptureArgs) -> ViewCaptureResult:
                 sha256=hashlib.sha256(target.read_bytes()).hexdigest(),
             )
         ],
+    )
+
+
+# --- appearance and visibility ------------------------------------------------
+
+
+def _appearance_owner(ctx: OpContext, doc: Any, args: Any) -> tuple[Any, str, str]:
+    """The COM object carrying the appearance, plus a label for the result."""
+    target = args.target
+    if target == "document":
+        return doc, "document", "the document"
+    if target == "body":
+        if not args.body_name:
+            raise SwMcpError(
+                validation_error("MISSING_ARGUMENT", "target='body' needs body_name.")
+            )
+        for body in bodies(doc):
+            if str(try_com_member(body, "Name", default="")) == args.body_name:
+                return body, "body", args.body_name
+        raise SwMcpError(
+            make_error(
+                "BODY_NOT_FOUND",
+                "validation",
+                f"There is no body named {args.body_name!r}.",
+                remediation=["List the document's bodies to see the exact names."],
+            )
+        )
+    if target == "feature":
+        if not args.feature_name:
+            raise SwMcpError(
+                validation_error("MISSING_ARGUMENT", "target='feature' needs feature_name.")
+            )
+        feature = find_feature(doc, args.feature_name)
+        if feature is None:
+            raise SwMcpError(
+                make_error(
+                    "FEATURE_NOT_FOUND",
+                    "validation",
+                    f"There is no feature named {args.feature_name!r}.",
+                    remediation=["List the document's features to see the exact names."],
+                )
+            )
+        return feature, "feature", args.feature_name
+    if not args.face_ref:
+        raise SwMcpError(validation_error("MISSING_ARGUMENT", "target='face' needs face_ref."))
+    resolution = resolve(ctx.session, doc, args.face_ref, max_candidates=ctx.config.max_candidates)
+    return resolution.entity, "face", resolution.refreshed.label
+
+
+def _read_appearance(owner: Any) -> list[float]:
+    """The nine doubles, from whichever spelling this object uses.
+
+    IPartDoc and IModelDoc2 expose ``MaterialPropertyValues``; IBody2 and IFace2 use
+    ``MaterialPropertyValues2``. Reading the wrong one returns nothing rather than
+    raising, so both are tried before concluding there is no appearance here.
+    """
+    for member in ("MaterialPropertyValues2", "MaterialPropertyValues"):
+        values = normalize_sequence(try_com_member(owner, member, default=None))
+        if len(values) >= 9:
+            return [float(v) for v in values[:9]]
+    return []
+
+
+def _write_appearance(owner: Any, values: list[float]) -> bool:
+    """Assign the array, trying both spellings. A plain list will not marshal.
+
+    Assigning a Python tuple appears to work and then reads back as uninitialised
+    memory, so the value has to go across as a real VT_R8 SAFEARRAY.
+    """
+    packed = array_of_doubles(values)
+    for member in ("MaterialPropertyValues2", "MaterialPropertyValues"):
+        try:
+            setattr(owner, member, packed)
+        except Exception:
+            continue
+        if _read_appearance(owner)[:9] == values:
+            return True
+    return False
+
+
+@op(
+    name="sw_appearance_set",
+    tier="core",
+    domains=("view",),
+    tags=("appearance", "colour", "transparency", "display"),
+    summary=(
+        "Set the colour, transparency, and shading of the document, a body, a feature, "
+        "or a face, changing only the values given and reading the result back."
+    ),
+    safety=NonModelSideEffect(
+        destructive=False,
+        rationale=(
+            "Changes how the model is displayed and is stored in the document. No "
+            "geometry, feature, or dimension is created, changed, or removed."
+        ),
+    ),
+    satisfies=("VIEW-001",),
+    precondition="part_or_assembly",
+    idempotent=True,
+    timeout_s=180.0,
+)
+def appearance_set(ctx: OpContext, args: AppearanceSetArgs) -> AppearanceResult:
+    doc = ctx.require_doc()
+    owner, target, label = _appearance_owner(ctx, doc, args)
+
+    current = _read_appearance(owner) or _read_appearance(doc) or [0.8] * 9
+    wanted = list(current)
+    changed: list[str] = []
+
+    if args.color is not None:
+        for index, value in enumerate(args.color):
+            if wanted[index] != value:
+                changed.append(APPEARANCE_FIELDS[index])
+            wanted[index] = float(value)
+    for index, field in enumerate(APPEARANCE_FIELDS):
+        if index < 3:
+            continue
+        supplied = getattr(args, field, None)
+        if supplied is not None:
+            if wanted[index] != supplied:
+                changed.append(field)
+            wanted[index] = float(supplied)
+
+    if not _write_appearance(owner, wanted):
+        raise SwMcpError(
+            make_error(
+                "APPEARANCE_NOT_APPLIED",
+                "solidworks",
+                f"SOLIDWORKS did not apply the appearance to {label}.",
+                context={"target": target},
+                remediation=[
+                    "A face or body appearance needs the entity to still exist; "
+                    "re-capture the reference if the model has been rebuilt.",
+                ],
+            )
+        )
+
+    try_com_member(doc, "GraphicsRedraw2", default=None)
+    final = _read_appearance(owner)
+    return AppearanceResult(
+        target=target,
+        applied_to=label,
+        appearance=dict(zip(APPEARANCE_FIELDS, final, strict=False)),
+        changed=sorted(set(changed)),
+    )
+
+
+@op(
+    name="sw_appearance_get",
+    tier="core",
+    domains=("view",),
+    tags=("appearance", "colour", "transparency", "inspect"),
+    summary=(
+        "Read the colour, transparency, and shading of the document, a body, a feature, "
+        "or a face, reporting whether the value is its own or inherited."
+    ),
+    safety=ReadSafety(),
+    satisfies=("VIEW-001",),
+    precondition="part_or_assembly",
+    idempotent=True,
+    timeout_s=120.0,
+)
+def appearance_get(ctx: OpContext, args: AppearanceGetArgs) -> AppearanceGetResult:
+    doc = ctx.require_doc()
+    owner, target, label = _appearance_owner(ctx, doc, args)
+
+    own = _read_appearance(owner)
+    inherited = not own and target != "document"
+    values = own or _read_appearance(doc)
+
+    return AppearanceGetResult(
+        target=target,
+        applied_to=label,
+        appearance=dict(zip(APPEARANCE_FIELDS, values, strict=False)),
+        inherited=inherited,
+        warnings=(
+            [f"{label} has no appearance of its own; these are the document's values."]
+            if inherited
+            else []
+        ),
+    )
+
+
+@op(
+    name="sw_visibility_set",
+    tier="core",
+    domains=("view",),
+    tags=("visibility", "hide", "show", "body", "feature"),
+    summary=(
+        "Hide or show a solid body, or blank a reference plane, axis, point, or sketch, "
+        "verified by reading the visibility back rather than trusting the call."
+    ),
+    safety=NonModelSideEffect(
+        destructive=False,
+        rationale=(
+            "Changes what is drawn and is stored in the document. Hidden geometry is "
+            "still present and still measured; nothing is created or removed."
+        ),
+    ),
+    satisfies=("VIEW-002",),
+    precondition="part_or_assembly",
+    idempotent=True,
+    timeout_s=180.0,
+)
+def visibility_set(ctx: OpContext, args: VisibilitySetArgs) -> VisibilitySetResult:
+    """Bodies and features hide through completely different calls.
+
+    ``IBody2::HideBody`` is void, and reference geometry does not use it at all - it
+    blanks through ``IModelDoc2::BlankRefGeom``, with sketches on a third pair of calls
+    again. All three are void, so each is confirmed by reading the state back.
+    """
+    doc = ctx.require_doc()
+
+    if args.target == "body":
+        body = next(
+            (b for b in bodies(doc) if str(try_com_member(b, "Name", default="")) == args.name),
+            None,
+        )
+        if body is None:
+            raise SwMcpError(
+                make_error(
+                    "BODY_NOT_FOUND",
+                    "validation",
+                    f"There is no body named {args.name!r}.",
+                    remediation=["List the document's bodies to see the exact names."],
+                )
+            )
+        try_com_member(body, "HideBody", not args.visible, default=None)
+        refreshed = next(
+            (b for b in bodies(doc) if str(try_com_member(b, "Name", default="")) == args.name),
+            None,
+        )
+        actual = bool(try_com_member(refreshed, "Visible", default=not args.visible))
+        method = "IBody2::HideBody"
+    else:
+        feature = find_feature(doc, args.name)
+        if feature is None:
+            raise SwMcpError(
+                make_error(
+                    "FEATURE_NOT_FOUND",
+                    "validation",
+                    f"There is no feature named {args.name!r}.",
+                    remediation=["List the document's features to see the exact names."],
+                )
+            )
+        type_name = str(try_com_member(feature, "GetTypeName2", default="") or "")
+        sketch = type_name in {"ProfileFeature", "3DProfileFeature"}
+        member = (
+            ("UnblankSketch" if args.visible else "BlankSketch")
+            if sketch
+            else ("UnBlankRefGeom" if args.visible else "BlankRefGeom")
+        )
+        try_com_member(doc, "ClearSelection2", True, default=None)
+        if not try_com_member(feature, "Select2", False, 0, default=False):
+            raise SwMcpError(
+                make_error(
+                    "FEATURE_NOT_SELECTABLE",
+                    "reference",
+                    f"Could not select {args.name!r} to change its visibility.",
+                )
+            )
+        try_com_member(doc, member, default=None)
+        try_com_member(doc, "ClearSelection2", True, default=None)
+        refreshed = find_feature(doc, args.name)
+        # IFeature::Visible is swVisibilityState_e (1 hidden, 2 shown), not a boolean -
+        # unlike IBody2::Visible on the line above, which really is one. bool() on the
+        # enum is True for both states, so a hidden feature read back as visible and the
+        # operation reported failure for work it had done correctly.
+        state = try_com_member(refreshed, "Visible", default=None)
+        shown = swconst.value("swVisibilityState_e", "swVisibilityStateShown")
+        actual = (int(state) == shown) if isinstance(state, int) else args.visible
+        method = f"IModelDoc2::{member}"
+
+    if actual != args.visible:
+        raise SwMcpError(
+            make_error(
+                "VISIBILITY_NOT_APPLIED",
+                "solidworks",
+                f"{args.name!r} still reads as {'visible' if actual else 'hidden'}.",
+                context={"target": args.target, "method": method, "requested": args.visible},
+                remediation=[
+                    "A body inside a hidden parent, or a feature consumed by another, "
+                    "may not be independently hideable.",
+                ],
+            )
+        )
+
+    return VisibilitySetResult(
+        target=args.target,
+        name=args.name,
+        visible=actual,
+        method=method,
     )

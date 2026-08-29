@@ -100,6 +100,9 @@
       "sw_feature_chamfer",
       "sw_feature_fillet"
     ],
+    "FEAT-010": [
+      "sw_feature_draft"
+    ],
     "FEAT-011": [
       "sw_feature_rib"
     ],
@@ -219,6 +222,13 @@
     "SYS-005": [
       "sw_health"
     ],
+    "VIEW-001": [
+      "sw_appearance_get",
+      "sw_appearance_set"
+    ],
+    "VIEW-002": [
+      "sw_visibility_set"
+    ],
     "VIEW-003": [
       "sw_view_set"
     ],
@@ -246,10 +256,29 @@
         "sw_feature_shell"
       ]
     },
+    "FEAT-013": {
+      "limitation": "Straight, centre-point straight, centre-point arc, and three-point arc slots, each with centre-to-centre or overall length. A semicircular slot is an arc slot spanning 180 degrees; SOLIDWORKS has no separate type for it. Patterning a slot goes through sw_feature_pattern once the slot is cut, so it inherits that tool's linear-and-circular limitation.",
+      "tools": [
+        "sw_sketch_add_geometry"
+      ]
+    },
     "FEAT-014": {
       "limitation": "Box, cylinder, sphere, cone, frustum, torus, wedge, and prism, each built as an ordinary sketch and boss. Helix and spring are not implemented.",
       "tools": [
         "sw_body_primitive"
+      ]
+    },
+    "FEAT-018": {
+      "limitation": "Planar fill, offset (including a zero offset to copy faces), extend, and knit surfaces. Trimming is not implemented: SOLIDWORKS exposes no InsertTrimSurface, and InsertCutSurface cuts a solid with a surface rather than trimming one surface against another. Knit only sews surfaces that touch along an edge.",
+      "tools": [
+        "sw_surface_create"
+      ]
+    },
+    "FEAT-020": {
+      "limitation": "Part-level material assignment and read-back, with the density and mass it produces. Per-body and per-component materials are not implemented, and mass override is not: IMassProperty on this build does not expose SetOverrideMassValue or OverrideMass through late binding, so a tool for it would have nothing to call.",
+      "tools": [
+        "sw_material_get",
+        "sw_material_set"
       ]
     },
     "IO-003": {
@@ -278,6 +307,12 @@
         "sw_sketch_modify"
       ]
     },
+    "SK-008": {
+      "limitation": "Sketch text with alignment, path following, mirroring, width factor, and character spacing. Font is not settable: InsertSketchText takes no font and SOLIDWORKS reads it from the document's text-format preference, so exposing it would mean changing a document-wide setting as a side effect of drawing one string. Emboss and wrap are separate features and are not implemented.",
+      "tools": [
+        "sw_sketch_text"
+      ]
+    },
     "SYS-007": {
       "limitation": "Implemented structurally via locale-invariant GetTypeName2 tokens and ordinal standard-plane position. Only an English SOLIDWORKS is installed locally, so regression on a localized feature tree is outstanding.",
       "tools": [
@@ -287,11 +322,11 @@
   },
   "totals": {
     "covered_by_platform": 11,
-    "fully_covered_by_a_tool": 61,
-    "in_scope": 78,
-    "partially_covered": 9,
+    "fully_covered_by_a_tool": 64,
+    "in_scope": 85,
+    "partially_covered": 13,
     "requirements_in_backlog": 152,
-    "tools": 79,
+    "tools": 87,
     "uncovered_in_scope": 0
   },
   "uncovered_in_scope": []
