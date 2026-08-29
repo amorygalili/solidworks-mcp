@@ -34,6 +34,9 @@ IN_SCOPE_REQUIREMENTS: frozenset[str] = frozenset(
         # Pulled forward from P2: export is how the model reaches anything else, and
         # an atomic sequence is what the safety layer has been building toward.
         "IO-002", "IO-003", "REV-006",
+        # P2 — review. Inspection, caller-owned validation policy, a B-Rep hole
+        # audit, and reports in both machine and human form.
+        "REV-001", "REV-002", "REV-004", "REV-005", "REV-007",
         # P2 — assemblies. The first vertical of P2: insert, inspect, and set component
         # state. Transforms (ASM-004) and the rest of ASM are not claimed yet.
         "ASM-001", "ASM-002", "ASM-003",
@@ -169,6 +172,21 @@ DECLARED_PARTIAL: dict[str, str] = {
         "Interference detection, reporting each overlap's volume and the components "
         "involved. Clearance verification is a separate SOLIDWORKS manager "
         "(ClearanceVerificationManager) and is not implemented."
+    ),
+    "REV-001": (
+        "Document, feature tree, sketches, bodies, configurations, components, and mass "
+        "in one payload. Equations, dimensions, and custom properties still have their "
+        "own tools and are not folded in here."
+    ),
+    "REV-004": (
+        "Holes are audited from the B-Rep — cylindrical faces grouped by diameter, with "
+        "axis and position — and compared against expected counts. Depth and "
+        "datum-relative position are not measured, and slots are not audited."
+    ),
+    "REV-005": (
+        "A policy review written as both JSON and Markdown, each finding attributed to "
+        "what it read. The report covers the validation findings; it does not embed "
+        "previews or a hole audit."
     ),
     "SK-007": (
         "Move, rotate, scale, mirror, offset, and trim are implemented. Extend, split, "

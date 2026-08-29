@@ -14,6 +14,7 @@ from swmcp.com.marshal import (
     call_with_outparams,
     get_com_member,
     normalize_sequence,
+    out_bstr,
     out_long,
     try_com_member,
 )
@@ -101,6 +102,26 @@ def document_mass_properties(doc: Any) -> dict[str, Any]:
         "mass_kg": mass,
         "density_kg_m3": (mass / volume) if volume else None,
     }
+
+
+def document_material(doc: Any, configuration: str = "") -> tuple[str | None, str | None]:
+    """The part's material name and library, or ``(None, None)`` when none is set.
+
+    ``GetMaterialPropertyName2(ConfigName, out Database)`` is the only reliable reader:
+    ``IPartDoc::MaterialIdName`` comes back non-empty even for a part with no material,
+    so a review that tested it reported "material assigned" for every document. One
+    function so sw_material_get and the review checks cannot drift apart.
+    """
+    database = out_bstr("")
+    try:
+        name, outs = call_with_outparams(
+            doc.GetMaterialPropertyName2, configuration, database, outparams=[database]
+        )
+    except Exception:  # pragma: no cover - a COM refusal reads as "no material"
+        return None, None
+    text = str(name or "")
+    found = outs[0] if outs else None
+    return (text or None), (str(found) if found else None)
 
 
 def document_density(doc: Any) -> float | None:

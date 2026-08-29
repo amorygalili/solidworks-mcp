@@ -13,11 +13,12 @@ from typing import Any
 
 from swmcp.catalog.registry import op
 from swmcp.catalog.spec import ModelMutation, ReadSafety
-from swmcp.com.marshal import call_with_outparams, out_bstr, try_com_member
+from swmcp.com.marshal import try_com_member
 from swmcp.context import OpContext
 from swmcp.envelope import Check, Verification
 from swmcp.errors import SwMcpError, make_error
 from swmcp.modeling import bodies, document_mass_properties
+from swmcp.modeling import document_material as _read_material
 from swmcp.schemas.material import (
     MaterialGetArgs,
     MaterialGetResult,
@@ -30,25 +31,6 @@ def _active_configuration(doc: Any) -> str:
     manager = try_com_member(doc, "ConfigurationManager", default=None)
     active = try_com_member(manager, "ActiveConfiguration", default=None)
     return str(try_com_member(active, "Name", default="") or "Default")
-
-
-def _read_material(doc: Any, configuration: str) -> tuple[str | None, str | None]:
-    """``GetMaterialPropertyName2(ConfigName, out Database)`` -> (name, database).
-
-    The database is an ``[out]`` parameter, which pywin32 binds either by mutating the
-    VARIANT or by appending it to the return value; ``call_with_outparams`` covers both
-    so this reads the same either way.
-    """
-    database = out_bstr("")
-    try:
-        name, outs = call_with_outparams(
-            doc.GetMaterialPropertyName2, configuration, database, outparams=[database]
-        )
-    except Exception:  # pragma: no cover - a COM refusal reads as "no material"
-        return None, None
-    text = str(name or "")
-    found = outs[0] if outs else None
-    return (text or None), (str(found) if found else None)
 
 
 def _body_materials(doc: Any) -> list[dict[str, Any]]:

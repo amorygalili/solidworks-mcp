@@ -537,6 +537,7 @@
         "swmcp/handlers/feature.py",
         "swmcp/handlers/mate.py",
         "swmcp/handlers/review.py",
+        "swmcp/handlers/review_checks.py",
         "swmcp/handlers/sketch.py",
         "swmcp/handlers/surface.py",
         "swmcp/modeling.py",
@@ -694,6 +695,7 @@
       "member": "GetComponents",
       "sources": [
         "swmcp/handlers/assembly.py",
+        "swmcp/handlers/review_checks.py",
         "swmcp/refs/resolve.py"
       ]
     },
@@ -1016,6 +1018,7 @@
         "swmcp/handlers/feature.py",
         "swmcp/handlers/mate.py",
         "swmcp/handlers/review.py",
+        "swmcp/handlers/review_checks.py",
         "swmcp/handlers/sketch.py",
         "swmcp/handlers/surface.py",
         "swmcp/modeling.py",
@@ -1068,7 +1071,8 @@
       "member": "GetPathName",
       "sources": [
         "swmcp/com/session.py",
-        "swmcp/handlers/assembly.py"
+        "swmcp/handlers/assembly.py",
+        "swmcp/handlers/review_checks.py"
       ]
     },
     {
@@ -1160,6 +1164,7 @@
       "member": "GetSpecificFeature2",
       "sources": [
         "swmcp/handlers/mate.py",
+        "swmcp/handlers/review_checks.py",
         "swmcp/sketching.py"
       ]
     },
@@ -1241,6 +1246,7 @@
         "swmcp/handlers/document.py",
         "swmcp/handlers/feature.py",
         "swmcp/handlers/mate.py",
+        "swmcp/handlers/review_checks.py",
         "swmcp/handlers/sketch.py",
         "swmcp/handlers/view.py",
         "swmcp/modeling.py",
@@ -1549,6 +1555,7 @@
         "swmcp/handlers/document.py",
         "swmcp/handlers/feature.py",
         "swmcp/handlers/mate.py",
+        "swmcp/handlers/review_checks.py",
         "swmcp/modeling.py"
       ]
     },
@@ -1632,6 +1639,7 @@
         "swmcp/handlers/material.py",
         "swmcp/handlers/parameter.py",
         "swmcp/handlers/review.py",
+        "swmcp/handlers/review_checks.py",
         "swmcp/handlers/sketch.py",
         "swmcp/handlers/solid.py",
         "swmcp/handlers/surface.py",
@@ -1651,6 +1659,7 @@
       "sources": [
         "swmcp/handlers/assembly.py",
         "swmcp/handlers/mate.py",
+        "swmcp/handlers/review_checks.py",
         "swmcp/refs/capture.py",
         "swmcp/refs/resolve.py"
       ]

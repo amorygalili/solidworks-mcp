@@ -796,6 +796,48 @@
         "kind": "read"
       }
     },
+    "sw_review_holes": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_review_inspect": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_review_report": {
+      "audited": true,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "Writes two report files under an allowed output root. The model is only read; nothing in the document changes."
+      }
+    },
+    "sw_review_validate": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
     "sw_safe_execute": {
       "audited": true,
       "auto_checkpoint": true,

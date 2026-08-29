@@ -6,7 +6,7 @@ worker thread.
 It implements the P0 foundation and a P1 modelling vertical from
 [`docs/solidworks-target-requirements.md`](../docs/solidworks-target-requirements.md),
 plus neutral-format export and an atomic mutate-and-validate workflow pulled forward
-from P2: **95 operations covering all 94 in-scope requirements**, with coverage
+from P2: **99 operations covering all 99 in-scope requirements**, with coverage
 reported honestly in `src/swmcp/generated/requirements_coverage.json` rather than
 asserted.
 
@@ -125,7 +125,7 @@ Angles default to degrees and accept `"45deg"`, `"1.57rad"`, or `{"value": 0.25,
 | surface | create a surface by planar fill, offset, extend, or knit |
 | exchange | export STEP, IGES, STL, 3MF, OBJ, PLY, Parasolid, SAT, VRML, PDF, DXF, DWG |
 | assembly | insert a component, walk the component tree, set suppression, fixed state, visibility, and configuration, add/list/edit/delete mates, check interference |
-| review | safe execute: run a sequence under one checkpoint and roll it back if an invariant fails |
+| review | inspect a document, validate it against caller-supplied policy, audit holes in the B-Rep, write JSON and Markdown reports, safe execute: run a sequence under one checkpoint and roll it back if an invariant fails |
 
 Per-tool reference with full JSON schemas: `src/swmcp/generated/docs/`.
 
@@ -156,7 +156,7 @@ only the documents the run created are closed, addressed by title.
 ## Development
 
 ```bash
-uv run pytest                       # 491 tests, no SOLIDWORKS needed
+uv run pytest                       # 508 tests, no SOLIDWORKS needed
 uv run pytest -m live tests/live/test_live_sketch.py   # one module: minutes
 uv run pytest -m "live and not slow"  # the quick live pass
 uv run pytest -m live               # the FULL live suite: ~90 minutes
@@ -301,6 +301,15 @@ coverage file, rather than left for a user to discover:
   neither is mass override: `IMassProperty` on this build does not expose
   `SetOverrideMassValue` or `OverrideMass` through late binding, so a tool for it would
   have nothing to call.
+- **`REV-001` (inspection)** — document, feature tree, sketches, bodies,
+  configurations, components, and mass in one payload. Equations, dimensions, and
+  custom properties keep their own tools and are not folded in.
+- **`REV-004` (hole audit)** — holes are counted from the B-Rep, grouped by diameter,
+  with axis and position, and compared against expected counts. Depth and
+  datum-relative position are not measured, and slots are not audited.
+- **`REV-005` (reports)** — a policy review written as both JSON and Markdown, each
+  finding attributed to what it read. The report covers validation findings; it does
+  not embed previews or the hole audit.
 - **`MATE-006` (mate editing)** — rename, suppress, unsuppress, and delete one mate.
   Deleting a range or all mates at once, and replaying a mate sequence under a
   checkpoint, are not implemented — though `sw_safe_execute` already rolls back a

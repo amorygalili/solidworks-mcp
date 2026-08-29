@@ -178,8 +178,14 @@
       "sw_ref_capture",
       "sw_ref_resolve"
     ],
+    "REV-002": [
+      "sw_review_validate"
+    ],
     "REV-006": [
       "sw_safe_execute"
+    ],
+    "REV-007": [
+      "sw_review_validate"
     ],
     "SAFE-003": [
       "sw_checkpoint_restore"
@@ -347,6 +353,24 @@
         "sw_probe_ray"
       ]
     },
+    "REV-001": {
+      "limitation": "Document, feature tree, sketches, bodies, configurations, components, and mass in one payload. Equations, dimensions, and custom properties still have their own tools and are not folded in here.",
+      "tools": [
+        "sw_review_inspect"
+      ]
+    },
+    "REV-004": {
+      "limitation": "Holes are audited from the B-Rep — cylindrical faces grouped by diameter, with axis and position — and compared against expected counts. Depth and datum-relative position are not measured, and slots are not audited.",
+      "tools": [
+        "sw_review_holes"
+      ]
+    },
+    "REV-005": {
+      "limitation": "A policy review written as both JSON and Markdown, each finding attributed to what it read. The report covers the validation findings; it does not embed previews or a hole audit.",
+      "tools": [
+        "sw_review_report"
+      ]
+    },
     "SK-007": {
       "limitation": "Move, rotate, scale, mirror, offset, and trim are implemented. Extend, split, and sketch pattern are not, and are rejected by the schema rather than failing at runtime.",
       "tools": [
@@ -368,11 +392,11 @@
   },
   "totals": {
     "covered_by_platform": 11,
-    "fully_covered_by_a_tool": 67,
-    "in_scope": 94,
-    "partially_covered": 19,
+    "fully_covered_by_a_tool": 69,
+    "in_scope": 99,
+    "partially_covered": 22,
     "requirements_in_backlog": 152,
-    "tools": 95,
+    "tools": 99,
     "uncovered_in_scope": 0
   },
   "uncovered_in_scope": []
