@@ -52,6 +52,11 @@ guessing — it is the reason those numbers exist.
   `sw_feature_extrude_boss` reaches the same geometry at 6.6s instead of 257s.
 - **Verify by measurement, not by return value.** Compare a volume against arithmetic the
   test knew in advance. "The call returned" is not evidence — see below.
+- **A module-scoped *file* fixture needs its own subdirectory.** The autouse cleanup in
+  `tests/live/conftest.py` sweeps `swmcp_*.step`, `swmcp_*.stl` and friends out of the
+  scratch root after *every* test, which deletes a module's exported fixtures after the
+  first one runs. `test_live_import.py` writes them to `scratch_root/import_fixtures/`
+  instead and clears that directory itself.
 - **A shared document couples the tests in it.** That is the price of module scope, and
   it is worth paying, but keep each test's geometry and feature names distinct, and
   isolate a test onto its own document when it genuinely needs a clean tree — with a
@@ -82,6 +87,18 @@ Probing has already caught, in code that looked correct:
 - A **loft between two circles is not an exact frustum** — it is a B-spline surface, and
   measured 0.0036% under the closed-form volume. Compare loft volumes with a relative
   tolerance.
+- `IBody2::GetMassProperties` **changes what its slots mean by body type**. The documented
+  layout is the solid one. For a *sheet* body, slot 3 holds the area and slot 4 the
+  perimeter — so reading the solid layout off a surface reported a 40 × 30 mm plane as
+  1 200 000 mm³ of material. Nothing in the type library says this; it took a circle and
+  two rectangles of equal area to prove which slot was which.
+- `ISldWorks::LoadFile4` returns a document and leaves its `Errors` out-parameter at 0
+  whether or not the import produced anything, and **on failure it leaves the previously
+  active document active**. Identify an imported document by difference against the open
+  set, never by reading `ActiveDoc` afterwards.
+- `ISldWorks::GetImportFileData` is a dead end on this build: `None` for Parasolid, ACIS,
+  and STL, and for STEP an object whose only reachable property is `MapConfigurationData`.
+  Import options go through **user preferences**, like the export ones.
 
 If you call an interface that `src/swmcp/generated/swapi.json` does not cover, add it to
 `INTERFACES` in `scripts/gen_swapi.py` and re-run that script plus

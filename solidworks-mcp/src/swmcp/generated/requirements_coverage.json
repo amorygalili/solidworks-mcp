@@ -302,6 +302,12 @@
         "sw_material_set"
       ]
     },
+    "IO-001": {
+      "limitation": "STEP, IGES, Parasolid, and ACIS arrive as solids, and STL as a graphics, surface, or solid body — each verified by measuring what the import produced rather than by trusting that LoadFile4 returned. OBJ and other mesh formats are not implemented and are rejected by the schema rather than importing as something unexpected. Import diagnostics run and are reported by what they changed, but SOLIDWORKS exposes no per-file translator log, so a file that imports incompletely is diagnosed from the geometry rather than from a translator message. Multi-body files import as one document; splitting them into separate parts is not implemented.",
+      "tools": [
+        "sw_import"
+      ]
+    },
     "IO-003": {
       "limitation": "Tessellation quality, mesh unit, binary/ASCII, and the STEP protocol are exposed, and every written file is verified against its format signature. Exporting a selected subset of bodies is not implemented; the whole document is exported.",
       "tools": [
@@ -393,10 +399,10 @@
   "totals": {
     "covered_by_platform": 11,
     "fully_covered_by_a_tool": 69,
-    "in_scope": 99,
-    "partially_covered": 22,
+    "in_scope": 100,
+    "partially_covered": 23,
     "requirements_in_backlog": 152,
-    "tools": 99,
+    "tools": 100,
     "uncovered_in_scope": 0
   },
   "uncovered_in_scope": []

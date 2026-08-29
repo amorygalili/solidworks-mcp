@@ -61,15 +61,42 @@ def test_density_of_zero_volume_is_none_rather_than_a_division_error():
 
 
 class FakeBody:
-    """``IBody2::GetMassProperties(Density)`` — index 5 is volume times the argument."""
+    """``IBody2::GetMassProperties(Density)`` — index 5 is volume times the argument.
 
-    def __init__(self, volume: float):
+    ``GetType`` is part of the contract too: the reader picks its array layout from the
+    body type, because a sheet body fills the same slots with different quantities.
+    """
+
+    def __init__(self, volume: float, body_type: int = 0):
         self._volume = volume
+        self._type = body_type
         self.densities: list[float] = []
+
+    def GetType(self):  # noqa: N802
+        return self._type
 
     def GetMassProperties(self, density):  # noqa: N802
         self.densities.append(density)
         return [0.0, 0.0, 0.0, self._volume, 0.005, self._volume * density, 0, 0, 0, 0, 0, 0]
+
+
+class FakeSheetBody:
+    """A sheet body: slot 3 is its area and slot 4 its perimeter, not volume and area.
+
+    The numbers are the 40 x 30 mm planar surface that exposed the defect — 1200 mm² of
+    area and a 140 mm perimeter, which the solid layout reported as 1 200 000 mm³ of
+    material and 140 000 mm² of area.
+    """
+
+    AREA_M2 = 0.0012
+    PERIMETER_M = 0.14
+
+    def GetType(self):  # noqa: N802
+        return 1  # swSheetBody
+
+    def GetMassProperties(self, density):  # noqa: N802
+        _ = density
+        return [0.02, 0.015, 0.0, self.AREA_M2, self.PERIMETER_M, self.AREA_M2, 0, 0, 0, 0, 0, 0]
 
 
 def test_body_mass_uses_the_density_it_is_given():
@@ -95,6 +122,53 @@ def test_the_old_default_is_visibly_wrong():
     """Guards the regression directly: density 1.0 makes mass equal to volume."""
     reported = body_mass_properties(FakeBody(VOLUME_M3), 1.0)
     assert reported["mass_kg"] == pytest.approx(reported["volume_m3"])
+
+
+# --- a sheet body fills the same slots with different quantities ----------------
+
+
+def test_a_sheet_body_reports_no_volume_and_no_mass():
+    """The defect: a 40 x 30 surface was reported as 1 200 000 mm³ of material."""
+    reported = body_mass_properties(FakeSheetBody(), STEEL_DENSITY)
+
+    assert reported["body_type"] == "sheetbody"
+    assert reported["volume_m3"] is None, "a sheet body encloses no volume"
+    assert reported["mass_kg"] is None, "a body with no volume has no mass"
+
+
+def test_a_sheet_bodys_area_comes_from_the_volume_slot():
+    """Slot 3 is the area for a sheet body, and slot 4 the perimeter."""
+    reported = body_mass_properties(FakeSheetBody())
+
+    assert reported["surface_area_m2"] == pytest.approx(FakeSheetBody.AREA_M2)
+    assert reported["perimeter_m"] == pytest.approx(FakeSheetBody.PERIMETER_M)
+
+
+def test_a_sheet_body_says_why_its_layout_differs():
+    """A missing volume has to read as "not applicable", not as a failed measurement."""
+    note = body_mass_properties(FakeSheetBody())["measurement_note"]
+
+    assert "no volume" in note.lower()
+
+
+def test_an_unverified_body_type_reports_no_figures():
+    """Only the solid and sheet layouts were measured; the rest must not be guessed."""
+    reported = body_mass_properties(FakeBody(VOLUME_M3, body_type=2))  # swWireBody
+
+    assert reported["body_type"] == "wirebody"
+    assert reported["volume_m3"] is None
+    assert reported["surface_area_m2"] is None
+    assert reported["raw_mass_properties"][3] == pytest.approx(VOLUME_M3)
+
+
+def test_a_solid_body_is_unaffected():
+    """The fix must not move the numbers for the case that was always right."""
+    reported = body_mass_properties(FakeBody(VOLUME_M3), STEEL_DENSITY)
+
+    assert reported["body_type"] == "solidbody"
+    assert reported["volume_m3"] == pytest.approx(VOLUME_M3)
+    assert reported["surface_area_m2"] == pytest.approx(0.005)
+    assert reported["mass_kg"] == pytest.approx(VOLUME_M3 * STEEL_DENSITY)
 
 
 # --- visibility decoding ------------------------------------------------------
@@ -157,3 +231,26 @@ def test_an_empty_material_name_is_allowed_because_it_clears():
 def test_visibility_needs_a_name():
     with pytest.raises(ValueError):
         VisibilitySetArgs(target="body", name="", visible=False)
+
+
+# --- measuring a mixture of solids and surfaces ---------------------------------
+
+
+def test_measuring_surfaces_reports_no_volume_and_counts_them():
+    """A volume of zero must be distinguishable from a measurement that failed."""
+    from swmcp.handlers.feature import _aggregate_bodies
+
+    totals = _aggregate_bodies([FakeBody(VOLUME_M3), FakeSheetBody()], STEEL_DENSITY)
+
+    assert totals["volume_m3"] == pytest.approx(VOLUME_M3), "the sheet adds no volume"
+    assert totals["mass_kg"] == pytest.approx(VOLUME_M3 * STEEL_DENSITY)
+    assert totals["volumeless_body_count"] == 1
+
+
+def test_measuring_only_solids_flags_nothing():
+    from swmcp.handlers.feature import _aggregate_bodies
+
+    totals = _aggregate_bodies([FakeBody(VOLUME_M3), FakeBody(VOLUME_M3)], STEEL_DENSITY)
+
+    assert totals["volumeless_body_count"] == 0
+    assert totals["volume_m3"] == pytest.approx(2 * VOLUME_M3)

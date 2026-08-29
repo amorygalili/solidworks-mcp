@@ -5,8 +5,8 @@ worker thread.
 
 It implements the P0 foundation and a P1 modelling vertical from
 [`docs/solidworks-target-requirements.md`](../docs/solidworks-target-requirements.md),
-plus neutral-format export and an atomic mutate-and-validate workflow pulled forward
-from P2: **99 operations covering all 99 in-scope requirements**, with coverage
+plus neutral-format exchange and an atomic mutate-and-validate workflow pulled forward
+from P2: **100 operations covering all 100 in-scope requirements**, with coverage
 reported honestly in `src/swmcp/generated/requirements_coverage.json` rather than
 asserted.
 
@@ -123,7 +123,7 @@ Angles default to degrees and accept `"45deg"`, `"1.57rad"`, or `{"value": 0.25,
 | view | set orientation and display mode, capture a PNG or BMP preview, get/set appearance, hide or show bodies and datums |
 | material | assign a part material and read the density and mass it produces |
 | surface | create a surface by planar fill, offset, extend, or knit |
-| exchange | export STEP, IGES, STL, 3MF, OBJ, PLY, Parasolid, SAT, VRML, PDF, DXF, DWG |
+| exchange | export STEP, IGES, STL, 3MF, OBJ, PLY, Parasolid, SAT, VRML, PDF, DXF, DWG; import STEP, IGES, Parasolid, SAT, STL with diagnostics |
 | assembly | insert a component, walk the component tree, set suppression, fixed state, visibility, and configuration, add/list/edit/delete mates, check interference |
 | review | inspect a document, validate it against caller-supplied policy, audit holes in the B-Rep, write JSON and Markdown reports, safe execute: run a sequence under one checkpoint and roll it back if an invariant fails |
 
@@ -156,7 +156,7 @@ only the documents the run created are closed, addressed by title.
 ## Development
 
 ```bash
-uv run pytest                       # 508 tests, no SOLIDWORKS needed
+uv run pytest                       # 541 tests, no SOLIDWORKS needed
 uv run pytest -m live tests/live/test_live_sketch.py   # one module: minutes
 uv run pytest -m "live and not slow"  # the quick live pass
 uv run pytest -m live               # the FULL live suite: ~90 minutes
@@ -354,6 +354,13 @@ coverage file, rather than left for a user to discover:
 - **`IO-003` (export options)** — tessellation quality, mesh unit, binary or ASCII, and
   the STEP protocol, with every written file verified against its format signature.
   Exporting a selected subset of bodies is not implemented.
+- **`IO-001` (import)** — STEP, IGES, Parasolid, and ACIS arrive as solids, and STL as a
+  graphics, surface, or solid body, each verified by measuring what the import produced.
+  OBJ and other mesh formats are not implemented. Import diagnostics run and are
+  reported by what they changed, but SOLIDWORKS exposes no per-file translator log, so an
+  incomplete import is diagnosed from the geometry rather than from a message.
+  Multi-body files import as one document; splitting them into separate parts is not
+  implemented.
 - **`SYS-007` (localization)** — implemented structurally through locale-invariant
   `GetTypeName2` tokens and ordinal plane position rather than an alias table. Only an
   English SOLIDWORKS was available, so regression on a localized tree is outstanding.
@@ -370,10 +377,11 @@ coverage file, rather than left for a user to discover:
   snapshotted. Non-destructive edits proceed with a warning; destructive ones are
   refused unless `SWMCP_ALLOW_UNCHECKPOINTED=1`.
 
-Export (`IO-002`, `IO-003`) and the atomic mutate-and-validate workflow (`REV-006`)
-were pulled forward from P2 because a model that cannot leave SOLIDWORKS, and a sequence
-that can end half-applied, both undercut everything else. P2 proper starts with
+Export (`IO-002`, `IO-003`), import (`IO-001`), and the atomic mutate-and-validate
+workflow (`REV-006`) were pulled forward from P2 because a model that cannot leave
+SOLIDWORKS or come back into it, and a sequence that can end half-applied, both undercut
+everything else. P2 proper starts with
 assemblies: `ASM-001` to `ASM-003` cover inserting a component, walking the tree, and
 setting component state. Component transforms (`ASM-004`) and the rest of P2 and P3 —
-mates, motion, drawings, import, sheet metal, weldments, simulation — are not
+mates, motion, drawings, sheet metal, weldments, simulation — are not
 implemented.

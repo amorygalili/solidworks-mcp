@@ -33,7 +33,7 @@ IN_SCOPE_REQUIREMENTS: frozenset[str] = frozenset(
         "PAR-001", "PAR-002", "PAR-003", "PAR-004", "PAR-005", "PAR-006",
         # Pulled forward from P2: export is how the model reaches anything else, and
         # an atomic sequence is what the safety layer has been building toward.
-        "IO-002", "IO-003", "REV-006",
+        "IO-001", "IO-002", "IO-003", "REV-006",
         # P2 — review. Inspection, caller-owned validation policy, a B-Rep hole
         # audit, and reports in both machine and human form.
         "REV-001", "REV-002", "REV-004", "REV-005", "REV-007",
@@ -75,6 +75,17 @@ DECLARED_PARTIAL: dict[str, str] = {
         "Linear and circular patterns only. Curve-driven, sketch-driven, table-driven, "
         "fill, and variable patterns are not implemented and are rejected by the schema "
         "rather than failing at runtime."
+    ),
+    "IO-001": (
+        "STEP, IGES, Parasolid, and ACIS arrive as solids, and STL as a graphics, "
+        "surface, or solid body — each verified by measuring what the import "
+        "produced rather than by trusting that LoadFile4 returned. OBJ and other mesh "
+        "formats are not implemented and are rejected by the schema rather than "
+        "importing as something unexpected. Import diagnostics run and are reported by "
+        "what they changed, but SOLIDWORKS exposes no per-file translator log, so a "
+        "file that imports incompletely is diagnosed from the geometry rather than from "
+        "a translator message. Multi-body files import as one document; splitting them "
+        "into separate parts is not implemented."
     ),
     "IO-003": (
         "Tessellation quality, mesh unit, binary/ASCII, and the STEP protocol are "

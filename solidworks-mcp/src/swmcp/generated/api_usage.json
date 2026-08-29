@@ -1,5 +1,5 @@
 {
-  "call_count": 217,
+  "call_count": 219,
   "calls": [
     {
       "argument_counts": [
@@ -1203,6 +1203,7 @@
       "sources": [
         "swmcp/com/session.py",
         "swmcp/handlers/document.py",
+        "swmcp/handlers/exchange.py",
         "swmcp/handlers/safety.py"
       ]
     },
@@ -1326,6 +1327,15 @@
       "member": "Identity",
       "sources": [
         "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        4
+      ],
+      "member": "ImportDiagnosis",
+      "sources": [
+        "swmcp/handlers/exchange.py"
       ]
     },
     {
@@ -1575,6 +1585,15 @@
       "member": "LengthUnit",
       "sources": [
         "swmcp/com/session.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        4
+      ],
+      "member": "LoadFile4",
+      "sources": [
+        "swmcp/handlers/exchange.py"
       ]
     },
     {

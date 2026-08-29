@@ -608,6 +608,18 @@
         "kind": "read"
       }
     },
+    "sw_import": {
+      "audited": true,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "Reads a file and opens a new document in the session. The source file is not modified, and the import preferences it changes are restored afterwards."
+      }
+    },
     "sw_interference_check": {
       "audited": false,
       "auto_checkpoint": false,

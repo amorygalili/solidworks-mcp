@@ -97,19 +97,42 @@ def test_a_pdf_is_recognised_by_its_header(tmp_path):
     assert ok
 
 
+PARASOLID_HEADER = b"**ABCDEFGHIJKLMNOPQRSTUVWXYZ**\n**PARASOLID !\n"
+
+
 def test_a_parasolid_text_file_is_recognised(tmp_path):
-    header = b"**ABCDEFGHIJKLMNOPQRSTUVWXYZ**\n**PARASOLID !\n"
-    ok, _detail = _verify("parasolid_text", _write(tmp_path, "a.x_t", header))
+    ok, _detail = _verify("parasolid_text", _write(tmp_path, "a.x_t", PARASOLID_HEADER))
     assert ok
+
+
+def test_a_binary_parasolid_file_is_recognised_too(tmp_path):
+    """A .x_b opens with the same printable header; only what follows it is binary.
+
+    It went unchecked until a live import test exported one and read the bytes.
+    """
+    ok, detail = _verify(
+        "parasolid_binary", _write(tmp_path, "a.x_b", PARASOLID_HEADER + bytes(range(256)))
+    )
+
+    assert ok
+    assert "binary" in detail
+
+
+def test_a_parasolid_file_missing_its_marker_is_rejected(tmp_path):
+    """The sentinel alone is not enough; **PARASOLID has to be there too."""
+    ok, _detail = _verify(
+        "parasolid_binary", _write(tmp_path, "a.x_b", b"**ABCDEFGHIJKLMNOPQRSTUVWXYZ**\n")
+    )
+    assert not ok
 
 
 def test_an_unchecked_format_says_so_rather_than_claiming_success(tmp_path):
     """A format with no signature check must report that, not a bare False."""
-    ok, detail = _verify("parasolid_binary", _write(tmp_path, "a.x_b", b"anything at all"))
+    ok, detail = _verify("sat", _write(tmp_path, "a.sat", b"anything at all"))
 
     assert not ok
     assert "no signature check is implemented" in detail
-    assert "parasolid_binary" in detail
+    assert "sat" in detail
 
 
 @pytest.mark.parametrize(("path", "expected"), sorted(BY_EXTENSION.items()))

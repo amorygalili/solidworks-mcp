@@ -2143,14 +2143,21 @@ def body_list(ctx: OpContext, args: BodyListArgs) -> BodyListResult:
 
 
 def _aggregate_bodies(chosen: list[Any], density: float) -> dict[str, Any]:
-    """Sum volume, area, mass, bounding box, and topology over the chosen bodies."""
+    """Sum volume, area, mass, bounding box, and topology over the chosen bodies.
+
+    Only solid bodies carry a volume and a mass. A sheet body contributes its area and
+    nothing else, and is counted separately so the caller can be told that a volume of
+    zero means "these are surfaces", not "the measurement failed".
+    """
     total_volume = total_area = total_mass = 0.0
     weighted_center = [0.0, 0.0, 0.0]
     box: list[float] | None = None
     faces = edges = 0
+    volumeless = 0
 
     for body in chosen:
         properties = body_mass_properties(body, density)
+        volumeless += properties.get("volume_m3") is None
         volume = properties.get("volume_m3") or 0.0
         total_volume += volume
         total_area += properties.get("surface_area_m2") or 0.0
@@ -2178,6 +2185,7 @@ def _aggregate_bodies(chosen: list[Any], density: float) -> dict[str, Any]:
         "volume_m3": total_volume,
         "surface_area_m2": total_area,
         "mass_kg": total_mass,
+        "volumeless_body_count": volumeless,
         "center_of_mass_m": [value / divisor for value in weighted_center],
         "box": box,
         "face_count": faces,
@@ -2302,6 +2310,12 @@ def measure(ctx: OpContext, args: MeasureArgs) -> MeasureResult:
     # right while every body shares the document's material - which is said out loud
     # rather than left for the caller to discover.
     warnings = _mass_caveats(whole_document, density, measuring_everything=measuring_everything)
+    if totals["volumeless_body_count"]:
+        warnings.append(
+            f"{totals['volumeless_body_count']} of {len(chosen)} bodies enclose no "
+            "volume - a sheet body has an area and a perimeter but no volume or mass, "
+            "so neither is included in the totals."
+        )
     if measuring_everything and whole_document:
         total_mass = whole_document["mass_kg"]
         center_of_mass = whole_document["center_of_mass_m"]

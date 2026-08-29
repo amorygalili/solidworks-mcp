@@ -1,4 +1,4 @@
-"""Neutral-format export.
+"""Neutral-format exchange: export and import.
 
 Two things make this more than a wrapper around ``SaveAs``.
 
@@ -30,14 +30,19 @@ from swmcp.context import OpContext
 from swmcp.decode.status import decode_save
 from swmcp.envelope import ArtifactEvidence
 from swmcp.errors import SwMcpError, make_error, validation_error
-from swmcp.modeling import configuration_names
+from swmcp.modeling import configuration_names, model_snapshot
 from swmcp.safety.overwrite import resolve_output_path
-from swmcp.safety.paths import assert_output_path
+from swmcp.safety.paths import assert_output_path, normalize_cad_path
 from swmcp.schemas.exchange import (
     BY_EXTENSION,
+    IMPORT_BY_EXTENSION,
+    MESH_IMPORT_FORMATS,
     ExportArgs,
     ExportResult,
+    ImportArgs,
+    ImportResult,
     format_for_extension,
+    import_format_for_extension,
 )
 
 #: Formats whose settings come from the mesh preferences rather than the solid ones.
@@ -111,9 +116,17 @@ def _verify(fmt: str, path: Path) -> tuple[bool, str]:
         text = data[:512].lstrip()
         ok = text.startswith((b"#", b"v ", b"g ", b"o ", b"mtllib"))
         return ok, "OBJ text header found" if ok else "no recognisable OBJ header"
-    if fmt == "parasolid_text":
-        ok = b"**ABCDEFGHIJKLMNOPQRSTUVWXYZ" in data[:256]
-        return ok, "Parasolid text header found" if ok else "no Parasolid header"
+    if fmt in {"parasolid_text", "parasolid_binary"}:
+        # Both flavours open with the same printable sentinel and a **PARASOLID marker;
+        # only the geometry after the header differs. The binary form went unchecked
+        # until a live test exported one and looked at the bytes.
+        ok = b"**ABCDEFGHIJKLMNOPQRSTUVWXYZ" in data[:256] and b"**PARASOLID" in data[:512]
+        kind = "text" if fmt == "parasolid_text" else "binary"
+        return ok, (
+            f"Parasolid {kind} header and **PARASOLID marker found"
+            if ok
+            else "no Parasolid header"
+        )
     if fmt == "dwg":
         ok = data[:2] == b"AC"
         return ok, "DWG version header found" if ok else "no AC1xxx header"
@@ -365,3 +378,255 @@ def _activate_configuration(doc: Any, name: str) -> str | None:
     )
     try_com_member(doc, "ShowConfiguration2", name, default=None)
     return previous
+
+
+# --- import (IO-001) ----------------------------------------------------------
+
+#: ``swImportStlVrmlModelType_e``. SOLIDWORKS' own default is Graphics, which produces a
+#: picture rather than a body: zero bodies, no volume, nothing addressable.
+_MESH_BODY_TYPES = {
+    "graphics": "swImportStlVrmlModelType_Graphics",
+    "surface": "swImportStlVrmlModelType_Surface",
+    "solid": "swImportStlVrmlModelType_Solid",
+}
+
+_NEUTRAL_UNITS = {
+    "file": "swImportNeutralUnits_ImportFileUnits",
+    "template": "swImportNeutralUnits_TemplateUnits",
+}
+
+_KNIT_OPTIONS = {
+    "form_solids": "swImportNeutralKnitOption_FormSolids",
+    "do_not_knit": "swImportNeutralKnitOption_DoNotKnit",
+}
+
+
+def _apply_import_settings(app: Any, args: ImportArgs, fmt: str) -> _Preferences:
+    """Import options are user preferences, exactly as the export ones are.
+
+    ``ISldWorks::GetImportFileData`` looks like the argument-shaped alternative, but on
+    this build it returns ``None`` for Parasolid, ACIS, and STL, and for STEP returns an
+    object whose only reachable property is ``MapConfigurationData`` — passing it back
+    into ``LoadFile4`` changed nothing that could be measured. So the preference route is
+    the one that works, and the caller's own settings are put back afterwards.
+    """
+    preferences = _Preferences(app)
+    if fmt in MESH_IMPORT_FORMATS:
+        preferences.set_integer(
+            "swImportStlVrmlModelType",
+            swconst.value("swImportStlVrmlModelType_e", _MESH_BODY_TYPES[args.mesh_body_type]),
+            label="mesh_body_type",
+            shown=args.mesh_body_type,
+        )
+        if args.mesh_unit is not None:
+            preferences.set_integer(
+                "swImportStlVrmlUnits",
+                swconst.value("swLengthUnit_e", _MESH_UNITS[args.mesh_unit]),
+                label="mesh_unit",
+                shown=args.mesh_unit,
+            )
+    else:
+        preferences.set_integer(
+            "swImportNeutral_KnitOption",
+            swconst.value("swImportNeutralKnitOption_e", _KNIT_OPTIONS[args.knit]),
+            label="knit",
+            shown=args.knit,
+        )
+        preferences.set_integer(
+            "swImportNeutralUnits",
+            swconst.value("swImportNeutralUnits_e", _NEUTRAL_UNITS[args.neutral_units]),
+            label="neutral_units",
+            shown=args.neutral_units,
+        )
+    return preferences
+
+
+def _geometry_summary(doc: Any) -> dict[str, Any]:
+    """What actually arrived, measured rather than assumed."""
+    snapshot = model_snapshot(doc)
+    solids = snapshot.get("solid_body_count", 0)
+    return {
+        "body_count": snapshot.get("body_count", 0),
+        "solid_body_count": solids,
+        "sheet_body_count": snapshot.get("sheet_body_count", 0),
+        "volume_mm3": snapshot.get("volume_mm3") if solids else None,
+        "surface_area_mm2": snapshot.get("surface_area_mm2"),
+        "face_count": snapshot.get("face_count", 0),
+        "edge_count": snapshot.get("edge_count", 0),
+    }
+
+
+def _run_import_diagnostics(doc: Any, args: ImportArgs) -> dict[str, Any]:
+    """``IPartDoc::ImportDiagnosis``, reported by what it changed.
+
+    The call returns 1 on a body that needed nothing doing, so its return value alone
+    would let a tool claim it repaired geometry that was never broken. The face count and
+    volume on either side are what make the claim checkable.
+    """
+    before = _geometry_summary(doc)
+    returned = try_com_member(
+        doc,
+        "ImportDiagnosis",
+        args.close_gaps,
+        args.remove_bad_faces,
+        args.fix_faces,
+        0,
+        default=None,
+    )
+    after = _geometry_summary(doc)
+    changed = (
+        before["face_count"] != after["face_count"]
+        or before["body_count"] != after["body_count"]
+        or before["volume_mm3"] != after["volume_mm3"]
+    )
+    return {
+        "ran": True,
+        "returned": returned,
+        "changed_the_model": changed,
+        "faces_before": before["face_count"],
+        "faces_after": after["face_count"],
+        "volume_mm3_before": before["volume_mm3"],
+        "volume_mm3_after": after["volume_mm3"],
+        "options": {
+            "close_gaps": args.close_gaps,
+            "fix_faces": args.fix_faces,
+            "remove_bad_faces": args.remove_bad_faces,
+        },
+    }
+
+
+@op(
+    name="sw_import",
+    tier="core",
+    domains=("exchange",),
+    tags=("import", "step", "iges", "parasolid", "acis", "stl", "translate"),
+    summary=(
+        "Import a STEP, IGES, Parasolid, ACIS, or STL file into a new document, then "
+        "report the geometry that actually arrived — body counts, volume, and topology "
+        "— rather than trusting that LoadFile4 returned."
+    ),
+    safety=NonModelSideEffect(
+        destructive=False,
+        rationale=(
+            "Reads a file and opens a new document in the session. The source file is "
+            "not modified, and the import preferences it changes are restored "
+            "afterwards."
+        ),
+    ),
+    partially_satisfies=("IO-001",),
+    precondition="none",
+    idempotent=False,
+    timeout_s=900.0,
+)
+def import_geometry(ctx: OpContext, args: ImportArgs) -> ImportResult:
+    source = normalize_cad_path(args.input_path)
+    if not Path(source).is_file():
+        raise SwMcpError(
+            make_error(
+                "FILE_NOT_FOUND",
+                "validation",
+                f"There is no file at {source!r}.",
+                context={"input_path": source},
+                remediation=["Check the path, or export the file first."],
+            )
+        )
+
+    fmt = args.format or import_format_for_extension(source)
+    if fmt is None:
+        raise SwMcpError(
+            validation_error(
+                "UNSUPPORTED_IMPORT_FORMAT",
+                f"{Path(source).suffix!r} is not a format this release imports.",
+                context={"supported_extensions": sorted(IMPORT_BY_EXTENSION)},
+                remediation=[
+                    "Use a supported extension, or open a native document with sw_doc_open.",
+                ],
+            )
+        )
+
+    app = ctx.session.app
+    # LoadFile4 leaves the previously active document active when it fails, so the new
+    # document has to be identified by difference. Reading ActiveDoc afterwards would
+    # happily report the caller's own model as the import result.
+    before_titles = {
+        str(try_com_member(doc, "GetTitle", default="") or "")
+        for doc in ctx.session.open_documents()
+    }
+
+    preferences = _apply_import_settings(app, args, fmt)
+    try:
+        errors = out_long(0)
+        app.LoadFile4(source, "r", null_dispatch(), errors)
+        error_code = int(getattr(errors, "value", errors) or 0)
+    finally:
+        preferences.restore()
+
+    imported = None
+    for doc in ctx.session.open_documents():
+        title = str(try_com_member(doc, "GetTitle", default="") or "")
+        if title not in before_titles:
+            imported = doc
+            break
+
+    if imported is None:
+        raise SwMcpError(
+            make_error(
+                "IMPORT_PRODUCED_NO_DOCUMENT",
+                "solidworks",
+                f"SOLIDWORKS did not open a document for {Path(source).name}.",
+                context={"format": fmt, "load_error_code": error_code},
+                remediation=[
+                    "Check that the file is readable and not truncated.",
+                    "Open it by hand in SOLIDWORKS to see the translator's own message.",
+                ],
+            )
+        )
+
+    diagnostics = _run_import_diagnostics(imported, args) if args.run_diagnostics else None
+    geometry = _geometry_summary(imported)
+
+    result_warnings: list[str] = []
+    if error_code:
+        result_warnings.append(
+            f"SOLIDWORKS reported load error code {error_code}, but a document was "
+            "opened; check the geometry counts below."
+        )
+    if geometry["body_count"] == 0:
+        mesh_graphics = args.mesh_body_type == "graphics" and fmt in MESH_IMPORT_FORMATS
+        result_warnings.append(
+            "The import produced no body this server can measure. "
+            + (
+                "mesh_body_type='graphics' brings a mesh in as a picture; ask for "
+                "'solid' or 'surface' to get geometry."
+                if mesh_graphics
+                else "The file may contain no solid or surface geometry."
+            )
+        )
+    if geometry["solid_body_count"] == 0 and geometry["sheet_body_count"]:
+        result_warnings.append(
+            f"{geometry['sheet_body_count']} surface bodies arrived and no solid. "
+            "A sheet body encloses no volume, so none is reported."
+        )
+
+    stat = Path(source).stat()
+    return ImportResult(
+        document=ctx.session.describe(imported).as_dict(),
+        format=fmt,
+        source_path=source,
+        geometry_found=geometry["body_count"] > 0,
+        settings=preferences.applied,
+        diagnostics=diagnostics,
+        warnings=result_warnings,
+        artifacts=[
+            ArtifactEvidence(
+                path=source,
+                exists=True,
+                size_bytes=stat.st_size,
+                modified_utc=datetime.fromtimestamp(stat.st_mtime, UTC).isoformat(),
+                sha256=hashlib.sha256(Path(source).read_bytes()).hexdigest()
+                if stat.st_size <= 64 * 1024 * 1024
+                else None,
+            )
+        ],
+        **geometry,
+    )

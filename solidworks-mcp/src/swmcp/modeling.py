@@ -129,6 +129,26 @@ def document_density(doc: Any) -> float | None:
     return document_mass_properties(doc).get("density_kg_m3")
 
 
+def _body_type_label(name: str) -> str:
+    """``swSheetBody`` → ``sheetbody``, the form this codebase has always reported."""
+    return name.replace("sw", "", 1).lower()
+
+
+_SOLID_BODY_NAME = _body_type_label("swSolidBody")
+_SHEET_BODY_NAME = _body_type_label("swSheetBody")
+
+
+def body_type_name(body: Any) -> str:
+    """The body's ``swBodyType_e`` as a bare word: ``solidbody``, ``sheetbody``, …
+
+    One place decides this, because the meaning of a body's mass-property array depends
+    on it — see :func:`body_mass_properties`.
+    """
+    code = try_com_member(body, "GetType", default=None)
+    name = swconst.name_of("swBodyType_e", code) if isinstance(code, int) else None
+    return _body_type_label(name) if name else "unknown"
+
+
 def body_mass_properties(body: Any, density: float = 1.0) -> dict[str, Any]:
     """``IBody2.GetMassProperties`` returns [cx, cy, cz, volume, area, mass, ...].
 
@@ -139,18 +159,64 @@ def body_mass_properties(body: Any, density: float = 1.0) -> dict[str, Any]:
     numerically equal to the volume, identical for a steel part and an aluminium one.
     Callers that want the real figure pass :func:`document_density`, or read
     :func:`document_mass_properties` directly.
+
+    That layout is the *solid* one, and it is the only one documented. A **sheet** body
+    has no volume, and SOLIDWORKS quietly reuses the same slots for its two-dimensional
+    analogues: slot 3 carries the area and slot 4 the perimeter. Reading the solid layout
+    off a surface therefore reports its area as a volume — a 40 x 30 mm planar surface
+    came back as 1 200 000 mm³ of material that does not exist, and its 140 mm perimeter
+    as 140 000 mm² of area. Measured against a 60 x 20 rectangle (the same area as the
+    40 x 30, a different perimeter) and a circle of radius 20, both exact.
+
+    Only the solid and sheet layouts are verified, so any other body type reports no
+    figures at all rather than a number whose meaning is a guess.
     """
+    kind = body_type_name(body)
     raw = normalize_sequence(
         try_com_member(body, "GetMassProperties", float(density), default=None)
     )
     if len(raw) < 6:
-        return {}
+        return {
+            "body_type": kind,
+            "measurement_note": "GetMassProperties returned fewer than six values.",
+        }
+
+    values = [float(v) for v in raw]
+    common = {"center_of_mass_m": values[0:3], "body_type": kind}
+
+    if kind == _SOLID_BODY_NAME:
+        return {
+            **common,
+            "volume_m3": values[3],
+            "surface_area_m2": values[4],
+            "mass_kg": values[5],
+            "density_kg_m3": float(density),
+        }
+    if kind == _SHEET_BODY_NAME:
+        return {
+            **common,
+            "volume_m3": None,
+            "surface_area_m2": values[3],
+            "perimeter_m": values[4],
+            "mass_kg": None,
+            "density_kg_m3": None,
+            "measurement_note": (
+                "A sheet body encloses no volume. SOLIDWORKS reuses the volume slot for "
+                "the area and the area slot for the perimeter, so no volume or mass is "
+                "reported for it."
+            ),
+        }
     return {
-        "center_of_mass_m": [float(v) for v in raw[0:3]],
-        "volume_m3": float(raw[3]),
-        "surface_area_m2": float(raw[4]),
-        "mass_kg": float(raw[5]),
-        "density_kg_m3": float(density),
+        **common,
+        "volume_m3": None,
+        "surface_area_m2": None,
+        "mass_kg": None,
+        "density_kg_m3": None,
+        "measurement_note": (
+            f"Only the solid and sheet mass-property layouts are verified; a {kind} body "
+            "reports its raw slots rather than figures with guessed meanings."
+        ),
+        "raw_mass_properties": values,
     }
 
 
@@ -165,12 +231,12 @@ def body_summary(body: Any, density: float = 1.0) -> dict[str, Any]:
     faces = normalize_sequence(get_com_member(body, "GetFaces", default=None))
     edges = normalize_sequence(get_com_member(body, "GetEdges", default=None))
 
-    raw_type = try_com_member(body, "GetType", default=None)
-    type_name = swconst.name_of("swBodyType_e", raw_type) if isinstance(raw_type, int) else None
-
     return {
         "name": str(try_com_member(body, "Name", default="") or ""),
-        "type": (type_name or "unknown").replace("sw", "").lower(),
+        # The type comes from the mass-property reader rather than a second GetType
+        # call: that reader chooses its array layout from the type, so the two must
+        # never be able to disagree about what this body is.
+        "type": properties.get("body_type", "unknown"),
         "visible": bool(try_com_member(body, "Visible", default=True)),
         "material": str(try_com_member(body, "GetMaterialPropertyName2", "", default="") or ""),
         "face_count": len(faces),
@@ -192,14 +258,25 @@ def _owning_features(faces: list[Any]) -> list[str]:
 
 
 def model_snapshot(doc: Any) -> dict[str, Any]:
-    """A comparable before/after picture of the model (REV-003 in spirit)."""
+    """A comparable before/after picture of the model (REV-003 in spirit).
+
+    The volume counts solid bodies only. A sheet body has none, and folding its area in
+    here would make a surface operation look like it added material — see
+    :func:`body_mass_properties`. The two counts are reported separately so a comparison
+    can still see a surface appear or disappear.
+    """
     found = bodies(doc)
     total_volume = 0.0
     total_area = 0.0
     faces = 0
     edges = 0
+    solids = 0
+    sheets = 0
     for body in found:
         properties = body_mass_properties(body)
+        kind = properties.get("body_type")
+        solids += kind == _SOLID_BODY_NAME
+        sheets += kind == _SHEET_BODY_NAME
         total_volume += properties.get("volume_m3") or 0.0
         total_area += properties.get("surface_area_m2") or 0.0
         faces += len(normalize_sequence(get_com_member(body, "GetFaces", default=None)))
@@ -207,6 +284,8 @@ def model_snapshot(doc: Any) -> dict[str, Any]:
 
     return {
         "body_count": len(found),
+        "solid_body_count": solids,
+        "sheet_body_count": sheets,
         "volume_m3": total_volume,
         "volume_mm3": volume_to_display(total_volume),
         "surface_area_m2": total_area,
