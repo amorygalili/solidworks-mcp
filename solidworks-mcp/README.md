@@ -6,7 +6,7 @@ worker thread.
 It implements the P0 foundation and a P1 modelling vertical from
 [`docs/solidworks-target-requirements.md`](../docs/solidworks-target-requirements.md),
 plus neutral-format export and an atomic mutate-and-validate workflow pulled forward
-from P2: **92 operations covering all 92 in-scope requirements**, with coverage
+from P2: **95 operations covering all 94 in-scope requirements**, with coverage
 reported honestly in `src/swmcp/generated/requirements_coverage.json` rather than
 asserted.
 
@@ -124,7 +124,7 @@ Angles default to degrees and accept `"45deg"`, `"1.57rad"`, or `{"value": 0.25,
 | material | assign a part material and read the density and mass it produces |
 | surface | create a surface by planar fill, offset, extend, or knit |
 | exchange | export STEP, IGES, STL, 3MF, OBJ, PLY, Parasolid, SAT, VRML, PDF, DXF, DWG |
-| assembly | insert a component, walk the component tree, set suppression, fixed state, visibility, and configuration, add and list mates |
+| assembly | insert a component, walk the component tree, set suppression, fixed state, visibility, and configuration, add/list/edit/delete mates, check interference |
 | review | safe execute: run a sequence under one checkpoint and roll it back if an invariant fails |
 
 Per-tool reference with full JSON schemas: `src/swmcp/generated/docs/`.
@@ -156,7 +156,7 @@ only the documents the run created are closed, addressed by title.
 ## Development
 
 ```bash
-uv run pytest                       # 486 tests, no SOLIDWORKS needed
+uv run pytest                       # 491 tests, no SOLIDWORKS needed
 uv run pytest -m live tests/live/test_live_sketch.py   # one module: minutes
 uv run pytest -m "live and not slow"  # the quick live pass
 uv run pytest -m live               # the FULL live suite: ~90 minutes
@@ -198,7 +198,7 @@ marked for personal and educational use, and the upstream repository carries no 
 so it is fetched rather than redistributed here.
 
 `--check` cross-checks every vendored signature against the type library registered on
-the machine and fails on any arity mismatch — 3,342 members checked here with none. It
+the machine and fails on any arity mismatch — 3,358 members checked here with none. It
 is the difference between "the docs say 2026" and "the docs describe this install."
 
 Two things it settled that probing had answered correctly but explained wrongly:
@@ -301,6 +301,13 @@ coverage file, rather than left for a user to discover:
   neither is mass override: `IMassProperty` on this build does not expose
   `SetOverrideMassValue` or `OverrideMass` through late binding, so a tool for it would
   have nothing to call.
+- **`MATE-006` (mate editing)** — rename, suppress, unsuppress, and delete one mate.
+  Deleting a range or all mates at once, and replaying a mate sequence under a
+  checkpoint, are not implemented — though `sw_safe_execute` already rolls back a
+  sequence of any tools.
+- **`MATE-008` (interference)** — interference detection with each overlap's volume and
+  the components involved. Clearance verification is a separate SOLIDWORKS manager
+  (`ClearanceVerificationManager`) and is not implemented.
 - **`MATE-001` (mate types)** — coincident, concentric, perpendicular, parallel,
   tangent, distance, angle, and lock: the types `AddMate5` builds from exactly two
   selected entities. Width, symmetric, gear, rack-and-pinion, screw, universal joint,

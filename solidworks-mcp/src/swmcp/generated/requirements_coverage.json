@@ -320,6 +320,19 @@
         "sw_mate_add"
       ]
     },
+    "MATE-006": {
+      "limitation": "Rename, suppress, unsuppress, and delete one mate. Deleting a range or all mates at once, and replaying a mate sequence under a checkpoint, are not implemented — though sw_safe_execute already rolls back a sequence of any tools.",
+      "tools": [
+        "sw_mate_delete",
+        "sw_mate_edit"
+      ]
+    },
+    "MATE-008": {
+      "limitation": "Interference detection, reporting each overlap's volume and the components involved. Clearance verification is a separate SOLIDWORKS manager (ClearanceVerificationManager) and is not implemented.",
+      "tools": [
+        "sw_interference_check"
+      ]
+    },
     "PAR-004": {
       "limitation": "Configuration-specific dimension values are read and written through sw_dimension_list and sw_dimension_set. Per-configuration feature suppression is not implemented; sw_feature_edit suppresses in the active configuration.",
       "tools": [
@@ -356,10 +369,10 @@
   "totals": {
     "covered_by_platform": 11,
     "fully_covered_by_a_tool": 67,
-    "in_scope": 92,
-    "partially_covered": 17,
+    "in_scope": 94,
+    "partially_covered": 19,
     "requirements_in_backlog": 152,
-    "tools": 92,
+    "tools": 95,
     "uncovered_in_scope": 0
   },
   "uncovered_in_scope": []

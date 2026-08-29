@@ -9,6 +9,7 @@ a success. The status is compared against the named constant instead.
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from swmcp.catalog.registry import op
@@ -16,6 +17,7 @@ from swmcp.catalog.spec import ModelMutation, ReadSafety
 from swmcp.com import swconst
 from swmcp.com.marshal import (
     call_with_outparams,
+    normalize_sequence,
     null_dispatch,
     out_long,
     try_com_member,
@@ -24,7 +26,18 @@ from swmcp.context import OpContext
 from swmcp.envelope import Check, Verification
 from swmcp.errors import SwMcpError, make_error
 from swmcp.refs.resolve import resolve
-from swmcp.schemas.mate import MateAddArgs, MateAddResult, MateListArgs, MateListResult
+from swmcp.schemas.mate import (
+    InterferenceCheckArgs,
+    InterferenceCheckResult,
+    MateAddArgs,
+    MateAddResult,
+    MateDeleteArgs,
+    MateDeleteResult,
+    MateEditArgs,
+    MateEditResult,
+    MateListArgs,
+    MateListResult,
+)
 from swmcp.units import from_meters, from_radians
 
 _MATE_TYPES = {
@@ -289,4 +302,292 @@ def mate_list(ctx: OpContext, args: MateListArgs) -> MateListResult:
         mate_count=len(mates),
         mates=mates,
         suppressed_count=sum(1 for mate in mates if mate["suppressed"]),
+    )
+
+
+# --- editing and interference --------------------------------------------------
+
+_SUPPRESS_ACTIONS = {True: "swSuppressFeature", False: "swUnSuppressFeature"}
+
+#: The interference manager's options, paired with the schema field that drives each.
+_INTERFERENCE_FLAGS = (
+    ("TreatCoincidenceAsInterference", "treat_coincidence_as_interference"),
+    ("IgnoreHiddenBodies", "ignore_hidden_bodies"),
+    ("TreatSubAssembliesAsComponents", "treat_subassemblies_as_components"),
+    ("IncludeMultibodyPartInterferences", "include_multibody_part_interferences"),
+)
+
+
+def _find_mate(doc: Any, name: str) -> Any | None:
+    for feature in _mate_features(doc):
+        if str(try_com_member(feature, "Name", default="") or "") == name:
+            return feature
+    return None
+
+
+@op(
+    name="sw_mate_edit",
+    tier="extended",
+    domains=("assembly",),
+    tags=("mate", "assembly", "rename", "suppress"),
+    summary=(
+        "Rename a mate or change its suppression, verified by reading the mate list "
+        "back rather than trusting the call."
+    ),
+    safety=ModelMutation(destructive=False),
+    partially_satisfies=("MATE-006",),
+    precondition="assembly",
+    idempotent=True,
+    timeout_s=300.0,
+)
+def mate_edit(ctx: OpContext, args: MateEditArgs) -> MateEditResult:
+    """MATE-006's non-destructive half.
+
+    A mate is a *subfeature* of the MateGroup rather than a top-level feature, which is
+    why sw_feature_edit cannot reach it — that walks the tree, and a mate is not on it.
+
+    Deleting lives in sw_mate_delete instead of behind a flag here. Folding both into
+    one tool meant marking the whole thing destructive, and then renaming a mate
+    demanded a confirmation it had no business demanding.
+    """
+    doc = ctx.require_doc()
+    before = _mate_features(doc)
+    feature = _find_mate(doc, args.mate_name)
+    if feature is None:
+        raise SwMcpError(
+            make_error(
+                "MATE_NOT_FOUND",
+                "validation",
+                f"This assembly has no mate named {args.mate_name!r}.",
+                remediation=["Use sw_mate_list to see the mate names."],
+            )
+        )
+
+    renamed_to = None
+    if args.rename_to:
+        feature.Name = args.rename_to
+        renamed_to = args.rename_to
+        feature = _find_mate(doc, args.rename_to) or feature
+
+    if args.suppressed is not None:
+        try_com_member(
+            feature,
+            "SetSuppression2",
+            swconst.value("swFeatureSuppressionAction_e", _SUPPRESS_ACTIONS[args.suppressed]),
+            swconst.value("swInConfigurationOpts_e", "swThisConfiguration"),
+            null_dispatch(),
+            default=None,
+        )
+
+    final_name = renamed_to or args.mate_name
+    after = _mate_features(doc)
+    surviving = _find_mate(doc, final_name)
+    suppressed = (
+        bool(try_com_member(surviving, "IsSuppressed", default=False))
+        if surviving is not None
+        else False
+    )
+
+    checks = [
+        Check(name="mate_still_present", passed=surviving is not None, detail=final_name)
+    ]
+    if args.rename_to:
+        checks.append(
+            Check(
+                name="rename_applied",
+                passed=surviving is not None,
+                detail=f"{args.mate_name} -> {args.rename_to}",
+            )
+        )
+    if args.suppressed is not None:
+        checks.append(
+            Check(
+                name="suppression_applied",
+                passed=suppressed == args.suppressed,
+                detail=f"suppressed={suppressed}",
+            )
+        )
+
+    return MateEditResult(
+        mate_name=final_name,
+        suppressed=suppressed,
+        renamed_to=renamed_to,
+        mates_before=len(before),
+        mates_after=len(after),
+        verification=Verification(
+            read_back=True,
+            before={"mate_count": len(before), "name": args.mate_name},
+            after={"mate_count": len(after), "name": final_name, "suppressed": suppressed},
+            checks=checks,
+        ),
+    )
+
+
+@op(
+    name="sw_mate_delete",
+    tier="extended",
+    domains=("assembly",),
+    tags=("mate", "assembly", "delete"),
+    summary=(
+        "Delete one mate and verify it is gone from the mate list. Removing a mate can "
+        "let components move, so it requires confirmation."
+    ),
+    safety=ModelMutation(destructive=True),
+    partially_satisfies=("MATE-006",),
+    precondition="assembly",
+    idempotent=False,
+    timeout_s=300.0,
+)
+def mate_delete(ctx: OpContext, args: MateDeleteArgs) -> MateDeleteResult:
+    doc = ctx.require_doc()
+    before = _mate_features(doc)
+    feature = _find_mate(doc, args.mate_name)
+    if feature is None:
+        raise SwMcpError(
+            make_error(
+                "MATE_NOT_FOUND",
+                "validation",
+                f"This assembly has no mate named {args.mate_name!r}.",
+                remediation=["Use sw_mate_list to see the mate names."],
+            )
+        )
+
+    try_com_member(doc, "ClearSelection2", True, default=None)
+    if not try_com_member(feature, "Select2", False, 0, default=False):
+        raise SwMcpError(
+            make_error(
+                "MATE_NOT_SELECTABLE",
+                "reference",
+                f"Could not select {args.mate_name!r} to delete it.",
+            )
+        )
+    try_com_member(
+        doc.Extension,
+        "DeleteSelection2",
+        swconst.value("swDeleteSelectionOptions_e", "swDelete_Absorbed"),
+        default=None,
+    )
+    try_com_member(doc, "ClearSelection2", True, default=None)
+
+    after = _mate_features(doc)
+    gone = _find_mate(doc, args.mate_name) is None
+
+    return MateDeleteResult(
+        mate_name=args.mate_name,
+        deleted=gone,
+        mates_before=len(before),
+        mates_after=len(after),
+        verification=Verification(
+            read_back=True,
+            before={"mate_count": len(before)},
+            after={"mate_count": len(after)},
+            checks=[
+                Check(
+                    name="mate_removed",
+                    passed=gone,
+                    detail=f"{args.mate_name} is gone"
+                    if gone
+                    else "the mate is still in the assembly",
+                ),
+                Check(
+                    name="mate_count_fell",
+                    passed=len(after) < len(before),
+                    detail=f"{len(before)} -> {len(after)} mate(s)",
+                ),
+            ],
+        ),
+    )
+
+
+@op(
+    name="sw_interference_check",
+    tier="core",
+    domains=("assembly",),
+    tags=("interference", "clearance", "assembly", "review"),
+    summary=(
+        "Find where components overlap, reporting each interference's volume and the "
+        "components involved rather than a pass/fail verdict."
+    ),
+    safety=ReadSafety(),
+    partially_satisfies=("MATE-008",),
+    precondition="assembly",
+    idempotent=True,
+    timeout_s=600.0,
+)
+def interference_check(
+    ctx: OpContext, args: InterferenceCheckArgs
+) -> InterferenceCheckResult:
+    """MATE-008 for interference. Clearance verification is a different manager.
+
+    The volume is the point: a boolean "they interfere" tells a caller nothing about
+    whether it is a rounding artefact or a real collision. Two 30 x 20 x 10 blocks
+    overlapping by 10 mm report 2000 mm3 exactly, which is what the live test checks.
+    """
+    doc = ctx.require_doc()
+    manager = try_com_member(doc, "InterferenceDetectionManager", default=None)
+    if manager is None:
+        raise SwMcpError(
+            make_error(
+                "INTERFERENCE_UNAVAILABLE",
+                "solidworks",
+                "SOLIDWORKS did not provide an interference detection manager.",
+                remediation=["Interference detection needs an assembly document."],
+            )
+        )
+
+    settings: dict[str, bool] = {}
+    for member, field in _INTERFERENCE_FLAGS:
+        wanted = bool(getattr(args, field))
+        # An option this build refuses to set is reported as it actually reads back,
+        # rather than echoing what the caller asked for.
+        with contextlib.suppress(Exception):
+            setattr(manager, member, wanted)
+        settings[field] = bool(try_com_member(manager, member, default=wanted))
+
+    count = int(try_com_member(manager, "GetInterferenceCount", default=0) or 0)
+    found = normalize_sequence(try_com_member(manager, "GetInterferences", default=None))
+
+    interferences = []
+    total = 0.0
+    for item in found:
+        volume = try_com_member(item, "Volume", default=None)
+        volume_m3 = float(volume) if isinstance(volume, (int, float)) else 0.0
+        total += volume_m3
+        interferences.append(
+            {
+                "volume_m3": volume_m3,
+                "volume_mm3": round(volume_m3 * 1e9, 6),
+                "component_count": int(try_com_member(item, "GetComponentCount", default=0) or 0),
+                "components": [
+                    str(try_com_member(component, "Name2", default="") or "")
+                    for component in normalize_sequence(
+                        try_com_member(item, "Components", default=None)
+                    )
+                ],
+                # A "possible" interference is one SOLIDWORKS could not decide on, which
+                # is not the same as a real overlap and is reported separately.
+                "possible_only": bool(
+                    try_com_member(item, "IsPossibleInterference", default=False)
+                ),
+                "is_fastener": bool(try_com_member(item, "IsFastener", default=False)),
+            }
+        )
+
+    # Done() releases the manager's UI state; skipping it leaves the assembly in
+    # interference-detection mode.
+    try_com_member(manager, "Done", default=None)
+
+    warnings = []
+    if count != len(interferences):
+        warnings.append(
+            f"SOLIDWORKS reported {count} interference(s) but returned "
+            f"{len(interferences)}; the listing may be incomplete."
+        )
+
+    return InterferenceCheckResult(
+        interference_count=len(interferences),
+        total_volume_mm3=round(total * 1e9, 6),
+        interferences=interferences,
+        settings=settings,
+        warnings=warnings,
     )

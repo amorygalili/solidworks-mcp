@@ -67,6 +67,11 @@ INTERFACES = (
     # AddMate5 did what was asked, so IMate2 has to be arity-checked like the rest.
     "IMate2",
     "IMateEntity2",
+    # Interference detection. The manager is reached from IAssemblyDoc and returns
+    # IInterference objects carrying the overlap volume, which is the evidence MATE-008
+    # asks for — so both need arity checking like everything else.
+    "IInterferenceDetectionMgr",
+    "IInterference",
 )
 
 

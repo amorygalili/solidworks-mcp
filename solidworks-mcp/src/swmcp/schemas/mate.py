@@ -8,7 +8,7 @@ from pydantic import Field, model_validator
 
 from swmcp.envelope import MutationResult, ReadResult
 from swmcp.refs.model import EntityRef
-from swmcp.schemas.common import BaseArgs
+from swmcp.schemas.common import BaseArgs, ConfirmField
 from swmcp.units import Angle, Length
 
 #: The mate types ``AddMate5`` builds from exactly two selected entities. The rest of
@@ -103,3 +103,60 @@ class MateListResult(ReadResult):
     mate_count: int
     mates: list[dict[str, Any]] = Field(default_factory=list)
     suppressed_count: int = 0
+
+
+class MateEditArgs(BaseArgs):
+    """Non-destructive edits only. Deleting a mate is sw_mate_delete, which confirms."""
+
+    mate_name: str = Field(
+        min_length=1, description="Mate name as sw_mate_list reports it, e.g. 'Coincident1'."
+    )
+    rename_to: str | None = Field(default=None, description="New name for the mate.")
+    suppressed: bool | None = Field(default=None, description="Suppress or unsuppress it.")
+
+    @model_validator(mode="after")
+    def _something_to_do(self) -> MateEditArgs:
+        if self.rename_to is None and self.suppressed is None:
+            raise ValueError("nothing to do: give rename_to or suppressed")
+        return self
+
+
+class MateEditResult(MutationResult):
+    mate_name: str
+    suppressed: bool = False
+    renamed_to: str | None = None
+    mates_before: int
+    mates_after: int
+
+
+class MateDeleteArgs(BaseArgs):
+    mate_name: str = Field(min_length=1, description="Mate to remove.")
+    confirm: ConfirmField = None
+
+
+class MateDeleteResult(MutationResult):
+    mate_name: str
+    deleted: bool
+    mates_before: int
+    mates_after: int
+
+
+class InterferenceCheckArgs(BaseArgs):
+    treat_coincidence_as_interference: bool = Field(
+        default=False,
+        description="Count touching faces as interference. Off by default, as SOLIDWORKS has it.",
+    )
+    ignore_hidden_bodies: bool = Field(default=False, description="Skip hidden bodies.")
+    treat_subassemblies_as_components: bool = Field(
+        default=False, description="Report a subassembly as one component rather than descending."
+    )
+    include_multibody_part_interferences: bool = Field(
+        default=False, description="Also report bodies of one multibody part interfering."
+    )
+
+
+class InterferenceCheckResult(ReadResult):
+    interference_count: int
+    total_volume_mm3: float = 0.0
+    interferences: list[dict[str, Any]] = Field(default_factory=list)
+    settings: dict[str, bool] = Field(default_factory=dict)

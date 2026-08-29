@@ -1,5 +1,5 @@
 {
-  "call_count": 208,
+  "call_count": 217,
   "calls": [
     {
       "argument_counts": [
@@ -174,6 +174,15 @@
       "member": "Comment",
       "sources": [
         "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "Components",
+      "sources": [
+        "swmcp/handlers/mate.py"
       ]
     },
     {
@@ -375,6 +384,7 @@
       "member": "DeleteSelection2",
       "sources": [
         "swmcp/handlers/feature.py",
+        "swmcp/handlers/mate.py",
         "swmcp/handlers/sketch.py"
       ]
     },
@@ -392,6 +402,15 @@
         1
       ],
       "member": "DisplayDimension2",
+      "sources": [
+        "swmcp/handlers/mate.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "Done",
       "sources": [
         "swmcp/handlers/mate.py"
       ]
@@ -661,6 +680,15 @@
     },
     {
       "argument_counts": [
+        0
+      ],
+      "member": "GetComponentCount",
+      "sources": [
+        "swmcp/handlers/mate.py"
+      ]
+    },
+    {
+      "argument_counts": [
         1
       ],
       "member": "GetComponents",
@@ -875,6 +903,24 @@
       "member": "GetID",
       "sources": [
         "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetInterferenceCount",
+      "sources": [
+        "swmcp/handlers/mate.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetInterferences",
+      "sources": [
+        "swmcp/handlers/mate.py"
       ]
     },
     {
@@ -1425,6 +1471,15 @@
       "argument_counts": [
         0
       ],
+      "member": "InterferenceDetectionManager",
+      "sources": [
+        "swmcp/handlers/mate.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
       "member": "IsAppliedToAllConfigurations",
       "sources": [
         "swmcp/handlers/constraint.py"
@@ -1452,6 +1507,15 @@
       "argument_counts": [
         0
       ],
+      "member": "IsFastener",
+      "sources": [
+        "swmcp/handlers/mate.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
       "member": "IsFixed",
       "sources": [
         "swmcp/handlers/assembly.py"
@@ -1464,6 +1528,15 @@
       "member": "IsOpenedReadOnly",
       "sources": [
         "swmcp/com/session.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "IsPossibleInterference",
+      "sources": [
+        "swmcp/handlers/mate.py"
       ]
     },
     {
@@ -1683,6 +1756,7 @@
       "member": "Select2",
       "sources": [
         "swmcp/handlers/feature.py",
+        "swmcp/handlers/mate.py",
         "swmcp/handlers/sketch.py",
         "swmcp/handlers/view.py",
         "swmcp/sketching.py"
@@ -1756,11 +1830,13 @@
     },
     {
       "argument_counts": [
-        1
+        1,
+        3
       ],
       "member": "SetSuppression2",
       "sources": [
-        "swmcp/handlers/assembly.py"
+        "swmcp/handlers/assembly.py",
+        "swmcp/handlers/mate.py"
       ]
     },
     {
@@ -2001,6 +2077,15 @@
         "swmcp/handlers/assembly.py",
         "swmcp/handlers/view.py",
         "swmcp/modeling.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "Volume",
+      "sources": [
+        "swmcp/handlers/mate.py"
       ]
     }
   ],

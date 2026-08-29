@@ -608,7 +608,39 @@
         "kind": "read"
       }
     },
+    "sw_interference_check": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
     "sw_mate_add": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_mate_delete": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": true,
+      "destructive": true,
+      "read_only": false,
+      "safety": {
+        "destructive": true,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_mate_edit": {
       "audited": true,
       "auto_checkpoint": true,
       "confirm_required": false,

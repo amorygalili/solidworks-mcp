@@ -39,7 +39,7 @@ IN_SCOPE_REQUIREMENTS: frozenset[str] = frozenset(
         "ASM-001", "ASM-002", "ASM-003",
         # P2 — mates. Add and inspect; editing and the exotic mate types are not
         # claimed yet.
-        "MATE-001", "MATE-002", "MATE-003", "MATE-004",
+        "MATE-001", "MATE-002", "MATE-003", "MATE-004", "MATE-006", "MATE-008",
         # P1 vertical — appearance and view
         "VIEW-001", "VIEW-002", "VIEW-003", "VIEW-004",
         # P1 vertical — core features, bodies, measurement
@@ -159,6 +159,16 @@ DECLARED_PARTIAL: dict[str, str] = {
         "Faces, edges, vertices, planes, and axes are addressed through the same "
         "structured references as everywhere else. Component coordinate systems as mate "
         "references are untested and are not claimed."
+    ),
+    "MATE-006": (
+        "Rename, suppress, unsuppress, and delete one mate. Deleting a range or all "
+        "mates at once, and replaying a mate sequence under a checkpoint, are not "
+        "implemented — though sw_safe_execute already rolls back a sequence of any tools."
+    ),
+    "MATE-008": (
+        "Interference detection, reporting each overlap's volume and the components "
+        "involved. Clearance verification is a separate SOLIDWORKS manager "
+        "(ClearanceVerificationManager) and is not implemented."
     ),
     "SK-007": (
         "Move, rotate, scale, mirror, offset, and trim are implemented. Extend, split, "

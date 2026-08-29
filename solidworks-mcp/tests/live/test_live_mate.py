@@ -284,3 +284,147 @@ def test_mate_tools_refuse_a_part_document(call):
     call("sw_doc_new", {"doc_type": "part"})
     payload = call("sw_mate_list", {}, expect_ok=False)
     assert not payload["ok"]
+
+
+# --- MATE-006: editing mates ---------------------------------------------------
+
+
+def _one_mate(call, pair) -> str:
+    """Create a coincident mate and return its name."""
+    right = _facing(call, 0, positive=True)
+    left = _facing(call, 0, positive=False)
+    return call(
+        "sw_mate_add",
+        {
+            "mate_type": "coincident",
+            "refs": [right[0]["tool_args"]["ref"], left[-1]["tool_args"]["ref"]],
+        },
+    )["result"]["mate_name"]
+
+
+def test_a_mate_can_be_renamed(call, pair):
+    name = _one_mate(call, pair)
+
+    edited = call("sw_mate_edit", {"mate_name": name, "rename_to": "Butt"})["result"]
+
+    assert edited["mate_name"] == "Butt"
+    assert edited["renamed_to"] == "Butt"
+    assert "deleted" not in edited, "editing a mate has nothing to say about deletion"
+    assert all(check["passed"] for check in edited["verification"]["checks"])
+    assert "Butt" in {m["name"] for m in call("sw_mate_list")["result"]["mates"]}
+
+
+def test_a_mate_can_be_suppressed_and_unsuppressed(call, pair):
+    name = _one_mate(call, pair)
+
+    off = call("sw_mate_edit", {"mate_name": name, "suppressed": True})["result"]
+    assert off["suppressed"] is True
+    assert all(check["passed"] for check in off["verification"]["checks"])
+    assert call("sw_mate_list")["result"]["suppressed_count"] == 1
+
+    on = call("sw_mate_edit", {"mate_name": name, "suppressed": False})["result"]
+    assert on["suppressed"] is False
+    assert call("sw_mate_list")["result"]["suppressed_count"] == 0
+
+
+def test_a_mate_can_be_deleted(call, pair):
+    name = _one_mate(call, pair)
+
+    deleted = call("sw_mate_delete", {"mate_name": name, "confirm": True})["result"]
+
+    assert deleted["deleted"] is True
+    assert deleted["mates_before"] == 1
+    assert deleted["mates_after"] == 0
+    assert all(check["passed"] for check in deleted["verification"]["checks"])
+    assert call("sw_mate_list")["result"]["mate_count"] == 0
+
+
+def test_deleting_a_mate_needs_confirmation(call, pair):
+    """Deleting is its own tool precisely so renaming does not inherit this."""
+    name = _one_mate(call, pair)
+    payload = call("sw_mate_delete", {"mate_name": name}, expect_ok=False)
+    assert not payload["ok"]
+    assert call("sw_mate_list")["result"]["mate_count"] == 1, "the mate must survive"
+
+
+def test_editing_a_mate_that_is_not_there_is_refused(call, pair):
+    payload = call("sw_mate_edit", {"mate_name": "Ghost1", "suppressed": True}, expect_ok=False)
+    assert payload["error"]["code"] == "MATE_NOT_FOUND"
+
+
+def test_renaming_a_mate_needs_no_confirmation(call, pair):
+    """The reason edit and delete are separate tools.
+
+    Folding them into one meant marking the whole thing destructive, and a rename then
+    demanded a confirmation it had no business demanding.
+    """
+    name = _one_mate(call, pair)
+    renamed = call("sw_mate_edit", {"mate_name": name, "rename_to": "NoConfirmNeeded"})
+    assert renamed["ok"]
+    assert renamed["result"]["renamed_to"] == "NoConfirmNeeded"
+
+
+def test_an_edit_that_changes_nothing_is_refused(call, pair):
+    payload = call("sw_mate_edit", {"mate_name": "Any"}, expect_ok=False)
+    assert payload["error"]["category"] == "validation"
+
+
+# --- MATE-008: interference ----------------------------------------------------
+
+
+@pytest.fixture
+def overlapping(call, scratch_root, unique_name, block_file):
+    """Two blocks overlapping by 10 mm in X, so the overlap volume is arithmetic."""
+    for stale in scratch_root.glob(f"{unique_name}*.SLDASM"):
+        stale.unlink(missing_ok=True)
+    call("sw_doc_new", {"doc_type": "assembly"})
+    call("sw_doc_save", {"output_path": str(scratch_root / f"{unique_name}.SLDASM")})
+    call("sw_asm_insert", {"component_path": block_file})
+    call("sw_asm_insert", {"component_path": block_file, "at": [20, 0, 0]})
+    # 30 wide, offset 20 -> 10 mm of overlap across the full 20 x 10 section.
+    return 10.0 * BLOCK_D * BLOCK_H
+
+
+def test_interference_reports_the_overlap_volume(call, overlapping):
+    found = call("sw_interference_check")["result"]
+
+    assert found["interference_count"] == 1
+    assert found["total_volume_mm3"] == pytest.approx(overlapping, rel=1e-6)
+
+    entry = found["interferences"][0]
+    assert entry["volume_mm3"] == pytest.approx(overlapping, rel=1e-6)
+    assert entry["component_count"] == 2
+    assert len(set(entry["components"])) == 2
+    assert entry["possible_only"] is False
+
+
+def test_components_that_do_not_touch_report_no_interference(call, pair):
+    """The blocks in `pair` are 60 mm apart, so there is nothing to find."""
+    found = call("sw_interference_check")["result"]
+
+    assert found["interference_count"] == 0
+    assert found["total_volume_mm3"] == 0.0
+    assert found["interferences"] == []
+    assert found["warnings"] == []
+
+
+def test_the_interference_settings_are_reported_as_they_read_back(call, overlapping):
+    """An option SOLIDWORKS declines must not be echoed back as if it took."""
+    found = call(
+        "sw_interference_check",
+        {"treat_coincidence_as_interference": True, "ignore_hidden_bodies": True},
+    )["result"]
+
+    assert set(found["settings"]) == {
+        "treat_coincidence_as_interference",
+        "ignore_hidden_bodies",
+        "treat_subassemblies_as_components",
+        "include_multibody_part_interferences",
+    }
+    assert found["interference_count"] >= 1
+
+
+def test_interference_check_refuses_a_part_document(call):
+    call("sw_doc_new", {"doc_type": "part"})
+    payload = call("sw_interference_check", {}, expect_ok=False)
+    assert not payload["ok"]

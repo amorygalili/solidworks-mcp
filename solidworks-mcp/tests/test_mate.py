@@ -134,3 +134,66 @@ def test_lengths_and_angles_reach_the_handler_in_api_units():
     assert args.distance == pytest.approx(0.015)
     angled = MateAddArgs(mate_type="angle", refs=_refs(), angle=45)
     assert angled.angle == pytest.approx(0.7853981633974483)
+
+
+# --- mate editing and interference ---------------------------------------------
+
+
+def test_editing_and_deleting_are_separate_tools():
+    """Folding them together forced a confirmation onto renaming.
+
+    A single tool with a `delete` flag has to be declared destructive, and the safety
+    layer then demands `confirm=true` for every call — including a rename, which
+    destroys nothing. The split keeps the confirmation where the risk is.
+    """
+    from swmcp.catalog.projection import project
+    from swmcp.catalog.registry import load_all_ops
+
+    ops = load_all_ops()
+    assert project(ops["sw_mate_edit"].safety).confirm_required is False
+    assert project(ops["sw_mate_delete"].safety).confirm_required is True
+
+
+def test_a_mate_edit_must_change_something():
+    from swmcp.schemas.mate import MateEditArgs
+
+    with pytest.raises(ValidationError, match="nothing to do"):
+        MateEditArgs(mate_name="Coincident1")
+    assert MateEditArgs(mate_name="Coincident1", rename_to="Butt")
+    assert MateEditArgs(mate_name="Coincident1", suppressed=True)
+
+
+def test_suppression_actions_map_to_the_real_enum():
+    from swmcp.handlers.mate import _SUPPRESS_ACTIONS
+
+    assert swconst.value("swFeatureSuppressionAction_e", _SUPPRESS_ACTIONS[True]) == 0
+    assert swconst.value("swFeatureSuppressionAction_e", _SUPPRESS_ACTIONS[False]) == 1
+
+
+def test_interference_flags_name_real_manager_members():
+    """Each flag must match both a schema field and an IInterferenceDetectionMgr member."""
+    import json
+    from pathlib import Path
+
+    from swmcp.handlers.mate import _INTERFERENCE_FLAGS
+    from swmcp.schemas.mate import InterferenceCheckArgs
+
+    root = Path(__file__).resolve().parent.parent
+    members = json.loads(
+        (root / "src" / "swmcp" / "generated" / "swapi.json").read_text(encoding="utf-8")
+    )["interfaces"]["IInterferenceDetectionMgr"]
+
+    for member, field in _INTERFERENCE_FLAGS:
+        assert member in members, f"{member} is not on IInterferenceDetectionMgr"
+        assert field in InterferenceCheckArgs.model_fields, f"{field} is not a schema field"
+
+
+def test_interference_defaults_match_solidworks_own():
+    """Measured defaults: every option off. Silently changing them would surprise."""
+    from swmcp.schemas.mate import InterferenceCheckArgs
+
+    args = InterferenceCheckArgs()
+    assert args.treat_coincidence_as_interference is False
+    assert args.ignore_hidden_bodies is False
+    assert args.treat_subassemblies_as_components is False
+    assert args.include_multibody_part_interferences is False

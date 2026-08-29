@@ -1,6 +1,6 @@
 {
  "generated_from": "sldworks.tlb",
- "interface_count": 32,
+ "interface_count": 34,
  "interfaces": {
   "IAssemblyDoc": {
    "ActivateGroundPlane": {
@@ -20860,6 +20860,428 @@
     "returns_void": false
    },
    "ViewFeatures": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   }
+  },
+  "IInterference": {
+   "AddRef": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "Components": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "GetComponentCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetIDsOfNames": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "riid",
+     "rgszNames",
+     "cNames",
+     "lcid",
+     "rgdispid"
+    ],
+    "returns_void": true
+   },
+   "GetInterferenceBody": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetTypeInfo": {
+    "flags": [
+     1,
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "itinfo",
+     "lcid",
+     "pptinfo"
+    ],
+    "returns_void": true
+   },
+   "GetTypeInfoCount": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "pctinfo"
+    ],
+    "returns_void": true
+   },
+   "IGetComponents": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ComponentCount"
+    ],
+    "returns_void": false
+   },
+   "Ignore": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "Invoke": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     2,
+     2,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "dispidMember",
+     "riid",
+     "lcid",
+     "wFlags",
+     "pdispparams",
+     "pvarResult",
+     "pexcepinfo",
+     "puArgErr"
+    ],
+    "returns_void": true
+   },
+   "IsFastener": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "IsPossibleInterference": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "QueryInterface": {
+    "flags": [
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "riid",
+     "ppvObj"
+    ],
+    "returns_void": true
+   },
+   "Release": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "Volume": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   }
+  },
+  "IInterferenceDetectionMgr": {
+   "AddRef": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "CreateFastenersFolder": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "Done": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "ExportResults": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "FileName",
+     "IncludeThumbnail"
+    ],
+    "returns_void": false
+   },
+   "GetComponentsAndTransforms": {
+    "flags": [
+     2,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "ComponentList",
+     "TransformList"
+    ],
+    "returns_void": false
+   },
+   "GetComponentsTransformInterference": {
+    "flags": [
+     1,
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "Component",
+     "Transform",
+     "InterferingComponent"
+    ],
+    "returns_void": false
+   },
+   "GetComponentsTransformInterferenceCount": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumOfComponent",
+     "Component",
+     "Transform"
+    ],
+    "returns_void": false
+   },
+   "GetIDsOfNames": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "riid",
+     "rgszNames",
+     "cNames",
+     "lcid",
+     "rgdispid"
+    ],
+    "returns_void": true
+   },
+   "GetInterferenceComponentCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetInterferenceComponents": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetInterferenceCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetInterferences": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetTypeInfo": {
+    "flags": [
+     1,
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "itinfo",
+     "lcid",
+     "pptinfo"
+    ],
+    "returns_void": true
+   },
+   "GetTypeInfoCount": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "pctinfo"
+    ],
+    "returns_void": true
+   },
+   "IGetComponentsTransformInterference": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "NumOfComponent",
+     "Component",
+     "Transform",
+     "NumOfIntComponent",
+     "InterferingComponent"
+    ],
+    "returns_void": false
+   },
+   "IGetInterferenceComponents": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "InterfernceComponentCount"
+    ],
+    "returns_void": false
+   },
+   "IGetInterferences": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "InterfernceCount"
+    ],
+    "returns_void": false
+   },
+   "IgnoreHiddenBodies": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "IncludeMultibodyPartInterferences": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "Invoke": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     2,
+     2,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "dispidMember",
+     "riid",
+     "lcid",
+     "wFlags",
+     "pdispparams",
+     "pvarResult",
+     "pexcepinfo",
+     "puArgErr"
+    ],
+    "returns_void": true
+   },
+   "MakeInterferingPartsTransparent": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "NonInterferingComponentDisplay": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "QueryInterface": {
+    "flags": [
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "riid",
+     "ppvObj"
+    ],
+    "returns_void": true
+   },
+   "Release": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "SetComponentsAndTransforms": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ComponentList",
+     "TransformList"
+    ],
+    "returns_void": false
+   },
+   "ShowIgnoredInterferences": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "TreatCoincidenceAsInterference": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "TreatSubAssembliesAsComponents": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "UseTransform": {
     "flags": [],
     "kind": "propget",
     "params": [],
@@ -48681,7 +49103,7 @@
    }
   }
  },
- "member_count": 4113,
+ "member_count": 4157,
  "typelib_iid": "{83A33D31-27C5-11CE-BFD4-00400513BB57}",
  "typelib_major": 34
 }
