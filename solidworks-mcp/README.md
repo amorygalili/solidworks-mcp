@@ -405,6 +405,33 @@ coverage file, rather than left for a user to discover:
 - **Hole Wizard** — availability is probed rather than assumed. A counterbored or
   tapped hole fails with an explanation when Toolbox is unavailable; it is never
   silently downgraded to a plain cut.
+- **Drawings (`DRW-001` to `DRW-010`) are not implemented.** Creating the *document*
+  works — `NewDocument` on the drawing template returns a drawing whose sheet reports
+  its name, format and size — but creating a *view* on it does not. Both entry points
+  spin: `IDrawingDoc::CreateDrawViewFromModelView3` and
+  `IDrawingDoc::Create3rdAngleViews2` each peg one core indefinitely, measured at
+  CPU climbing in lockstep with wall-clock (15.4s per 15s, then 12.2s per 12s) while
+  private bytes stay flat to the megabyte and the thread count does not move. Flat
+  memory rules out the work actually progressing, and steady CPU rules out a modal
+  dialog, which idles at zero. Reproduced on a freshly restarted 500 MB session, so it
+  is not the memory wall either.
+
+  Three things were eliminated. The arguments are right: the vendored API help confirms
+  `ViewName` must carry the asterisk, and `"*Front"` is what was passed. The auto-started
+  Model View PropertyManager is not the cause: `swInsertViewForNewDrawing` was found on,
+  is now disabled in `_configure_for_automation` — worth doing regardless, since an open
+  interactive command blocks every later COM call — and the spin survived it. And no
+  documented precondition covers it; the remarks for both calls mention only automatic
+  scaling.
+
+  The remaining untested variable is the edition. This machine runs **SOLIDWORKS Design
+  Professional for Makers, For Personal Use Only**, and a personal-use edition that
+  restricts drawing automation would explain a spin the documentation does not mention.
+  That is a hypothesis, not a finding — it needs a commercial licence to settle.
+
+  `IDrawingDoc`, `IView` and `ISheet` are in `swapi.json` regardless, so whoever picks
+  this up gets arity checking and vendored documentation from the first line.
+
 - **Mirror (`FEAT-008`) and combine (`FEAT-017`) are not implemented.** Both were
   written, and neither works on SOLIDWORKS 2026 SP3.0: `InsertMirrorFeature2` and
   `InsertCombineFeature` return nothing for every argument combination tried, which

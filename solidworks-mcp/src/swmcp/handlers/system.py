@@ -113,21 +113,6 @@ def health(ctx: OpContext, args: HealthArgs) -> HealthResult:
         issues.append("SOLIDWORKS is not registered on this machine.")
     issues.extend(install.notes)
 
-    # How to start SOLIDWORKS is only an issue while it is stopped. Said against a
-    # healthy attached session it is a false alarm, and a report that cries wolf is
-    # worse than one that says less.
-    if not ctx.session.attached and install.platform_managed:
-        where = (
-            f"from {install.platform_shortcut}"
-            if install.platform_shortcut
-            else "from the 3DEXPERIENCE Platform"
-        )
-        issues.append(
-            "SOLIDWORKS is not running, and this 3DEXPERIENCE-managed install cannot be "
-            f"started automatically — the Platform requires an interactive sign-in. "
-            f"Launch it {where}, then connect again."
-        )
-
     probe: dict[str, Any] | None = None
     if args.probe:
         started = time.monotonic()
@@ -143,6 +128,23 @@ def health(ctx: OpContext, args: HealthArgs) -> HealthResult:
     # Read through WMI, which keeps answering while COM does not — a session that has
     # exhausted itself is exactly when a caller needs to be told why.
     process = process_resources()
+
+    # Whether SOLIDWORKS is running is the WMI read, never session.attached: health
+    # deliberately does not attach — it has to answer while a COM call is wedged — so
+    # `attached` is False on every cold call and reported a running SOLIDWORKS as
+    # stopped. This is the one place in the handler that knows the difference.
+    if process is None and install.platform_managed:
+        where = (
+            f"from {install.platform_shortcut}"
+            if install.platform_shortcut
+            else "from the 3DEXPERIENCE Platform"
+        )
+        issues.append(
+            "SOLIDWORKS is not running, and this 3DEXPERIENCE-managed install cannot be "
+            "started automatically — the Platform requires an interactive sign-in. "
+            f"Launch it {where}, then connect again."
+        )
+
     if process and process["strained"]:
         issues.append(
             f"SOLIDWORKS is holding {process['private_mb']:.0f} MB of private memory "

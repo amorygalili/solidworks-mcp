@@ -290,3 +290,41 @@ def test_being_platform_managed_is_reported_structurally_not_as_a_fault(monkeypa
         "a managed install is not a broken one; notes must stay empty so a real "
         "installation fault is still visible there"
     )
+
+
+# --- prompts that wedge the API -------------------------------------------------
+
+
+def test_the_automation_guard_disables_both_known_wedging_prompts():
+    """Two settings stop SOLIDWORKS answering, and neither announces itself as a dialog.
+
+    swInputDimValOnCreate pops a modal Modify box for every dimension the API creates.
+    swInsertViewForNewDrawing is worse, because it is not a dialog at all: it opens the
+    Model View PropertyManager on every new drawing, leaving an interactive command
+    waiting for a selection. The process then reports "not responding" with its memory
+    flat while the next COM call blocks forever — indistinguishable from a hung session
+    until someone reads the status bar.
+    """
+    import inspect
+
+    from swmcp.com import swconst
+    from swmcp.com.session import SwSession
+
+    source = inspect.getsource(SwSession._configure_for_automation)
+    for name in ("swInputDimValOnCreate", "swInsertViewForNewDrawing"):
+        assert name in source, f"{name} is not disabled, so it will wedge the API"
+        assert isinstance(swconst.value("swUserPreferenceToggle_e", name), int), (
+            f"{name} must be a real swUserPreferenceToggle_e member"
+        )
+
+
+def test_the_wedging_prompts_are_restored_afterwards():
+    """They are the user's own settings, not ours to keep."""
+    import inspect
+
+    from swmcp.com.session import SwSession
+
+    configure = inspect.getsource(SwSession._configure_for_automation)
+    assert "_preference_overrides" in configure, "the previous value must be remembered"
+    restore = inspect.getsource(SwSession.restore_user_preferences)
+    assert "_preference_overrides" in restore, "and put back"

@@ -96,6 +96,18 @@ Probing has already caught, in code that looked correct:
   whether or not the import produced anything, and **on failure it leaves the previously
   active document active**. Identify an imported document by difference against the open
   set, never by reading `ActiveDoc` afterwards.
+- **Drawing views spin rather than fail.** `CreateDrawViewFromModelView3` and
+  `Create3rdAngleViews2` both peg one core forever on this build. Creating the drawing
+  *document* works fine, so the failure arrives one call later than you would expect.
+  Diagnose this class of hang by watching CPU, not the clock: steady CPU with flat
+  private bytes is a spin, a modal dialog idles at zero, and the memory wall grows.
+  Measuring that first would have saved three SOLIDWORKS restarts spent on a dialog
+  theory the CPU numbers had already ruled out.
+- **A wedged COM call cannot be cancelled by killing the client.** When a probe times
+  out, the call is still running inside SOLIDWORKS; pressing Escape dismisses a
+  PropertyManager but does not retract it. The session needs restarting, and on this
+  machine only the user can do that — so budget one restart per hanging experiment and
+  make each attempt count. Harvest everything you need in a single run.
 - `ISldWorks::GetImportFileData` is a dead end on this build: `None` for Parasolid, ACIS,
   and STL, and for STEP an object whose only reachable property is `MapConfigurationData`.
   Import options go through **user preferences**, like the export ones.

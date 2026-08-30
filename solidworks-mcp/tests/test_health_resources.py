@@ -143,32 +143,43 @@ def test_health_still_answers_when_the_process_cannot_be_read(monkeypatch):
     assert result.process is None
 
 
-def test_how_to_start_solidworks_is_an_issue_only_while_it_is_stopped(monkeypatch):
-    """A managed install always needs a hand-launch; that is news only when it is down.
+def test_how_to_start_solidworks_is_keyed_to_the_process_not_the_attachment(monkeypatch):
+    """The bug this pins: health never attaches, so `attached` is always False here.
 
-    Reported unconditionally it makes every health check on a perfectly good session
-    come back unhealthy — advice about starting SOLIDWORKS is not a problem when
-    SOLIDWORKS is already running, and a report that cries wolf gets ignored.
+    Keying the launch advice off ``session.attached`` made every cold health check on a
+    perfectly good machine report "SOLIDWORKS is not running" — while reporting its
+    memory in the same payload. Whether it is running is the WMI process read, which is
+    the whole reason health can answer while COM is wedged.
     """
     shortcut = "SOLIDWORKS Design.lnk"
 
     class Managed(FakeSession):
+        # Health does not attach, so this is False even while SOLIDWORKS runs.
+        attached = False
+
         def install(self) -> FakeInstall:
             return FakeInstall(platform_launcher="CATSTART.exe", platform_shortcut=shortcut)
 
-    class Detached(Managed):
-        attached = False
-
-    healthy = _resources(private=1 * 1024**3, handles=5_000)
-
-    running = _health_with(monkeypatch, Managed(), healthy)
-    assert running.issues == [], "an attached session must not be told how to start"
+    running = _health_with(
+        monkeypatch, Managed(), _resources(private=1 * 1024**3, handles=5_000)
+    )
+    assert running.issues == [], (
+        "a running SOLIDWORKS must not be told how to start itself, however "
+        "unattached the session happens to be"
+    )
     assert running.healthy is True
 
-    stopped = _health_with(monkeypatch, Detached(), healthy)
+    stopped = _health_with(monkeypatch, Managed(), None)
     assert any(shortcut in issue for issue in stopped.issues), (
-        "when it is stopped, naming the shortcut to run is the whole point"
+        "with no process at all, naming the shortcut to run is the whole point"
     )
+
+
+def test_a_classic_install_is_never_told_to_use_the_platform(monkeypatch):
+    """The advice is specific to a managed install; a normal one can just be started."""
+    stopped = _health_with(monkeypatch, FakeSession(), None)
+
+    assert not any("Platform" in issue for issue in stopped.issues)
 
 
 def _health_with(monkeypatch, session, resources):

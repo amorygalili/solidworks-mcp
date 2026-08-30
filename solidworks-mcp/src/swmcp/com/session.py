@@ -198,11 +198,20 @@ class SwSession:
         every subsequent COM call return "server busy" indefinitely. There is no way to
         dismiss it from here, so the only workable answer is not to raise it.
 
+        ``swInsertViewForNewDrawing`` is the same trap one document type over, and it
+        does not present as a dialog at all. It displays the Model View PropertyManager
+        whenever a new drawing is created, which leaves an *interactive command* open
+        waiting for a selection. SOLIDWORKS then stops answering: the process reports
+        "not responding" with its memory flat, the status bar asks the user to "select a
+        view containing the model", and the next COM call — ``CreateDrawViewFromModelView3``
+        in the case that found this — blocks until someone presses Escape. It reads
+        exactly like a hung session, and it is instead a menu waiting for a mouse.
+
         The previous value is remembered and reported in the system info, and restored
         by :meth:`restore_user_preferences`, because this is a change to the user's
         own SOLIDWORKS settings rather than to any document.
         """
-        for name in ("swInputDimValOnCreate",):
+        for name in ("swInputDimValOnCreate", "swInsertViewForNewDrawing"):
             try:
                 code = swconst.value("swUserPreferenceToggle_e", name)
                 previous = self._app.GetUserPreferenceToggle(code)
