@@ -399,7 +399,9 @@ def test_even_a_part_with_no_sketch_dimensions_yields_its_feature_ones(call, dra
     imported = call("sw_drawing_annotate_model", {"kinds": ["dimensions"]})["result"]
 
     assert imported["imported"] > 0
-    assert imported["warnings"] == []
+    # An unsaved drawing cannot be snapshotted, so the checkpoint layer warns; what must
+    # be absent is the "nothing to import" warning, since something was imported.
+    assert not any("marked for drawings" in w for w in imported["warnings"])
     assert all(check["passed"] for check in imported["verification"]["checks"])
 
 
