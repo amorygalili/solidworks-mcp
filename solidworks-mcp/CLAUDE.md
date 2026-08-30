@@ -96,18 +96,29 @@ Probing has already caught, in code that looked correct:
   whether or not the import produced anything, and **on failure it leaves the previously
   active document active**. Identify an imported document by difference against the open
   set, never by reading `ActiveDoc` afterwards.
-- **Drawing views spin rather than fail.** `CreateDrawViewFromModelView3` and
-  `Create3rdAngleViews2` both peg one core forever on this build. Creating the drawing
-  *document* works fine, so the failure arrives one call later than you would expect.
-  Diagnose this class of hang by watching CPU, not the clock: steady CPU with flat
-  private bytes is a spin, a modal dialog idles at zero, and the memory wall grows.
-  Measuring that first would have saved three SOLIDWORKS restarts spent on a dialog
-  theory the CPU numbers had already ruled out.
+- **A zero-by-zero drawing sheet makes SOLIDWORKS spin forever.**
+  `ISldWorks::NewDocument(template, paperSize, width, height)` reads width and height
+  *only* when `paperSize` is `swDwgPapersUserDefined` (12). Passing 12 with `0, 0` builds
+  a sheet of zero area, and any view insertion then loops trying to auto-scale geometry
+  to fit it — one core pegged, memory flat, forever. Pass a real `swDwgPaperSizes_e`
+  and `Create3rdAngleViews2` returns `True` in half a second. `ISheet::GetProperties2`
+  reports the sheet as `[paperSize, templateIn, scale1, scale2, firstAngle, width,
+  height, sameCustomProp]`, so a degenerate sheet is visible in slots 5 and 6 the moment
+  it is created — check them before blaming the view call.
+- **Diagnose a hang by watching CPU, not the clock.** A spin holds one core with private
+  bytes flat; a modal dialog idles at zero; the memory wall grows. Three restarts went
+  into a dialog theory that the CPU numbers had already ruled out, and the real cause
+  was in an argument I had passed myself.
 - **A wedged COM call cannot be cancelled by killing the client.** When a probe times
   out, the call is still running inside SOLIDWORKS; pressing Escape dismisses a
   PropertyManager but does not retract it. The session needs restarting, and on this
-  machine only the user can do that — so budget one restart per hanging experiment and
-  make each attempt count. Harvest everything you need in a single run.
+  machine only the user can do that — so budget one restart per hanging experiment,
+  and harvest everything you need in a single run.
+- **`IDrawingDoc::GetFirstView` returns the sheet, not a view.** It reports
+  `Type == swDrawingSheet` and a null referenced document; the real views follow it
+  through `GetNextView`. `IDrawingDoc::GetViews` groups by sheet but returned views
+  whose `GetName2` was `None` on this build, so the `GetFirstView` walk is the reliable
+  traversal.
 - `ISldWorks::GetImportFileData` is a dead end on this build: `None` for Parasolid, ACIS,
   and STL, and for STEP an object whose only reachable property is `MapConfigurationData`.
   Import options go through **user preferences**, like the export ones.
