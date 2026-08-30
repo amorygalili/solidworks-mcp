@@ -155,6 +155,59 @@ def test_nothing_is_ever_spawned_for_a_managed_install():
     assert "Arguments" not in inspect.getsource(install_mod.find_platform_shortcut)
 
 
+# --- not attaching is not the same as not using a session -----------------------
+
+
+def test_the_diagnostics_still_use_a_session_when_there_is_one():
+    """The trap in exempting them from the dispatcher's attach.
+
+    ``needs_session=False`` stops the dispatcher attaching on their behalf, so they
+    answer when SOLIDWORKS is stopped. Taken literally it also made them answer
+    *badly* when it was running: sw_capabilities reported no templates and
+    ``attach: False`` on a healthy machine, because nothing had attached yet and it
+    read ``session.attached`` rather than trying. They must opportunistically attach.
+    """
+    import inspect
+
+    from swmcp.handlers import system as system_handlers
+
+    for handler in (system_handlers.capabilities, system_handlers.system_info):
+        source = inspect.getsource(handler)
+        assert "try_attach" in source, (
+            f"{handler.__name__} must try to attach, or it reports degraded answers "
+            f"on a machine where SOLIDWORKS is running perfectly well"
+        )
+
+    # Health is deliberately excluded: it has to answer while a COM call is wedged, and
+    # attaching could block on the very thing it is being asked to explain.
+    assert "try_attach" not in inspect.getsource(system_handlers.health)
+
+
+def test_try_attach_reports_failure_rather_than_raising():
+    """It runs on the "SOLIDWORKS is absent" path, where failing is the normal case."""
+    from swmcp.com.session import SwSession
+    from swmcp.errors import SwMcpError, worker_error
+
+    session = SwSession.__new__(SwSession)
+    session._app = None
+
+    def refuse(**_kwargs):
+        raise SwMcpError(worker_error("SOLIDWORKS_NOT_RUNNING", "nothing to attach to"))
+
+    session.ensure = refuse
+    assert session.try_attach() is False
+
+
+def test_try_attach_never_launches():
+    """Launching is sw_connect's job, and on this install it cannot succeed anyway."""
+    import inspect
+
+    from swmcp.com.session import SwSession
+
+    source = inspect.getsource(SwSession.try_attach)
+    assert "start_if_missing" not in source
+
+
 # --- the failure a caller used to get -------------------------------------------
 
 

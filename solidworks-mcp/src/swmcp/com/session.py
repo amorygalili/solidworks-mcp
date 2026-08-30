@@ -295,6 +295,25 @@ class SwSession:
             )
         )
 
+    def try_attach(self) -> bool:
+        """Attach if SOLIDWORKS is there, and report whether it worked.
+
+        For the diagnostics. They must answer when SOLIDWORKS is *not* running, which is
+        why the dispatcher no longer attaches on their behalf — but "do not require a
+        session" is not the same as "do not use one". Without this they report degraded
+        answers on a perfectly healthy machine, purely because nothing had attached yet:
+        sw_capabilities listed no templates while SOLIDWORKS sat running behind it.
+
+        Never launches. A failure here is the ordinary case, not an error.
+        """
+        if self._app is not None:
+            return True
+        try:
+            self.ensure()
+        except SwMcpError:
+            return False
+        return self._app is not None
+
     def _wait_until_ready(self, timeout_s: float = 180.0) -> None:
         deadline = time.monotonic() + timeout_s
         while time.monotonic() < deadline:

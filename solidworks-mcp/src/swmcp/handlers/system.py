@@ -81,6 +81,9 @@ def connect(ctx: OpContext, args: ConnectArgs) -> ConnectResult:
 )
 def system_info(ctx: OpContext, args: SystemInfoArgs) -> SystemInfoResult:
     _ = args
+    # Answers with SOLIDWORKS stopped, and reports the live half — active document,
+    # language, executable path — whenever it is running. try_attach never launches.
+    ctx.session.try_attach()
     return SystemInfoResult(info=ctx.session.system_info())
 
 
@@ -191,11 +194,12 @@ def capabilities(ctx: OpContext, args: CapabilitiesArgs) -> CapabilitiesResult:
     _ = args
     install = ctx.session.install()
 
-    # Reading ``session.app`` would attach, and a capability probe has to answer on a
-    # machine where SOLIDWORKS is not running — that is when a caller most needs to know
-    # what is available. The template paths are the only part that needs a live session,
-    # so they report as unknown rather than taking the whole probe down with them.
-    attached = ctx.session.attached
+    # A capability probe has to answer on a machine where SOLIDWORKS is not running —
+    # that is when a caller most needs to know what is available — so the dispatcher
+    # does not attach on its behalf. It still *uses* a session when there is one:
+    # try_attach never launches, and the template paths are the only part that needs
+    # it, so they report as unknown rather than taking the whole probe down.
+    attached = ctx.session.try_attach()
     templates: dict[str, str | None] = {"part": None, "assembly": None, "drawing": None}
     if attached:
         app = ctx.session.app
