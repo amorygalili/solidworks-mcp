@@ -72,6 +72,15 @@ INTERFACES = (
     # asks for — so both need arity checking like everything else.
     "IInterferenceDetectionMgr",
     "IInterference",
+    # Drawings (DRW-001 to DRW-003). A drawing document is a different interface from
+    # IPartDoc and IAssemblyDoc, and its views and sheets are objects in their own
+    # right: IView carries the referenced model, configuration, scale, orientation and
+    # outline that a created view has to be read back from, and ISheet the format and
+    # size. Without these the drawing calls would be the only ones in the package that
+    # nothing arity-checks.
+    "IDrawingDoc",
+    "IView",
+    "ISheet",
 )
 
 

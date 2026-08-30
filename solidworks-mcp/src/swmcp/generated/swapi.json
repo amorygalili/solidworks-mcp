@@ -1,6 +1,6 @@
 {
  "generated_from": "sldworks.tlb",
- "interface_count": 34,
+ "interface_count": 37,
  "interfaces": {
   "IAssemblyDoc": {
    "ActivateGroundPlane": {
@@ -10956,6 +10956,4162 @@
     "kind": "propget",
     "params": [],
     "returns_void": false
+   }
+  },
+  "IDrawingDoc": {
+   "ActivateSheet": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Name"
+    ],
+    "returns_void": false
+   },
+   "ActivateView": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ViewName"
+    ],
+    "returns_void": false
+   },
+   "ActiveDrawingView": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "AddCenterMark": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "CmSize",
+     "CmShowLines"
+    ],
+    "returns_void": false
+   },
+   "AddChamferDim": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z"
+    ],
+    "returns_void": false
+   },
+   "AddHoleCallout": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "AddHoleCallout2": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z"
+    ],
+    "returns_void": false
+   },
+   "AddLineStyle": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "StyleName",
+     "StyleDefinition"
+    ],
+    "returns_void": false
+   },
+   "AddOrdinateDimension": {
+    "flags": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "DimType",
+     "LocX",
+     "LocY",
+     "LocZ"
+    ],
+    "returns_void": false
+   },
+   "AddOrdinateDimension2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "DimType",
+     "LocX",
+     "LocY",
+     "LocZ"
+    ],
+    "returns_void": false
+   },
+   "AddRef": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "AlignHorz": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "AlignOrdinate": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "AlignVert": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "AttachAnnotation": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Option"
+    ],
+    "returns_void": false
+   },
+   "AttachDimensions": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "AutoBalloon": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Layout"
+    ],
+    "returns_void": false
+   },
+   "AutoBalloon2": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Layout",
+     "IgnoreMultiple"
+    ],
+    "returns_void": false
+   },
+   "AutoBalloon3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Layout",
+     "IgnoreMultiple",
+     "Style",
+     "Size",
+     "UpperTextContent",
+     "UpperText",
+     "LowerTextContent",
+     "LowerText",
+     "Layername"
+    ],
+    "returns_void": false
+   },
+   "AutoBalloon4": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Layout",
+     "IgnoreMultiple",
+     "Style",
+     "Size",
+     "UpperTextContent",
+     "UpperText",
+     "LowerTextContent",
+     "LowerText",
+     "Layername",
+     "BalloonsToFaces"
+    ],
+    "returns_void": false
+   },
+   "AutoBalloon5": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "BalloonOptions"
+    ],
+    "returns_void": false
+   },
+   "AutoDimension": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "EntitiesToDimension",
+     "HorizontalScheme",
+     "HorizontalPlacement",
+     "VerticalScheme",
+     "VerticalPlacement"
+    ],
+    "returns_void": false
+   },
+   "AutomaticViewUpdate": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "BackgroundProcessingOption": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "BreakLineSplineCut": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "BreakLineStraightCut": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "BreakLineZigZagCut": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "BreakView": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "CenterMark": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "ChangeComponentLayer": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Layername",
+     "AllViews"
+    ],
+    "returns_void": true
+   },
+   "ChangeOrdDir": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "ChangeRefConfigurationOfFlatPatternView": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ModelName",
+     "ConfigName"
+    ],
+    "returns_void": false
+   },
+   "Create1stAngleViews": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ModelName"
+    ],
+    "returns_void": false
+   },
+   "Create1stAngleViews2": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ModelName"
+    ],
+    "returns_void": false
+   },
+   "Create3rdAngleViews": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ModelName"
+    ],
+    "returns_void": false
+   },
+   "Create3rdAngleViews2": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ModelName"
+    ],
+    "returns_void": false
+   },
+   "CreateAngDim": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "VP0",
+     "VP1",
+     "VP2",
+     "VP3",
+     "VP4",
+     "VP5",
+     "VP6",
+     "ArrowSize",
+     "Text",
+     "TextHeight",
+     "WitnessGap",
+     "WitnessOvershoot"
+    ],
+    "returns_void": false
+   },
+   "CreateAngDim2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "VP0",
+     "VP1",
+     "VP2",
+     "VP3",
+     "VP4",
+     "VP5",
+     "VP6",
+     "ArrowSize",
+     "Text",
+     "TextHeight",
+     "WitnessGap",
+     "WitnessOvershoot",
+     "VTextPoint"
+    ],
+    "returns_void": false
+   },
+   "CreateAngDim3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "VP0",
+     "VP1",
+     "VP2",
+     "VP3",
+     "VP4",
+     "VP5",
+     "VP6",
+     "ArrowSize",
+     "Text",
+     "TextHeight",
+     "WitnessGap",
+     "WitnessOvershoot",
+     "VTextPoint"
+    ],
+    "returns_void": false
+   },
+   "CreateAngDim4": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "P5",
+     "P6",
+     "TextPoint",
+     "TextHeight"
+    ],
+    "returns_void": false
+   },
+   "CreateAutoBalloonOptions": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "CreateAuxiliaryView": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "CreateAuxiliaryViewAt": {
+    "flags": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z",
+     "NotAligned"
+    ],
+    "returns_void": false
+   },
+   "CreateAuxiliaryViewAt2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z",
+     "NotAligned",
+     "Label",
+     "Showarrow",
+     "Flip"
+    ],
+    "returns_void": false
+   },
+   "CreateBlockDefinition": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Name",
+     "XRefFileName",
+     "Instance",
+     "Segments",
+     "Points",
+     "Notes",
+     "Dimensions",
+     "Blocks"
+    ],
+    "returns_void": false
+   },
+   "CreateBreakOutSection": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Depth"
+    ],
+    "returns_void": false
+   },
+   "CreateCompoundNote": {
+    "flags": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Height",
+     "X",
+     "Y",
+     "Z"
+    ],
+    "returns_void": false
+   },
+   "CreateConstructionGeometry": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "CreateCustomSymbol": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Segments",
+     "Points",
+     "Notes"
+    ],
+    "returns_void": false
+   },
+   "CreateDetailView": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "CreateDetailViewAt": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z"
+    ],
+    "returns_void": false
+   },
+   "CreateDetailViewAt2": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z"
+    ],
+    "returns_void": false
+   },
+   "CreateDetailViewAt3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z",
+     "Style",
+     "Scale1",
+     "Scale2",
+     "LabelIn",
+     "Showtype",
+     "FullOutline"
+    ],
+    "returns_void": false
+   },
+   "CreateDetailViewAt4": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z",
+     "Style",
+     "Scale1",
+     "Scale2",
+     "LabelIn",
+     "Showtype",
+     "FullOutline",
+     "JaggedOutline",
+     "NoOutline",
+     "ShapeIntensity"
+    ],
+    "returns_void": false
+   },
+   "CreateDiamDim": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "DimVal",
+     "VP0",
+     "VP1",
+     "VP2",
+     "VP3",
+     "ArrowSize",
+     "Text",
+     "TextHeight",
+     "WitnessGap",
+     "WitnessOvershoot"
+    ],
+    "returns_void": false
+   },
+   "CreateDiamDim2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "DimVal",
+     "VP0",
+     "VP1",
+     "VP2",
+     "VP3",
+     "ArrowSize",
+     "Text",
+     "TextHeight",
+     "WitnessGap",
+     "WitnessOvershoot",
+     "VTextPoint"
+    ],
+    "returns_void": false
+   },
+   "CreateDiamDim3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "DimVal",
+     "VP0",
+     "VP1",
+     "VP2",
+     "VP3",
+     "ArrowSize",
+     "Text",
+     "TextHeight",
+     "WitnessGap",
+     "WitnessOvershoot",
+     "VTextPoint"
+    ],
+    "returns_void": false
+   },
+   "CreateDiamDim4": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "TextPoint",
+     "Val",
+     "TextHeight"
+    ],
+    "returns_void": false
+   },
+   "CreateDrawViewFromModelView": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ModelName",
+     "ViewName",
+     "LocX",
+     "LocY",
+     "LocZ"
+    ],
+    "returns_void": false
+   },
+   "CreateDrawViewFromModelView2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ModelName",
+     "ViewName",
+     "LocX",
+     "LocY",
+     "LocZ"
+    ],
+    "returns_void": false
+   },
+   "CreateDrawViewFromModelView3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ModelName",
+     "ViewName",
+     "LocX",
+     "LocY",
+     "LocZ"
+    ],
+    "returns_void": false
+   },
+   "CreateFlatPatternViewFromModelView": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ModelName",
+     "ConfigName",
+     "LocX",
+     "LocY",
+     "LocZ"
+    ],
+    "returns_void": false
+   },
+   "CreateFlatPatternViewFromModelView2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ModelName",
+     "ConfigName",
+     "LocX",
+     "LocY",
+     "LocZ",
+     "HideBendLines"
+    ],
+    "returns_void": false
+   },
+   "CreateFlatPatternViewFromModelView3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ModelName",
+     "ConfigName",
+     "LocX",
+     "LocY",
+     "LocZ",
+     "HideBendLines",
+     "FlipView"
+    ],
+    "returns_void": false
+   },
+   "CreateLayer": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Layername",
+     "LayerDesc",
+     "LayerColor",
+     "LayerStyle",
+     "LayerWidth",
+     "BOn"
+    ],
+    "returns_void": false
+   },
+   "CreateLayer2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Layername",
+     "LayerDesc",
+     "LayerColor",
+     "LayerStyle",
+     "LayerWidth",
+     "BOn",
+     "BPrint"
+    ],
+    "returns_void": false
+   },
+   "CreateLinearDim": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "Angle",
+     "ArrowSize",
+     "Text",
+     "TextHeight",
+     "WitnessGap",
+     "WitnessOvershoot"
+    ],
+    "returns_void": false
+   },
+   "CreateLinearDim2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "Val",
+     "PrimPrec",
+     "Text",
+     "TextPoint",
+     "Angle",
+     "TextHeight",
+     "Prefix",
+     "Suffix",
+     "Callout1",
+     "Callout2",
+     "TolType",
+     "TolMin",
+     "TolMax",
+     "TolPrec",
+     "ArrowSize",
+     "ArrowStyle",
+     "ArrowDir",
+     "WitnessGap",
+     "WitnessOvershoot",
+     "DualDisplay",
+     "DualPrec"
+    ],
+    "returns_void": false
+   },
+   "CreateLinearDim3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "Val",
+     "PrimPrec",
+     "Text",
+     "TextPoint",
+     "Angle",
+     "TextHeight",
+     "Prefix",
+     "Suffix",
+     "Callout1",
+     "Callout2",
+     "TolType",
+     "TolMin",
+     "TolMax",
+     "TolPrec",
+     "ArrowSize",
+     "ArrowStyle",
+     "ArrowDir",
+     "WitnessGap",
+     "WitnessOvershoot",
+     "DualDisplay",
+     "DualPrec"
+    ],
+    "returns_void": false
+   },
+   "CreateLinearDim4": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "TextPoint",
+     "Val",
+     "Angle",
+     "TextHeight"
+    ],
+    "returns_void": false
+   },
+   "CreateOrdinateDim": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "Angle",
+     "ArrowSize",
+     "Text",
+     "TextHeight",
+     "WitnessGap",
+     "WitnessOvershoot"
+    ],
+    "returns_void": false
+   },
+   "CreateOrdinateDim2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "Angle",
+     "ArrowSize",
+     "Text",
+     "TextHeight",
+     "WitnessGap",
+     "WitnessOvershoot",
+     "P5"
+    ],
+    "returns_void": false
+   },
+   "CreateOrdinateDim3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "Angle",
+     "ArrowSize",
+     "Text",
+     "TextHeight",
+     "WitnessGap",
+     "WitnessOvershoot",
+     "P5"
+    ],
+    "returns_void": false
+   },
+   "CreateOrdinateDim4": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "P5",
+     "Val",
+     "Angle",
+     "TextHeight"
+    ],
+    "returns_void": false
+   },
+   "CreateRelativeView": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ModelName",
+     "XPos",
+     "YPos",
+     "ViewDirFront",
+     "ViewDirRight"
+    ],
+    "returns_void": false
+   },
+   "CreateSectionView": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "CreateSectionViewAt": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z",
+     "NotAligned",
+     "IsOffsetSection"
+    ],
+    "returns_void": false
+   },
+   "CreateSectionViewAt2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z",
+     "NotAligned",
+     "IsOffsetSection",
+     "Label",
+     "Chgdirection",
+     "Scwithmodel",
+     "Partial",
+     "Dispsurfcut"
+    ],
+    "returns_void": false
+   },
+   "CreateSectionViewAt3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z",
+     "NotAligned",
+     "IsOffsetSection",
+     "Label",
+     "Chgdirection",
+     "Scwithmodel",
+     "Partial",
+     "Dispsurfcut",
+     "ExcludedComponents"
+    ],
+    "returns_void": false
+   },
+   "CreateSectionViewAt4": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z",
+     "SectionLabel",
+     "Options",
+     "ExcludedComponents"
+    ],
+    "returns_void": false
+   },
+   "CreateSectionViewAt5": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z",
+     "SectionLabel",
+     "Options",
+     "ExcludedComponents",
+     "SectionDepth"
+    ],
+    "returns_void": false
+   },
+   "CreateText": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "TextString",
+     "TextX",
+     "TextY",
+     "TextZ",
+     "TextHeight",
+     "TextAngle"
+    ],
+    "returns_void": false
+   },
+   "CreateText2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "TextString",
+     "TextX",
+     "TextY",
+     "TextZ",
+     "TextHeight",
+     "TextAngle"
+    ],
+    "returns_void": false
+   },
+   "CreateUnfoldedViewAt": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z"
+    ],
+    "returns_void": false
+   },
+   "CreateUnfoldedViewAt2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z",
+     "NotAligned"
+    ],
+    "returns_void": false
+   },
+   "CreateUnfoldedViewAt3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z",
+     "NotAligned"
+    ],
+    "returns_void": false
+   },
+   "CreateViewport": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "LowerLeftX",
+     "LowerLeftY",
+     "UpperRightX",
+     "UpperRightY",
+     "SketchSize"
+    ],
+    "returns_void": false
+   },
+   "CreateViewport2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "LowerLeftX",
+     "LowerLeftY",
+     "UpperRightX",
+     "UpperRightY",
+     "SketchSize",
+     "Scale"
+    ],
+    "returns_void": false
+   },
+   "CreateViewport3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "LowerLeftX",
+     "LowerLeftY",
+     "SketchSize",
+     "Scale"
+    ],
+    "returns_void": false
+   },
+   "DeleteAllCosmeticThreads": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "DeleteLineStyle": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "StyleName",
+     "ReplaceName"
+    ],
+    "returns_void": false
+   },
+   "Dimensions": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "DragModelDimension": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ViewName",
+     "DropEffect",
+     "X",
+     "Y",
+     "Z"
+    ],
+    "returns_void": true
+   },
+   "DrawingViewRotate": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NewAngle"
+    ],
+    "returns_void": false
+   },
+   "DropDrawingViewFromPalette": {
+    "flags": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Layout",
+     "X",
+     "Y",
+     "Z"
+    ],
+    "returns_void": false
+   },
+   "DropDrawingViewFromPalette2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "PaletteViewName",
+     "X",
+     "Y",
+     "Z"
+    ],
+    "returns_void": false
+   },
+   "Dummy018": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "EditCenterMarkProperties": {
+    "flags": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Angle",
+     "Size",
+     "Lines",
+     "DocSettings"
+    ],
+    "returns_void": true
+   },
+   "EditOrdinate": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "EditRebuild": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "EditSelectedGtol": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "EditSheet": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "EditSheet2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "EditSketch": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "EditTemplate": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "EndDrawing": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "ExplodeBlockInstance": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "ExplodeCustomSymbol": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "FeatureByName": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Name"
+    ],
+    "returns_void": false
+   },
+   "FlipSectionLine": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "ForceRebuild": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "GenerateViewPaletteViews": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "FileName"
+    ],
+    "returns_void": false
+   },
+   "GetBlockDefinition": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Name"
+    ],
+    "returns_void": false
+   },
+   "GetBlockDefinitionCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetBlockDefinitions": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetCurrentSheet": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDrawingPaletteViewNames": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetEditBlock": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetEditSheet": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstView": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetIDsOfNames": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "riid",
+     "rgszNames",
+     "cNames",
+     "lcid",
+     "rgdispid"
+    ],
+    "returns_void": true
+   },
+   "GetInsertionPoint": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetLineFontCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetLineFontCount2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetLineFontId": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Index"
+    ],
+    "returns_void": false
+   },
+   "GetLineFontInfo": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Index"
+    ],
+    "returns_void": false
+   },
+   "GetLineFontInfo2": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Index"
+    ],
+    "returns_void": false
+   },
+   "GetLineFontName": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Index"
+    ],
+    "returns_void": false
+   },
+   "GetLineFontName2": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Index"
+    ],
+    "returns_void": false
+   },
+   "GetLineStyles": {
+    "flags": [
+     2,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "StyleNameList",
+     "StyleList"
+    ],
+    "returns_void": false
+   },
+   "GetPenCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetPenInfo": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSheetCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSheetNames": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetTypeInfo": {
+    "flags": [
+     1,
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "itinfo",
+     "lcid",
+     "pptinfo"
+    ],
+    "returns_void": true
+   },
+   "GetTypeInfoCount": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "pctinfo"
+    ],
+    "returns_void": true
+   },
+   "GetViewCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetViews": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "HiddenViewsVisible": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "HideEdge": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "HideShowDimensions": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "HideShowDrawingViews": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "IActiveDrawingView": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "IAddChamferDim": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z"
+    ],
+    "returns_void": false
+   },
+   "IAddHoleCallout2": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z"
+    ],
+    "returns_void": false
+   },
+   "ICreateAngDim": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "P5",
+     "P6",
+     "ArrowSize",
+     "Text",
+     "TextHeight",
+     "WitnessGap",
+     "WitnessOvershoot"
+    ],
+    "returns_void": true
+   },
+   "ICreateAngDim2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "P5",
+     "P6",
+     "ArrowSize",
+     "Text",
+     "TextHeight",
+     "WitnessGap",
+     "WitnessOvershoot",
+     "TextPoint"
+    ],
+    "returns_void": true
+   },
+   "ICreateAngDim3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "P5",
+     "P6",
+     "ArrowSize",
+     "Text",
+     "TextHeight",
+     "WitnessGap",
+     "WitnessOvershoot",
+     "TextPoint"
+    ],
+    "returns_void": false
+   },
+   "ICreateAngDim4": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "P5",
+     "P6",
+     "TextPoint",
+     "TextHeight"
+    ],
+    "returns_void": false
+   },
+   "ICreateAuxiliaryViewAt2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z",
+     "NotAligned",
+     "Label",
+     "Showarrow",
+     "Flip"
+    ],
+    "returns_void": false
+   },
+   "ICreateBlockDefinition": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Name",
+     "XRefFileName",
+     "Instance",
+     "SegmentCount",
+     "Segments",
+     "PointCount",
+     "Points",
+     "NoteCount",
+     "Notes",
+     "DimensionCount",
+     "Dimensions",
+     "BlockCount",
+     "Blocks"
+    ],
+    "returns_void": false
+   },
+   "ICreateCompoundNote": {
+    "flags": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Height",
+     "X",
+     "Y",
+     "Z"
+    ],
+    "returns_void": false
+   },
+   "ICreateCustomSymbol": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "SegmentCount",
+     "Segments",
+     "PointCount",
+     "Points",
+     "NoteCount",
+     "Notes"
+    ],
+    "returns_void": false
+   },
+   "ICreateDetailViewAt3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z",
+     "Style",
+     "Scale1",
+     "Scale2",
+     "LabelIn",
+     "Showtype",
+     "FullOutline"
+    ],
+    "returns_void": false
+   },
+   "ICreateDiamDim": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "DimValue",
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "ArrowSize",
+     "Text",
+     "TextHeight",
+     "WitnessGap",
+     "WitnessOvershoot"
+    ],
+    "returns_void": true
+   },
+   "ICreateDiamDim2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "DimValue",
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "ArrowSize",
+     "Text",
+     "TextHeight",
+     "WitnessGap",
+     "WitnessOvershoot",
+     "TextPoint"
+    ],
+    "returns_void": true
+   },
+   "ICreateDiamDim3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "DimValue",
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "ArrowSize",
+     "Text",
+     "TextHeight",
+     "WitnessGap",
+     "WitnessOvershoot",
+     "TextPoint"
+    ],
+    "returns_void": false
+   },
+   "ICreateDiamDim4": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "TextPoint",
+     "Val",
+     "TextHeight"
+    ],
+    "returns_void": false
+   },
+   "ICreateLinearDim": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "Angle",
+     "ArrowSize",
+     "Text",
+     "TextHeight",
+     "WitnessGap",
+     "WitnessOvershoot"
+    ],
+    "returns_void": true
+   },
+   "ICreateLinearDim2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "Val",
+     "PrimPrec",
+     "Text",
+     "TextPoint",
+     "Angle",
+     "TextHeight",
+     "Prefix",
+     "Suffix",
+     "Callout1",
+     "Callout2",
+     "TolType",
+     "TolMin",
+     "TolMax",
+     "TolPrec",
+     "ArrowSize",
+     "ArrowStyle",
+     "ArrowDir",
+     "WitnessGap",
+     "WitnessOvershoot",
+     "DualDisplay",
+     "DualPrecision"
+    ],
+    "returns_void": true
+   },
+   "ICreateLinearDim3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "Val",
+     "PrimPrec",
+     "Text",
+     "TextPoint",
+     "Angle",
+     "TextHeight",
+     "Prefix",
+     "Suffix",
+     "Callout1",
+     "Callout2",
+     "TolType",
+     "TolMin",
+     "TolMax",
+     "TolPrec",
+     "ArrowSize",
+     "ArrowStyle",
+     "ArrowDir",
+     "WitnessGap",
+     "WitnessOvershoot",
+     "DualDisplay",
+     "DualPrecision"
+    ],
+    "returns_void": false
+   },
+   "ICreateLinearDim4": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "TextPoint",
+     "Val",
+     "Angle",
+     "TextHeight"
+    ],
+    "returns_void": false
+   },
+   "ICreateOrdinateDim": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "Angle",
+     "ArrowSize",
+     "Text",
+     "TextHeight",
+     "WitnessGap",
+     "WitnessOvershoot"
+    ],
+    "returns_void": true
+   },
+   "ICreateOrdinateDim2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "Angle",
+     "ArrowSize",
+     "Text",
+     "TextHeight",
+     "WitnessGap",
+     "WitnessOvershoot",
+     "P5"
+    ],
+    "returns_void": true
+   },
+   "ICreateOrdinateDim3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "Angle",
+     "ArrowSize",
+     "Text",
+     "TextHeight",
+     "WitnessGap",
+     "WitnessOvershoot",
+     "P5"
+    ],
+    "returns_void": false
+   },
+   "ICreateOrdinateDim4": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "P0",
+     "P1",
+     "P2",
+     "P3",
+     "P4",
+     "P5",
+     "Val",
+     "Angle",
+     "TextHeight"
+    ],
+    "returns_void": false
+   },
+   "ICreateSectionViewAt2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z",
+     "NotAligned",
+     "IsOffsetSection",
+     "Label",
+     "Chgdirection",
+     "Scwithmodel",
+     "Partial",
+     "Dispsurfcut"
+    ],
+    "returns_void": false
+   },
+   "ICreateSectionViewAt3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z",
+     "NotAligned",
+     "IsOffsetSection",
+     "Label",
+     "Chgdirection",
+     "Scwithmodel",
+     "Partial",
+     "Dispsurfcut",
+     "NumExcludedComponents",
+     "PExcludedComponents"
+    ],
+    "returns_void": false
+   },
+   "ICreateSectionViewAt4": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z",
+     "SectionLabel",
+     "Options",
+     "NumExcludedComponents",
+     "ExcludedComponents"
+    ],
+    "returns_void": false
+   },
+   "ICreateSectionViewAt5": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z",
+     "SectionLabel",
+     "Options",
+     "NumExcludedComponents",
+     "ExcludedComponents",
+     "SectionDepth"
+    ],
+    "returns_void": false
+   },
+   "ICreateText2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "TextString",
+     "TextX",
+     "TextY",
+     "TextZ",
+     "TextHeight",
+     "TextAngle"
+    ],
+    "returns_void": false
+   },
+   "IEditSelectedGtol": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IFeatureByName": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Name"
+    ],
+    "returns_void": false
+   },
+   "IGetBlockDefinitions": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Count"
+    ],
+    "returns_void": false
+   },
+   "IGetCurrentSheet": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetFirstView": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetInsertionPoint": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetPenInfo": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetSheetNames": {
+    "flags": [
+     3
+    ],
+    "kind": "method",
+    "params": [
+     "Count"
+    ],
+    "returns_void": false
+   },
+   "IInsertCustomSymbol2": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "FileName"
+    ],
+    "returns_void": false
+   },
+   "IInsertDowelSymbol": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IInsertMultiJogLeader2": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "PointsCount",
+     "Points"
+    ],
+    "returns_void": false
+   },
+   "IInsertMultiJogLeader3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "PointsCount",
+     "Points",
+     "StartPointArrowStyle",
+     "EndPointArrowStyle"
+    ],
+    "returns_void": false
+   },
+   "IInsertRevisionCloud": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "CloudShape"
+    ],
+    "returns_void": false
+   },
+   "IMakeCustomSymbol2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "INewGtol": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IReorderSheets": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "SheetCount",
+     "NewSheetList"
+    ],
+    "returns_void": false
+   },
+   "InsertAngularRunningDim": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "InsertBaseDim": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "InsertBlock": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "FileName",
+     "X",
+     "Y",
+     "Angle",
+     "Scale"
+    ],
+    "returns_void": false
+   },
+   "InsertBreakHorizontal": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "InsertBreakVertical": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "InsertCenterLine": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "InsertCenterLine2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "InsertCenterMark": {
+    "flags": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "UseDoc",
+     "Size",
+     "ShowLines",
+     "Angle"
+    ],
+    "returns_void": false
+   },
+   "InsertCenterMark2": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Style",
+     "Propagate"
+    ],
+    "returns_void": false
+   },
+   "InsertCenterMark3": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Style",
+     "Propagate",
+     "Slot"
+    ],
+    "returns_void": false
+   },
+   "InsertChainDim": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "InsertCircularNotePattern": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ArcRadius",
+     "ArcAngle",
+     "PatternNum",
+     "PatternSpacing",
+     "PatternRotate",
+     "DeleteInstances"
+    ],
+    "returns_void": false
+   },
+   "InsertCustomSymbol": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "SymbolPath"
+    ],
+    "returns_void": true
+   },
+   "InsertCustomSymbol2": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "FileName"
+    ],
+    "returns_void": false
+   },
+   "InsertDatumTag": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "InsertDowelSymbol": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "InsertGroup": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "InsertHorizontalOrdinate": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "InsertLinearNotePattern": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumX",
+     "NumY",
+     "SpacingX",
+     "SpacingY",
+     "AngleX",
+     "AngleY",
+     "DeleteInstances"
+    ],
+    "returns_void": false
+   },
+   "InsertModelAnnotations": {
+    "flags": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Option",
+     "AllTypes",
+     "Types",
+     "AllViews"
+    ],
+    "returns_void": false
+   },
+   "InsertModelAnnotations2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Option",
+     "AllTypes",
+     "Types",
+     "AllViews",
+     "DuplicateDims",
+     "HiddenFeatureDims"
+    ],
+    "returns_void": false
+   },
+   "InsertModelAnnotations3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Option",
+     "Types",
+     "AllViews",
+     "DuplicateDims",
+     "HiddenFeatureDims",
+     "UsePlacementInSketch"
+    ],
+    "returns_void": false
+   },
+   "InsertModelAnnotations4": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Option",
+     "Types",
+     "AllViews",
+     "DuplicateDims",
+     "HiddenFeatureDims",
+     "UsePlacementInSketch",
+     "InsertAllAnnotations",
+     "InsertAllReferenceGeometry"
+    ],
+    "returns_void": false
+   },
+   "InsertModelDimensions": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Option"
+    ],
+    "returns_void": true
+   },
+   "InsertModelInPredefinedView": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ModelName"
+    ],
+    "returns_void": false
+   },
+   "InsertMultiJogLeader": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "InsertMultiJogLeader2": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Points"
+    ],
+    "returns_void": false
+   },
+   "InsertMultiJogLeader3": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Points",
+     "StartPointArrowStyle",
+     "EndPointArrowStyle"
+    ],
+    "returns_void": false
+   },
+   "InsertNewNote": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Text",
+     "NoLeader",
+     "BalloonNote",
+     "BentLeader",
+     "ArrowStyle",
+     "LeaderSide"
+    ],
+    "returns_void": true
+   },
+   "InsertNewNote2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "UpperText",
+     "LowerText",
+     "NoLeader",
+     "BentLeader",
+     "ArrowStyle",
+     "LeaderSide",
+     "Angle",
+     "BalloonStyle",
+     "BalloonFit",
+     "UpperNoteContent",
+     "LowerNoteContent"
+    ],
+    "returns_void": true
+   },
+   "InsertOrdinate": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "InsertRefDim": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "InsertRevisionCloud": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "CloudShape"
+    ],
+    "returns_void": false
+   },
+   "InsertRevisionSymbol": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y"
+    ],
+    "returns_void": false
+   },
+   "InsertSurfaceFinishSymbol": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "SymType",
+     "LeaderType",
+     "LocX",
+     "LocY",
+     "LocZ",
+     "LaySymbol",
+     "ArrowType",
+     "MachAllowance",
+     "OtherVals",
+     "ProdMethod",
+     "SampleLen",
+     "MaxRoughness",
+     "MinRoughness",
+     "RoughnessSpacing"
+    ],
+    "returns_void": false
+   },
+   "InsertTableAnnotation": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "AnchorType",
+     "Rows",
+     "Columns"
+    ],
+    "returns_void": false
+   },
+   "InsertTableAnnotation2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "UseAnchorPoint",
+     "X",
+     "Y",
+     "AnchorType",
+     "TableTemplate",
+     "Rows",
+     "Columns"
+    ],
+    "returns_void": false
+   },
+   "InsertThreadCallout": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "InsertVerticalOrdinate": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "InsertWeldSymbol": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Dim1",
+     "Symbol",
+     "Dim2",
+     "Symmetric",
+     "FieldWeld",
+     "ShowOtherSide",
+     "DashOnTop",
+     "Peripheral",
+     "HasProcess",
+     "ProcessValue"
+    ],
+    "returns_void": true
+   },
+   "Invoke": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     2,
+     2,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "dispidMember",
+     "riid",
+     "lcid",
+     "wFlags",
+     "pdispparams",
+     "pvarResult",
+     "pexcepinfo",
+     "puArgErr"
+    ],
+    "returns_void": true
+   },
+   "IsDetailingMode": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IsolateChangedDimensions": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "LoadLineStyles": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "StyleFiles",
+     "StyleNameList",
+     "ReplaceExisting"
+    ],
+    "returns_void": false
+   },
+   "MakeBlockDefinition": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Name",
+     "XRefFileName",
+     "Instance"
+    ],
+    "returns_void": false
+   },
+   "MakeCustomSymbol": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "MakeCustomSymbol2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "MakeSectionLine": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "ModifySurfaceFinishSymbol": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "SymType",
+     "LeaderType",
+     "LocX",
+     "LocY",
+     "LocZ",
+     "LaySymbol",
+     "ArrowType",
+     "MachAllowance",
+     "OtherVals",
+     "ProdMethod",
+     "SampleLen",
+     "MaxRoughness",
+     "MinRoughness",
+     "RoughnessSpacing"
+    ],
+    "returns_void": false
+   },
+   "NewGtol": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "NewNote": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Text",
+     "Height"
+    ],
+    "returns_void": true
+   },
+   "NewSheet": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Name",
+     "PaperSize",
+     "TemplateIn",
+     "Scale1",
+     "Scale2"
+    ],
+    "returns_void": true
+   },
+   "NewSheet2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Name",
+     "PaperSize",
+     "TemplateIn",
+     "Scale1",
+     "Scale2",
+     "FirstAngle",
+     "TemplateName",
+     "Width",
+     "Height"
+    ],
+    "returns_void": false
+   },
+   "NewSheet3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Name",
+     "PaperSize",
+     "TemplateIn",
+     "Scale1",
+     "Scale2",
+     "FirstAngle",
+     "TemplateName",
+     "Width",
+     "Height",
+     "PropertyViewName"
+    ],
+    "returns_void": false
+   },
+   "NewSheet4": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Name",
+     "PaperSize",
+     "TemplateIn",
+     "Scale1",
+     "Scale2",
+     "FirstAngle",
+     "TemplateName",
+     "Width",
+     "Height",
+     "PropertyViewName",
+     "ZoneLeftMargin",
+     "ZoneRightMargin",
+     "ZoneTopMargin",
+     "ZoneBottomMargin",
+     "ZoneRow",
+     "ZoneCol"
+    ],
+    "returns_void": false
+   },
+   "OnComponentProperties": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "PasteSheet": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "InsertOption",
+     "RenameOption"
+    ],
+    "returns_void": false
+   },
+   "QueryInterface": {
+    "flags": [
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "riid",
+     "ppvObj"
+    ],
+    "returns_void": true
+   },
+   "Release": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "ReorderSheets": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NewSheetList"
+    ],
+    "returns_void": false
+   },
+   "ReplaceViewModel": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NewModelPathName",
+     "Views",
+     "Instances"
+    ],
+    "returns_void": false
+   },
+   "ResolveOutOfDateLightWeightComponents": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "RestoreRotation": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "SaveBlock": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "FileName"
+    ],
+    "returns_void": false
+   },
+   "SaveCustomSymbol": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "FileNameIn"
+    ],
+    "returns_void": true
+   },
+   "SaveLineStyles": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "StyleFiles",
+     "StyleNameList",
+     "ReplaceExisting"
+    ],
+    "returns_void": false
+   },
+   "SetCurrentLayer": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Layername"
+    ],
+    "returns_void": false
+   },
+   "SetLineColor": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Color"
+    ],
+    "returns_void": true
+   },
+   "SetLineStyle": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "StyleName"
+    ],
+    "returns_void": true
+   },
+   "SetLineWidth": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Width"
+    ],
+    "returns_void": true
+   },
+   "SetLineWidthCustom": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Width"
+    ],
+    "returns_void": true
+   },
+   "SetSheetsSelected": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NewSheetList"
+    ],
+    "returns_void": true
+   },
+   "SetupSheet": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Name",
+     "PaperSize",
+     "TemplateIn",
+     "Scale1",
+     "Scale2"
+    ],
+    "returns_void": true
+   },
+   "SetupSheet2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Name",
+     "PaperSize",
+     "TemplateIn",
+     "Scale1",
+     "Scale2",
+     "SkPointsFlag"
+    ],
+    "returns_void": true
+   },
+   "SetupSheet3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Name",
+     "PaperSize",
+     "TemplateIn",
+     "Scale1",
+     "Scale2",
+     "FirstAngle",
+     "TemplateName",
+     "Width",
+     "Height"
+    ],
+    "returns_void": false
+   },
+   "SetupSheet4": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Name",
+     "PaperSize",
+     "TemplateIn",
+     "Scale1",
+     "Scale2",
+     "FirstAngle",
+     "TemplateName",
+     "Width",
+     "Height",
+     "PropertyViewName"
+    ],
+    "returns_void": false
+   },
+   "SetupSheet5": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Name",
+     "PaperSize",
+     "TemplateIn",
+     "Scale1",
+     "Scale2",
+     "FirstAngle",
+     "TemplateName",
+     "Width",
+     "Height",
+     "PropertyViewName",
+     "RemoveModifiedNotes"
+    ],
+    "returns_void": false
+   },
+   "SetupSheet6": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Name",
+     "PaperSize",
+     "TemplateIn",
+     "Scale1",
+     "Scale2",
+     "FirstAngle",
+     "TemplateName",
+     "Width",
+     "Height",
+     "PropertyViewName",
+     "RemoveModifiedNotes",
+     "ZoneLeftMargin",
+     "ZoneRightMargin",
+     "ZoneTopMargin",
+     "ZoneBottomMargin",
+     "ZoneRow",
+     "ZoneCol"
+    ],
+    "returns_void": false
+   },
+   "Sheet": {
+    "flags": [
+     1
+    ],
+    "kind": "propget",
+    "params": [
+     "Name"
+    ],
+    "returns_void": false
+   },
+   "SheetNext": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "SheetPrevious": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "ShowEdge": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "SketchDim": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "StartDrawing": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "SuppressView": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "ToggleGrid": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "TranslateDrawing": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "DeltaX",
+     "DeltaY"
+    ],
+    "returns_void": true
+   },
+   "UnBreakView": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "UnsuppressView": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "ViewDisplayHidden": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "ViewDisplayHiddengreyed": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "ViewDisplayShaded": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "ViewDisplayWireframe": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "ViewFullPage": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "ViewHlrQuality": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "ViewModelEdges": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "ViewTangentEdges": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
    }
   },
   "IEdge": {
@@ -40008,6 +44164,660 @@
     "returns_void": false
    }
   },
+  "ISheet": {
+   "AddRef": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "CreateOLEObject": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Aspect",
+     "Position",
+     "Buffer"
+    ],
+    "returns_void": false
+   },
+   "CustomPropertyView": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "FocusLocked": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "GetBomTable": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetCustomColorsCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDrawingZone": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y"
+    ],
+    "returns_void": false
+   },
+   "GetID": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetIDsOfNames": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "riid",
+     "rgszNames",
+     "cNames",
+     "lcid",
+     "rgdispid"
+    ],
+    "returns_void": true
+   },
+   "GetMagneticLines": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetMagneticLinesCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetName": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetOLEObjectCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetOLEObjectData": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Index"
+    ],
+    "returns_void": false
+   },
+   "GetOLEObjectSettings": {
+    "flags": [
+     1,
+     3,
+     3
+    ],
+    "kind": "method",
+    "params": [
+     "Index",
+     "ByteCount",
+     "Aspect"
+    ],
+    "returns_void": false
+   },
+   "GetProperties": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetProperties2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSheetFormatName": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSize": {
+    "flags": [
+     3,
+     3
+    ],
+    "kind": "method",
+    "params": [
+     "Width",
+     "Height"
+    ],
+    "returns_void": false
+   },
+   "GetTemplateName": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetTemplateSketch": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetTypeInfo": {
+    "flags": [
+     1,
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "itinfo",
+     "lcid",
+     "pptinfo"
+    ],
+    "returns_void": true
+   },
+   "GetTypeInfoCount": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "pctinfo"
+    ],
+    "returns_void": true
+   },
+   "GetViews": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetZoneMargin": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ZoneMargin"
+    ],
+    "returns_void": false
+   },
+   "GetZoneSizeDistribution": {
+    "flags": [
+     2,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "Rows",
+     "Columns"
+    ],
+    "returns_void": false
+   },
+   "GetZoneSizeRegion": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "ICreateOLEObject": {
+    "flags": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Aspect",
+     "Position",
+     "ByteCount",
+     "Buffer"
+    ],
+    "returns_void": false
+   },
+   "IGetBomTable": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetCustomColors": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetMagneticLines": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Count"
+    ],
+    "returns_void": false
+   },
+   "IGetOLEObjectData": {
+    "flags": [
+     1,
+     3
+    ],
+    "kind": "method",
+    "params": [
+     "Index",
+     "Buffer"
+    ],
+    "returns_void": false
+   },
+   "IGetOLEObjectSettings": {
+    "flags": [
+     1,
+     3,
+     3,
+     3
+    ],
+    "kind": "method",
+    "params": [
+     "Index",
+     "ByteCount",
+     "Aspect",
+     "Position"
+    ],
+    "returns_void": false
+   },
+   "IGetProperties": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IPageSetup": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "InsertFamilyTable": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "AttachToAnchorPoint",
+     "X",
+     "Y",
+     "ModelName",
+     "TableTemplateName",
+     "DimColumnType",
+     "UseAllConfigs",
+     "ConfigArray",
+     "ItemNumberStart",
+     "ItemNumberIncrement",
+     "FollowConfigTreeOrder"
+    ],
+    "returns_void": false
+   },
+   "InsertMagneticLine": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "StartPoint",
+     "EndPoint"
+    ],
+    "returns_void": false
+   },
+   "InsertRevisionTable": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "UseAnchorPoint",
+     "X",
+     "Y",
+     "AnchorType",
+     "TableTemplate"
+    ],
+    "returns_void": false
+   },
+   "InsertRevisionTable2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "UseAnchorPoint",
+     "X",
+     "Y",
+     "AnchorType",
+     "TableTemplate",
+     "Shape",
+     "AutoUpdateZoomCells"
+    ],
+    "returns_void": false
+   },
+   "InsertTitleBlock": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Notes"
+    ],
+    "returns_void": false
+   },
+   "Invoke": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     2,
+     2,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "dispidMember",
+     "riid",
+     "lcid",
+     "wFlags",
+     "pdispparams",
+     "pvarResult",
+     "pexcepinfo",
+     "puArgErr"
+    ],
+    "returns_void": true
+   },
+   "IsLoaded": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "PageSetup": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "QueryInterface": {
+    "flags": [
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "riid",
+     "ppvObj"
+    ],
+    "returns_void": true
+   },
+   "Release": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "ReloadTemplate": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "KeepNoteChanges"
+    ],
+    "returns_void": false
+   },
+   "RevisionTable": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "SaveFormat": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "FileName"
+    ],
+    "returns_void": false
+   },
+   "SetAsTableAnchor": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "TableType"
+    ],
+    "returns_void": false
+   },
+   "SetName": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NameIn"
+    ],
+    "returns_void": true
+   },
+   "SetProperties": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "PaperSz",
+     "Templ",
+     "Scale1",
+     "Scale2",
+     "FirstAngle",
+     "Width",
+     "Height"
+    ],
+    "returns_void": true
+   },
+   "SetProperties2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "PaperSz",
+     "Templ",
+     "Scale1",
+     "Scale2",
+     "FirstAngle",
+     "Width",
+     "Height",
+     "SameCustomPropAsSheetInDocProp"
+    ],
+    "returns_void": true
+   },
+   "SetScale": {
+    "flags": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Numerator",
+     "Denominator",
+     "ScaleAnnoPosition",
+     "ScaleAnnoTextHeight"
+    ],
+    "returns_void": false
+   },
+   "SetSheetFormatName": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Name"
+    ],
+    "returns_void": false
+   },
+   "SetSize": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Size",
+     "Width",
+     "Height"
+    ],
+    "returns_void": false
+   },
+   "SetTemplateName": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NameIn"
+    ],
+    "returns_void": true
+   },
+   "SetZoneMargin": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ZoneMarginType",
+     "MarginValue"
+    ],
+    "returns_void": false
+   },
+   "SetZoneSizeDistribution": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Type",
+     "Rows",
+     "Column"
+    ],
+    "returns_void": false
+   },
+   "SetZoneSizeRegion": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "RegionType"
+    ],
+    "returns_void": false
+   },
+   "SheetFormatVisible": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "TableAnchor": {
+    "flags": [
+     1
+    ],
+    "kind": "propget",
+    "params": [
+     "TableType"
+    ],
+    "returns_void": false
+   },
+   "TitleBlock": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   }
+  },
   "ISketch": {
    "AddRef": {
     "flags": [],
@@ -49101,9 +53911,3811 @@
     ],
     "returns_void": false
    }
+  },
+  "IView": {
+   "AddRef": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "AlignDrawingView": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "AlignViewType"
+    ],
+    "returns_void": false
+   },
+   "AlignHorizontalTo": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ViewNameIn"
+    ],
+    "returns_void": true
+   },
+   "AlignVerticalTo": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ViewNameIn"
+    ],
+    "returns_void": true
+   },
+   "AlignWithView": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "AlignType",
+     "BaseView"
+    ],
+    "returns_void": false
+   },
+   "Angle": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "AutoInsertCenterMarks": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "InsertType",
+     "InsertOption",
+     "LinearSlotCenter",
+     "ArcSlotCenter",
+     "UseDocumentDefaults",
+     "Size",
+     "ExtendedLines",
+     "CenterLineFont",
+     "Angle"
+    ],
+    "returns_void": false
+   },
+   "AutoInsertCenterMarks2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "InsertType",
+     "InsertOption",
+     "LinearSlotCenter",
+     "ArcSlotCenter",
+     "UseDocumentDefaults",
+     "Size",
+     "Gap",
+     "ExtendedLines",
+     "CenterLineFont",
+     "Angle"
+    ],
+    "returns_void": false
+   },
+   "Bodies": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "BreakLineGap": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "CreateViewArrow": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "DrawingViewNameIn",
+     "ArrowNameIn"
+    ],
+    "returns_void": false
+   },
+   "Crop": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "Crop2": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "JaggedOutline",
+     "NoOutline",
+     "ShapeIntensity"
+    ],
+    "returns_void": false
+   },
+   "CropViewJaggedOutline": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "CropViewJaggedShapeIntensity": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "CropViewNoOutline": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "DisableAutoUpdate": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "DisplayState": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "EmphasizeOutline": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "EnumHiddenComponents": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "EnumHiddenComponents2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "EnumSectionLines": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "EnumSectionLines2": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "IgnoreSuppressed"
+    ],
+    "returns_void": false
+   },
+   "FlipView": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "FocusLocked": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "GetAlignment": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetAnnotationCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetAnnotations": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetAnnotationsByType": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Type"
+    ],
+    "returns_void": false
+   },
+   "GetArcCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetArcs": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetArcs2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetArcs3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetArcs4": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetBaseView": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetBendLineCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetBendLines": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetBendNoteAttributeString": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Attribute"
+    ],
+    "returns_void": false
+   },
+   "GetBendNoteTextFormat": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetBodiesCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetBomTable": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetBreakLineCount": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "Size"
+    ],
+    "returns_void": false
+   },
+   "GetBreakLineCount2": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "Size"
+    ],
+    "returns_void": false
+   },
+   "GetBreakLineInfo": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetBreakLineInfo2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetBreakLines": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetBreakOutSectionCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetBreakOutSections": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetCThreadCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetCThreadQuality": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetCThreads": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetCenterLineCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetCenterLineSketch": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetCenterLines": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetCenterMarkCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetCenterMarkCount2": {
+    "flags": [
+     3
+    ],
+    "kind": "method",
+    "params": [
+     "Size"
+    ],
+    "returns_void": false
+   },
+   "GetCenterMarkInfo": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetCenterMarks": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetCorresponding": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "InputObject"
+    ],
+    "returns_void": false
+   },
+   "GetCorrespondingEntity": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Entity"
+    ],
+    "returns_void": false
+   },
+   "GetDatumOriginCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDatumOrigins": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDatumPoints": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDatumPoints2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDatumPointsCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDatumTagCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDatumTags": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDatumTargetSymCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDatumTargetSyms": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDependentViewCount": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "AllViews",
+     "SpecificViewType"
+    ],
+    "returns_void": false
+   },
+   "GetDependentViews": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "AllViews",
+     "SpecificViewType"
+    ],
+    "returns_void": false
+   },
+   "GetDesignTableExtent": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDetail": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDetailCircleCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDetailCircleCount2": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "Size"
+    ],
+    "returns_void": false
+   },
+   "GetDetailCircleInfo": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDetailCircleInfo2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDetailCircleStrings": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDetailCircles": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionCount2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionCount3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionCount4": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionDisplayInfo": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionDisplayInfo2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionDisplayInfo3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionDisplayInfo4": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionDisplayInfo5": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionDisplayInfoSize": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionDisplayInfoSize2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionDisplayString": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionDisplayString2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionDisplayString3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionDisplayString4": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionDisplayString5": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "DimensionSize"
+    ],
+    "returns_void": false
+   },
+   "GetDimensionIds": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionIds2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionIds3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionIds4": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionInfo": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionInfo2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionInfo3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionInfo4": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionInfo5": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionInfo6": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionInfo7": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionString": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionString2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionString3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDimensionString4": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDisplayData": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDisplayData2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDisplayData3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDisplayData4": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDisplayDimensionCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDisplayDimensions": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDisplayEdgesInShadedMode": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDisplayMode": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDisplayMode2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDisplayTangentEdges": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDisplayTangentEdges2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDowelSymbolCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetDowelSymbols": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetEllipseCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetEllipses": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetEllipses2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetEllipses3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetEllipses4": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetEllipses5": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFaceHatchCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFaceHatches": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFacettedHlrDisplay": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstAnnotation": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstAnnotation2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstAnnotation3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstBlockInstance": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstCThread": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstCenterLine": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstCenterMark": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstCenterMark2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstCenterOfMass": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstCustomSymbol": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstDatumOrigin": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstDatumTag": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstDatumTargetSym": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstDisplayDimension": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstDisplayDimension2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstDisplayDimension3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstDisplayDimension4": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstDisplayDimension5": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstDisplayDimension6": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstDowelSymbol": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstGTOL": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstMultiJogLeader": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstMultiJogLeader2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstNote": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstNote2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstRevisionCloud": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstRevisionCloud2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstSFSymbol": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstTableAnnotation": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstTableAnnotation2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstWeldBead": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetFirstWeldSymbol": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetGTolCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetGTols": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetHiddenComponents": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetHiddenEdgeCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetIDsOfNames": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "riid",
+     "rgszNames",
+     "cNames",
+     "lcid",
+     "rgdispid"
+    ],
+    "returns_void": true
+   },
+   "GetKeepLinkedToBOM": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetKeepLinkedToBOMName": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetLineCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetLineCount2": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "CrossHatchOption"
+    ],
+    "returns_void": false
+   },
+   "GetLines": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetLines2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetLines3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetLines4": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "CrossHatchOption"
+    ],
+    "returns_void": false
+   },
+   "GetMirrorViewOrientation": {
+    "flags": [
+     2,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "BIsMirrorView",
+     "LMirrorViewOrientation"
+    ],
+    "returns_void": false
+   },
+   "GetMultiJogLeaderCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetMultiJogLeaders": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetName2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetNextView": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetNoteCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetNotes": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetOrientationName": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetOutline": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetParabolaCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetParabolas": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetParabolas2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetPolyLineCount": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "PointCount"
+    ],
+    "returns_void": false
+   },
+   "GetPolyLineCount2": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "PointCount"
+    ],
+    "returns_void": false
+   },
+   "GetPolyLineCount3": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "PointCount"
+    ],
+    "returns_void": false
+   },
+   "GetPolyLineCount4": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "PointCount"
+    ],
+    "returns_void": false
+   },
+   "GetPolyLineCount5": {
+    "flags": [
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "CrossHatchOption",
+     "PointCount"
+    ],
+    "returns_void": false
+   },
+   "GetPolyLinesAndCurves": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "CrossHatchOption"
+    ],
+    "returns_void": false
+   },
+   "GetPolyLinesAndCurvesCount": {
+    "flags": [
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "CrossHatchOption",
+     "PointCount"
+    ],
+    "returns_void": false
+   },
+   "GetPolylines": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetPolylines2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetPolylines3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetPolylines4": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetPolylines5": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "CrossHatchOption"
+    ],
+    "returns_void": false
+   },
+   "GetPolylines6": {
+    "flags": [
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "CrossHatchOption",
+     "Polylines"
+    ],
+    "returns_void": false
+   },
+   "GetPolylines7": {
+    "flags": [
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "CrossHatchOption",
+     "Polylines"
+    ],
+    "returns_void": false
+   },
+   "GetProjectionArrow": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetProjectionLineCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetProjectionLines": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetReferencedModelName": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetRelatedTangentEdgeCount": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "BendLine"
+    ],
+    "returns_void": false
+   },
+   "GetRelatedTangentEdges": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "BendLine"
+    ],
+    "returns_void": false
+   },
+   "GetRevisionCloudCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetRevisionClouds": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSFSymbolCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSFSymbols": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSMBoundaryBoxDisplayData": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSMBoundaryBoxDisplayData2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSection": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSectionLineCount": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "Size"
+    ],
+    "returns_void": false
+   },
+   "GetSectionLineCount2": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "Size"
+    ],
+    "returns_void": false
+   },
+   "GetSectionLineInfo": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSectionLineInfo2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSectionLineStrings": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSectionLines": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSketch": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSketchPictureCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSketchPictures": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSolidHatchCount": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "ArraySize"
+    ],
+    "returns_void": false
+   },
+   "GetSolidHatchInfo": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSplineCount": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "PointCount"
+    ],
+    "returns_void": false
+   },
+   "GetSplines": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSplines2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetSplines3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetTableAnnotationCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetTableAnnotations": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetTemporaryAxes": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetTemporaryAxesCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetTypeInfo": {
+    "flags": [
+     1,
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "itinfo",
+     "lcid",
+     "pptinfo"
+    ],
+    "returns_void": true
+   },
+   "GetTypeInfoCount": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "pctinfo"
+    ],
+    "returns_void": true
+   },
+   "GetUniqueName": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetUseParentDisplayMode": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetUserPoints": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetUserPoints2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetUserPointsCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetViewXform": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetVisible": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetVisibleComponentCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetVisibleComponents": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetVisibleDrawingComponents": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetVisibleEntities": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "LpViewComponent",
+     "EntityType"
+    ],
+    "returns_void": false
+   },
+   "GetVisibleEntities2": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "LpViewComponent",
+     "EntityType"
+    ],
+    "returns_void": false
+   },
+   "GetVisibleEntityCount": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "LpViewComponent",
+     "EntityType"
+    ],
+    "returns_void": false
+   },
+   "GetVisibleEntityCount2": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "LpViewComponent",
+     "EntityType"
+    ],
+    "returns_void": false
+   },
+   "GetWeldBeadCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetWeldBeads": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetWeldSymbolCount": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetWeldSymbols": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetWitnessEntitiesCount": {
+    "flags": [
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "Size"
+    ],
+    "returns_void": false
+   },
+   "GetWitnessGeomInfo": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "GetXform": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "HasDesignTable": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "HiddenEdges": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetAnnotations": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumAnnotations"
+    ],
+    "returns_void": false
+   },
+   "IGetArcs": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetArcs2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetArcs3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetArcs4": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetBaseView": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetBendLines": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumberOfBendLine"
+    ],
+    "returns_void": false
+   },
+   "IGetBodies": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Count"
+    ],
+    "returns_void": false
+   },
+   "IGetBomTable": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetBreakLineInfo": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ArraySize"
+    ],
+    "returns_void": false
+   },
+   "IGetBreakLineInfo2": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ArraySize"
+    ],
+    "returns_void": false
+   },
+   "IGetBreakLines": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Count"
+    ],
+    "returns_void": false
+   },
+   "IGetBreakOutSections": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Count"
+    ],
+    "returns_void": false
+   },
+   "IGetCThreads": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumCThread"
+    ],
+    "returns_void": false
+   },
+   "IGetCenterLines": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumCenterLine"
+    ],
+    "returns_void": false
+   },
+   "IGetCenterMarkInfo": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetCenterMarks": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Count"
+    ],
+    "returns_void": false
+   },
+   "IGetDatumOrigins": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumDatumOrigin"
+    ],
+    "returns_void": false
+   },
+   "IGetDatumPoints": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDatumPoints2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDatumTags": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumDatumTag"
+    ],
+    "returns_void": false
+   },
+   "IGetDatumTargetSyms": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumDatumTargetSym"
+    ],
+    "returns_void": false
+   },
+   "IGetDependentViews": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "AllViews",
+     "SpecificViewType",
+     "DependentViewCount"
+    ],
+    "returns_void": false
+   },
+   "IGetDesignTableExtent": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDetail": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDetailCircleInfo": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDetailCircleInfo2": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ArraySize"
+    ],
+    "returns_void": false
+   },
+   "IGetDetailCircleStrings": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDetailCircles": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumDetailCircles"
+    ],
+    "returns_void": false
+   },
+   "IGetDimensionDisplayInfo": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDimensionDisplayInfo2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDimensionDisplayInfo3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDimensionDisplayInfo4": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ArraySize"
+    ],
+    "returns_void": false
+   },
+   "IGetDimensionDisplayInfo5": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ArraySize"
+    ],
+    "returns_void": false
+   },
+   "IGetDimensionDisplayString": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDimensionDisplayString2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDimensionDisplayString3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDimensionDisplayString4": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDimensionIds": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDimensionIds2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDimensionIds3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDimensionIds4": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDimensionInfo": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDimensionInfo2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDimensionInfo3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDimensionInfo4": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDimensionInfo5": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDimensionInfo6": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDimensionString": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDimensionString2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDimensionString3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDimensionString4": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDisplayData": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDisplayData2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDisplayData3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetDisplayDimensions": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumDisplayDim"
+    ],
+    "returns_void": false
+   },
+   "IGetDowelSymbols": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumDowelSymbol"
+    ],
+    "returns_void": false
+   },
+   "IGetEllipses": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetEllipses2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetEllipses3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetEllipses4": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetEllipses5": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetFaceHatches": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumFacesHatches"
+    ],
+    "returns_void": false
+   },
+   "IGetFirstAnnotation": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetFirstAnnotation2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetFirstCThread": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetFirstCenterOfMass": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetFirstCustomSymbol": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetFirstDatumTag": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetFirstDatumTargetSym": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetFirstDisplayDimension": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetFirstDisplayDimension2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetFirstDisplayDimension3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetFirstDowelSymbol": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetFirstGTOL": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetFirstMultiJogLeader": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetFirstNote": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetFirstRevisionCloud": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetFirstSFSymbol": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetFirstWeldSymbol": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetGTols": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumGTol"
+    ],
+    "returns_void": false
+   },
+   "IGetHiddenEdges": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "HiddenEdgeCount"
+    ],
+    "returns_void": false
+   },
+   "IGetLines": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetLines2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetLines3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetLines4": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "CrossHatchOption",
+     "ArraySize"
+    ],
+    "returns_void": false
+   },
+   "IGetMultiJogLeaders": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumMultiJogLeader"
+    ],
+    "returns_void": false
+   },
+   "IGetNextView": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetNotes": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumberOfNotes"
+    ],
+    "returns_void": false
+   },
+   "IGetOutline": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetParabolas": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetParabolas2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetPolyLinesAndCurves": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "CrossHatchOption",
+     "ArraySize"
+    ],
+    "returns_void": false
+   },
+   "IGetPolylines": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetPolylines2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetPolylines3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetPolylines4": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetPolylines5": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "CrossHatchOption",
+     "ArraySize"
+    ],
+    "returns_void": false
+   },
+   "IGetPolylines6": {
+    "flags": [
+     1,
+     1,
+     2,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "CrossHatchOption",
+     "ArraySize",
+     "Polylines",
+     "EdgeArraySize"
+    ],
+    "returns_void": false
+   },
+   "IGetPolylines7": {
+    "flags": [
+     1,
+     1,
+     2,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "CrossHatchOption",
+     "ArraySize",
+     "Polylines",
+     "EdgeArraySize"
+    ],
+    "returns_void": false
+   },
+   "IGetProjectionArrow": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetProjectionLines": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Count"
+    ],
+    "returns_void": false
+   },
+   "IGetRelatedTangentEdges": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "BendLine",
+     "NumOfTangentEdges"
+    ],
+    "returns_void": false
+   },
+   "IGetRevisionClouds": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumRevClouds"
+    ],
+    "returns_void": false
+   },
+   "IGetSFSymbols": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumSFSymbol"
+    ],
+    "returns_void": false
+   },
+   "IGetSMBoundaryBoxDisplayData": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetSection": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetSectionLineInfo": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetSectionLineInfo2": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ArraySize"
+    ],
+    "returns_void": false
+   },
+   "IGetSectionLineStrings": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetSectionLines": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetSketch": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetSketchPictures": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Count"
+    ],
+    "returns_void": false
+   },
+   "IGetSolidHatchInfo": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ArraySize"
+    ],
+    "returns_void": false
+   },
+   "IGetSplines": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetSplines2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetSplines3": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetTableAnnotations": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumTableAnnotation"
+    ],
+    "returns_void": false
+   },
+   "IGetTemporaryAxes": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "TempAxesCount"
+    ],
+    "returns_void": false
+   },
+   "IGetUserPoints": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetUserPoints2": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetViewXform": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IGetVisibleComponents": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ViewComponentCount"
+    ],
+    "returns_void": false
+   },
+   "IGetVisibleEntities": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "LpViewComponent",
+     "EntityType",
+     "ViewEntityCount"
+    ],
+    "returns_void": false
+   },
+   "IGetVisibleEntities2": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "LpViewComponent",
+     "EntityType",
+     "ViewEntityCount"
+    ],
+    "returns_void": false
+   },
+   "IGetWeldBeads": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumWeldBead"
+    ],
+    "returns_void": false
+   },
+   "IGetWeldSymbols": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "NumWeldSymbol"
+    ],
+    "returns_void": false
+   },
+   "IGetWitnessGeomInfo": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ArraySize"
+    ],
+    "returns_void": false
+   },
+   "IGetXform": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IInsertBomTable": {
+    "flags": [
+     1,
+     1,
+     1,
+     3
+    ],
+    "kind": "method",
+    "params": [
+     "Template",
+     "Xloc",
+     "Yloc",
+     "Errors"
+    ],
+    "returns_void": false
+   },
+   "IPosition": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "IScaleRatio": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "ISelectEntity": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Entity",
+     "AppendFlag"
+    ],
+    "returns_void": false
+   },
+   "ISetBodies": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Count",
+     "BodyArray"
+    ],
+    "returns_void": true
+   },
+   "ISetHiddenEdges": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "HiddenEdgeCount",
+     "EdgeList"
+    ],
+    "returns_void": true
+   },
+   "ISetXform": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Transform"
+    ],
+    "returns_void": false
+   },
+   "ImportAnnotations": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "IncludeDesignAnnotations",
+     "IncludeCosmeticThreads",
+     "IncludeDimXpertAnnotations",
+     "IncludeHiddenFeatureItems",
+     "Include3DViewAnnotations"
+    ],
+    "returns_void": true
+   },
+   "InsertAlternateView": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ConfigurationName"
+    ],
+    "returns_void": false
+   },
+   "InsertBendTable": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "UseAnchorPoint",
+     "X",
+     "Y",
+     "AnchorType",
+     "StartValue",
+     "TableTemplate"
+    ],
+    "returns_void": false
+   },
+   "InsertBomTable": {
+    "flags": [
+     1,
+     1,
+     1,
+     3
+    ],
+    "kind": "method",
+    "params": [
+     "Template",
+     "Xloc",
+     "Yloc",
+     "Errors"
+    ],
+    "returns_void": false
+   },
+   "InsertBomTable2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "UseAnchorPoint",
+     "X",
+     "Y",
+     "AnchorType",
+     "BomType",
+     "Configuration",
+     "TableTemplate"
+    ],
+    "returns_void": false
+   },
+   "InsertBomTable3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "UseAnchorPoint",
+     "X",
+     "Y",
+     "AnchorType",
+     "BomType",
+     "Configuration",
+     "TableTemplate",
+     "Hidden"
+    ],
+    "returns_void": false
+   },
+   "InsertBomTable4": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "UseAnchorPoint",
+     "X",
+     "Y",
+     "AnchorType",
+     "BomType",
+     "Configuration",
+     "TableTemplate",
+     "Hidden",
+     "IndentedNumberingType",
+     "DetailedCutList"
+    ],
+    "returns_void": false
+   },
+   "InsertBomTable5": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "UseAnchorPoint",
+     "X",
+     "Y",
+     "AnchorType",
+     "BomType",
+     "Configuration",
+     "TableTemplate",
+     "Hidden",
+     "IndentedNumberingType",
+     "DetailedCutList",
+     "DissolvePartLevelRows"
+    ],
+    "returns_void": false
+   },
+   "InsertBomTable6": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "UseAnchorPoint",
+     "X",
+     "Y",
+     "AnchorType",
+     "BomType",
+     "Configuration",
+     "TableTemplate",
+     "Hidden",
+     "IndentedNumberingType",
+     "DetailedCutList",
+     "DissolvePartLevelRows",
+     "DisplayAsOneItem"
+    ],
+    "returns_void": false
+   },
+   "InsertBreak": {
+    "flags": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Orientation",
+     "Position1",
+     "Position2",
+     "Style"
+    ],
+    "returns_void": false
+   },
+   "InsertBreak2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Orientation",
+     "Position1",
+     "Position2",
+     "Style",
+     "ShapeIntensity"
+    ],
+    "returns_void": false
+   },
+   "InsertBreak3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Orientation",
+     "Position1",
+     "Position2",
+     "Style",
+     "ShapeIntensity",
+     "BreakSketchBlocks"
+    ],
+    "returns_void": false
+   },
+   "InsertCutListPropertyNote": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "X",
+     "Y",
+     "Z"
+    ],
+    "returns_void": true
+   },
+   "InsertHoleTable": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "UseAnchorPoint",
+     "X",
+     "Y",
+     "AnchorType",
+     "TableTemplate"
+    ],
+    "returns_void": false
+   },
+   "InsertHoleTable2": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "UseAnchorPoint",
+     "X",
+     "Y",
+     "AnchorType",
+     "StartValue",
+     "TableTemplate"
+    ],
+    "returns_void": false
+   },
+   "InsertHoleTable3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "UseAnchorPoint",
+     "X",
+     "Y",
+     "AnchorType",
+     "StartValue",
+     "Template",
+     "TagOrder",
+     "TagType",
+     "ManualTags"
+    ],
+    "returns_void": false
+   },
+   "InsertPunchTable": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "UseAnchorPoint",
+     "X",
+     "Y",
+     "AnchorType",
+     "StartValue",
+     "TableTemplate"
+    ],
+    "returns_void": false
+   },
+   "InsertViewAsBlock": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "InsertionPoint",
+     "Position"
+    ],
+    "returns_void": false
+   },
+   "InsertWeldTable": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "UseAnchorPoint",
+     "IncludeAnnotations",
+     "CombineSameType",
+     "X",
+     "Y",
+     "AnchorType",
+     "Configuration",
+     "TableTemplate"
+    ],
+    "returns_void": false
+   },
+   "InsertWeldmentTable": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "UseAnchorPoint",
+     "X",
+     "Y",
+     "AnchorType",
+     "Configuration",
+     "TableTemplate"
+    ],
+    "returns_void": false
+   },
+   "Invoke": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     2,
+     2,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "dispidMember",
+     "riid",
+     "lcid",
+     "wFlags",
+     "pdispparams",
+     "pvarResult",
+     "pexcepinfo",
+     "puArgErr"
+    ],
+    "returns_void": true
+   },
+   "IsBroken": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IsCropped": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IsExploded": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IsFlatPatternView": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IsLightweight": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IsModelBreakState": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IsModelLoaded": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IsModelOutOfDate": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "IsPerspectiveView": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "LinkParentConfiguration": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "LoadModel": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "MergeBendTags": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Merge",
+     "BendNotes"
+    ],
+    "returns_void": false
+   },
+   "ModelToViewTransform": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "ModifyViewArrow": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "DrawingViewNameIn",
+     "ArrowNameIn"
+    ],
+    "returns_void": true
+   },
+   "MoveViewArrow": {
+    "flags": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "DrawingViewNameIn",
+     "Dx",
+     "Dy",
+     "Dz"
+    ],
+    "returns_void": true
+   },
+   "Name": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "Position": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "PositionLocked": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "ProjectedDimensions": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "QueryInterface": {
+    "flags": [
+     1,
+     2
+    ],
+    "kind": "method",
+    "params": [
+     "riid",
+     "ppvObj"
+    ],
+    "returns_void": true
+   },
+   "ReferencedConfiguration": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "ReferencedConfigurationID": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "ReferencedDocument": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "Release": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "RemoveAlignment": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "ReplaceViewWithBlock": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "InsertionPoint"
+    ],
+    "returns_void": false
+   },
+   "ReplaceViewWithSketch": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": false
+   },
+   "ResetSketchVisibility": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "RootDrawingComponent": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "RootDrawingComponent2": {
+    "flags": [
+     1
+    ],
+    "kind": "propget",
+    "params": [
+     "InChildContext"
+    ],
+    "returns_void": false
+   },
+   "ScaleDecimal": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "ScaleHatchPattern": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "ScaleRatio": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "SelectEntity": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Entity",
+     "AppendFlag"
+    ],
+    "returns_void": false
+   },
+   "SetBendNoteTextFormat": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Format"
+    ],
+    "returns_void": false
+   },
+   "SetDisplayMode": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "DisplayIn"
+    ],
+    "returns_void": true
+   },
+   "SetDisplayMode2": {
+    "flags": [
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Mode",
+     "Facetted",
+     "Edges"
+    ],
+    "returns_void": false
+   },
+   "SetDisplayMode3": {
+    "flags": [
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "UseParent",
+     "Mode",
+     "Facetted",
+     "Edges"
+    ],
+    "returns_void": false
+   },
+   "SetDisplayMode4": {
+    "flags": [
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "UseParent",
+     "Mode",
+     "Faceted",
+     "Edges",
+     "CThreadHighQuality"
+    ],
+    "returns_void": false
+   },
+   "SetDisplayTangentEdges": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "DisplayIn"
+    ],
+    "returns_void": true
+   },
+   "SetDisplayTangentEdges2": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "DisplayIn"
+    ],
+    "returns_void": true
+   },
+   "SetKeepLinkedToBOM": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Linked",
+     "Name"
+    ],
+    "returns_void": false
+   },
+   "SetLightweightToResolved": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "SetMirrorViewOrientation": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "BSetIsMirrorView",
+     "BMirrorVieworientation"
+    ],
+    "returns_void": false
+   },
+   "SetName2": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Name"
+    ],
+    "returns_void": false
+   },
+   "SetResolvedToLightweight": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "SetViewPosition": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Position",
+     "MoveChildViews"
+    ],
+    "returns_void": false
+   },
+   "SetVisible": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Visible",
+     "DependentsToo"
+    ],
+    "returns_void": true
+   },
+   "SetXform": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "Transform"
+    ],
+    "returns_void": false
+   },
+   "Sheet": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "ShowExploded": {
+    "flags": [
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ShowIt"
+    ],
+    "returns_void": false
+   },
+   "ShowModelBreakState": {
+    "flags": [
+     1,
+     1
+    ],
+    "kind": "method",
+    "params": [
+     "ShowIt",
+     "BreakName"
+    ],
+    "returns_void": false
+   },
+   "ShowSheetMetalBendNotes": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "SuppressState": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "Type": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "UpdateViewDisplayGeometry": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "UseDefaultAlignment": {
+    "flags": [],
+    "kind": "method",
+    "params": [],
+    "returns_void": true
+   },
+   "UseParentScale": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   },
+   "UseSheetScale": {
+    "flags": [],
+    "kind": "propget",
+    "params": [],
+    "returns_void": false
+   }
   }
  },
- "member_count": 4157,
+ "member_count": 4979,
  "typelib_iid": "{83A33D31-27C5-11CE-BFD4-00400513BB57}",
  "typelib_major": 34
 }
