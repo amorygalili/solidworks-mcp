@@ -45,10 +45,9 @@ IN_SCOPE_REQUIREMENTS: frozenset[str] = frozenset(
         "MATE-001", "MATE-002", "MATE-003", "MATE-004", "MATE-005", "MATE-006",
         "MATE-007", "MATE-008",
         # P2 — drawings. Sheets, views, imported model items, notes, a bill of
-        # materials, and a review that counts rather than judges. DRW-009 (sheet
-        # export) is not claimed yet.
+        # materials, a review that counts rather than judges, and per-sheet export.
         "DRW-001", "DRW-002", "DRW-003", "DRW-004", "DRW-005", "DRW-006",
-        "DRW-007", "DRW-008", "DRW-010",
+        "DRW-007", "DRW-008", "DRW-009", "DRW-010",
         # P1 vertical — appearance and view
         "VIEW-001", "VIEW-002", "VIEW-003", "VIEW-004",
         # P1 vertical — core features, bodies, measurement
@@ -210,6 +209,15 @@ DECLARED_PARTIAL: dict[str, str] = {
         "missing-callout detection are not implemented: they need annotation extents "
         "compared against each other, and DRW-010 is explicit that approximate bounding "
         "boxes must not be presented as proof a drawing is correct."
+    ),
+    "DRW-009": (
+        "A drawing exports to PDF, DXF, or DWG, with the written file checked against "
+        "that format's own signature and reported with size, timestamp, and SHA-256, "
+        "plus counts of what was on the drawing when it was written. Sheet selection is "
+        "PDF-only, because IExportPdfData is the only route to one - a sheet list given "
+        "with DXF or DWG is reported as not applied rather than dropped silently. "
+        "Exporting to an image goes through sw_view_capture, and a full delivery "
+        "manifest across several drawings is IO-004, which is not implemented."
     ),
     "DRW-001": (
         "A drawing is created from an explicit or default template with a named sheet "

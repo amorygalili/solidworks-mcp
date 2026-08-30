@@ -317,3 +317,73 @@ def test_the_review_is_read_only_and_the_authoring_tools_verify():
         "sw_drawing_table_add",
     ):
         assert ops[name].safety.kind == "model_mutation", name
+
+
+# --- DRW-009 ----------------------------------------------------------------------
+
+
+def test_only_drawing_formats_are_offered():
+    from swmcp.handlers.drawing import _DRAWING_EXPORT_FORMATS
+
+    assert {"pdf", "dxf", "dwg"} == _DRAWING_EXPORT_FORMATS
+
+
+def test_the_sheet_selection_modes_name_real_enum_members():
+    from swmcp.handlers.drawing import _SHEET_SELECTION
+
+    for member in _SHEET_SELECTION.values():
+        assert isinstance(swconst.value("swExportDataSheetsToExport_e", member), int)
+    assert set(_SHEET_SELECTION) == {"all", "current", "specified"}
+
+
+def test_a_sheet_list_for_dxf_is_reported_not_dropped():
+    """IExportPdfData is PDF-only, so the choice cannot be honoured elsewhere.
+
+    Dropping it silently would let a caller believe one sheet was written when the
+    whole drawing was.
+    """
+    from swmcp.handlers.drawing import _sheet_selection
+
+    data, selection, warnings = _sheet_selection(None, "dxf", ["Sheet2"], ["Sheet1", "Sheet2"])
+    assert data is None
+    assert selection == "current"
+    assert any("only available for PDF" in w for w in warnings)
+
+    data, selection, warnings = _sheet_selection(None, "dwg", [], ["Sheet1"])
+    assert warnings == [], "no selection asked for, so nothing to warn about"
+    assert selection == "all"
+
+
+def test_the_export_never_claims_the_drawing_is_correct():
+    """DRW-010 again: a %PDF header is not a correct drawing."""
+    from swmcp.schemas.drawing import DrawingExportResult
+
+    result = DrawingExportResult(
+        saved_path="x.pdf",
+        format="pdf",
+        overwrite_action="none",
+        size_bytes=10,
+        signature_verified=True,
+        signature_detail="PDF header found",
+        sheets_exported="all",
+    )
+    assert result.visual_review_required is True
+
+
+def test_the_export_is_a_side_effect_with_artifact_evidence():
+    from swmcp.catalog.registry import load_all_ops
+    from swmcp.envelope import SideEffectResult
+
+    spec = load_all_ops()["sw_drawing_export"]
+    assert spec.safety.kind == "non_model_side_effect"
+    assert issubclass(spec.result_model, SideEffectResult)
+    assert spec.precondition == "drawing"
+
+
+def test_the_part_exporter_still_refuses_drawings():
+    """sw_export and sw_drawing_export divide by document type, not by format."""
+    from swmcp.catalog.registry import load_all_ops
+
+    ops = load_all_ops()
+    assert ops["sw_export"].precondition == "part_or_assembly"
+    assert ops["sw_drawing_export"].precondition == "drawing"

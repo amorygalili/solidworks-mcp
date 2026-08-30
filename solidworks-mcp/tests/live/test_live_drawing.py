@@ -11,6 +11,8 @@ to be saved, and rebuilding it per test would pay the save cost every time.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 # Not marked slow: the whole module runs in ~41s, because it places views on a
@@ -535,3 +537,106 @@ def test_the_review_never_claims_to_replace_a_human(call, drawing, model_file):
     assert reviewed["passed"] is True
     assert reviewed["visual_review_required"] is True
     assert any("a person still has to look at it" in w for w in reviewed["warnings"])
+
+
+# --- DRW-009: exporting the drawing -----------------------------------------------
+
+
+def test_a_drawing_exports_to_a_verified_pdf(call, drawing, model_file, scratch_root):
+    call("sw_drawing_view_add", {"view_type": "standard_3", "model_path": model_file})
+    target = scratch_root / "swmcp_drw_export.pdf"
+    target.unlink(missing_ok=True)
+
+    exported = call("sw_drawing_export", {"output_path": str(target)})["result"]
+
+    assert exported["format"] == "pdf"
+    assert exported["signature_verified"] is True, exported["signature_detail"]
+    assert exported["size_bytes"] > 0
+    assert Path(exported["saved_path"]).is_file()
+    assert exported["artifacts"][0]["sha256"]
+    # The machine-readable evidence DRW-009 asks for, beside the artifact.
+    assert exported["review"]["view_count"] == 3
+    assert exported["review"]["sheet_count"] == 1
+    assert exported["visual_review_required"] is True
+
+    Path(exported["saved_path"]).unlink(missing_ok=True)
+
+
+def test_a_named_sheet_can_be_chosen_for_pdf(call, drawing, model_file, scratch_root):
+    call("sw_drawing_view_add", {"view_type": "model", "model_path": model_file})
+    call("sw_drawing_sheet_add", {"name": "Sheet2", "paper_size": "a4"})
+    target = scratch_root / "swmcp_drw_one_sheet.pdf"
+    target.unlink(missing_ok=True)
+
+    exported = call(
+        "sw_drawing_export", {"output_path": str(target), "sheets": ["Sheet1"]}
+    )["result"]
+
+    assert exported["sheets_requested"] == ["Sheet1"]
+    assert exported["sheets_exported"] == "specified"
+    assert exported["signature_verified"] is True
+    assert exported["review"]["sheet_count"] == 2, "the drawing still has both sheets"
+
+    Path(exported["saved_path"]).unlink(missing_ok=True)
+
+
+def test_an_unknown_sheet_is_refused_before_anything_is_written(call, drawing, scratch_root):
+    target = scratch_root / "swmcp_drw_missing_sheet.pdf"
+    target.unlink(missing_ok=True)
+
+    payload = call(
+        "sw_drawing_export", {"output_path": str(target), "sheets": ["Nope"]},
+        expect_ok=False,
+    )
+
+    assert payload["error"]["code"] == "SHEET_NOT_FOUND"
+    assert not target.exists(), "nothing may be written when the request is refused"
+
+
+def test_a_sheet_list_with_dxf_is_reported_as_not_applied(call, drawing, model_file, scratch_root):
+    """The honesty case: DXF cannot honour a sheet selection, and says so."""
+    call("sw_drawing_view_add", {"view_type": "model", "model_path": model_file})
+    target = scratch_root / "swmcp_drw_export.dxf"
+    target.unlink(missing_ok=True)
+
+    exported = call(
+        "sw_drawing_export", {"output_path": str(target), "sheets": ["Sheet1"]}
+    )["result"]
+
+    assert exported["format"] == "dxf"
+    assert any("only available for PDF" in w for w in exported["warnings"])
+
+    Path(exported["saved_path"]).unlink(missing_ok=True)
+
+
+def test_a_non_drawing_format_is_refused(call, drawing, scratch_root):
+    payload = call(
+        "sw_drawing_export", {"output_path": str(scratch_root / "swmcp_drw.step")},
+        expect_ok=False,
+    )
+    assert payload["error"]["code"] == "UNSUPPORTED_DRAWING_EXPORT"
+
+
+def test_exporting_outside_the_allowed_roots_is_refused(call, drawing):
+    payload = call(
+        "sw_drawing_export", {"output_path": "C:/Windows/Temp/swmcp_escape.pdf"},
+        expect_ok=False,
+    )
+    assert payload["error"]["category"] in {"validation", "path"}
+
+
+def test_exporting_twice_versions_rather_than_replacing(call, drawing, model_file, scratch_root):
+    call("sw_drawing_view_add", {"view_type": "model", "model_path": model_file})
+    target = scratch_root / "swmcp_drw_versioned.pdf"
+    for stale in scratch_root.glob("swmcp_drw_versioned*.pdf"):
+        stale.unlink(missing_ok=True)
+
+    first = call("sw_drawing_export", {"output_path": str(target)})["result"]
+    second = call("sw_drawing_export", {"output_path": str(target)})["result"]
+
+    assert first["saved_path"] != second["saved_path"]
+    assert second["overwrite_action"] == "versioned"
+    assert any("rather than the requested name" in w for w in second["warnings"])
+
+    for stale in scratch_root.glob("swmcp_drw_versioned*.pdf"):
+        stale.unlink(missing_ok=True)

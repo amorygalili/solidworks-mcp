@@ -6,7 +6,7 @@ worker thread.
 It implements the P0 foundation and a P1 modelling vertical from
 [`docs/solidworks-target-requirements.md`](../docs/solidworks-target-requirements.md),
 plus neutral-format exchange and an atomic mutate-and-validate workflow pulled forward
-from P2: **110 operations covering all 111 in-scope requirements**, with coverage
+from P2: **111 operations covering all 112 in-scope requirements**, with coverage
 reported honestly in `src/swmcp/generated/requirements_coverage.json` rather than
 asserted.
 
@@ -125,7 +125,7 @@ Angles default to degrees and accept `"45deg"`, `"1.57rad"`, or `{"value": 0.25,
 | surface | create a surface by planar fill, offset, extend, or knit |
 | exchange | export STEP, IGES, STL, 3MF, OBJ, PLY, Parasolid, SAT, VRML, PDF, DXF, DWG; import STEP, IGES, Parasolid, SAT, STL with diagnostics |
 | assembly | insert a component, walk the component tree, set suppression, fixed state, visibility, and configuration, add/list/edit/delete mates, probe candidate mate entities and judge a pair before building it, report how constrained each component is, check interference |
-| drawing | create a drawing and add sheets with explicit template, size, scale, and projection standard; place model and standard-three views; import model dimensions; add notes and centre marks; insert a bill of materials read back cell by cell; list sheets and views; review counts against caller-supplied minimums |
+| drawing | create a drawing and add sheets with explicit template, size, scale, and projection standard; place model and standard-three views; import model dimensions; add notes and centre marks; insert a bill of materials read back cell by cell; list sheets and views; review counts against caller-supplied minimums; export a drawing or chosen sheets to PDF, DXF, or DWG with the written file verified against its own signature |
 | review | inspect a document, validate it against caller-supplied policy, audit holes in the B-Rep, write JSON and Markdown reports, safe execute: run a sequence under one checkpoint and roll it back if an invariant fails |
 
 Per-tool reference with full JSON schemas: `src/swmcp/generated/docs/`.
@@ -157,7 +157,7 @@ only the documents the run created are closed, addressed by title.
 ## Development
 
 ```bash
-uv run pytest                       # 610 tests, no SOLIDWORKS needed
+uv run pytest                       # 643 tests, no SOLIDWORKS needed
 uv run pytest -m live tests/live/test_live_sketch.py   # one module: minutes
 uv run pytest -m "live and not slow"  # the quick live pass
 uv run pytest -m live               # the FULL live suite: ~90 minutes
@@ -360,6 +360,13 @@ coverage file, rather than left for a user to discover:
   bounding boxes must not be presented as proof a drawing is correct — which is
   why `sw_drawing_review` sets `visual_review_required` unconditionally and says
   in its own warnings that a person still has to look at it.
+- **`DRW-009` (drawing export)** — PDF, DXF, or DWG, with the written file checked
+  against that format's own signature and reported with size, timestamp, and
+  SHA-256, plus counts of what was on the drawing when it was written. Sheet
+  selection is **PDF-only**, because `IExportPdfData` is the only route to one — a
+  sheet list given with DXF or DWG is reported as not applied rather than dropped
+  silently. Images go through `sw_view_capture`, and a delivery manifest across
+  several drawings is `IO-004`, which is not implemented.
 - **`DRW-001` (drawing creation)** — an explicit or default template, a named
   sheet size, scale, and projection standard, with the sheet measured back so a
   degenerate one is refused at creation rather than hanging the next call. Units
@@ -467,5 +474,5 @@ cover inserting a component, walking the tree, and setting component state, and
 `MATE-001` to `MATE-008` cover adding, listing, probing, editing, and deleting mates,
 reporting how constrained each component is, and detecting interference. Component
 transforms (`ASM-004`), the rest of the assembly domain (`ASM-005` to `ASM-007`), and
-per-sheet drawing export (`DRW-009`), and the rest of P2 and P3 — motion,
-delivery, sheet metal, weldments, simulation — are not implemented.
+The rest of P2 and P3 — motion, delivery, sheet metal, weldments, simulation — are
+not implemented.

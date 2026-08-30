@@ -17,20 +17,32 @@ was ``None`` on this build, so the ``GetFirstView`` walk is the traversal used h
 
 from __future__ import annotations
 
+import hashlib
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from swmcp.catalog.registry import op
 from swmcp.catalog.spec import ModelMutation, NonModelSideEffect, ReadSafety
 from swmcp.com import swconst
-from swmcp.com.marshal import call_with_outparams, out_long, try_com_member
+from swmcp.com.marshal import (
+    array_of_strings,
+    call_with_outparams,
+    null_dispatch,
+    out_long,
+    try_com_member,
+)
 from swmcp.context import OpContext
-from swmcp.envelope import Check, Verification
+from swmcp.envelope import ArtifactEvidence, Check, Verification
 from swmcp.errors import SwMcpError, make_error, validation_error
-from swmcp.safety.paths import normalize_cad_path
+from swmcp.handlers.exchange import _verify
+from swmcp.safety.overwrite import resolve_output_path
+from swmcp.safety.paths import assert_output_path, normalize_cad_path
 from swmcp.schemas.drawing import (
     DrawingAnnotateModelArgs,
     DrawingAnnotateModelResult,
+    DrawingExportArgs,
+    DrawingExportResult,
     DrawingListArgs,
     DrawingListResult,
     DrawingNewArgs,
@@ -46,6 +58,7 @@ from swmcp.schemas.drawing import (
     DrawingViewAddArgs,
     DrawingViewAddResult,
 )
+from swmcp.schemas.exchange import format_for_extension
 from swmcp.units import from_meters
 
 _PAPER_SIZES = {
@@ -1314,4 +1327,238 @@ def drawing_review(ctx: OpContext, args: DrawingReviewArgs) -> DrawingReviewResu
             if unwalked
             else []
         ),
+    )
+
+
+# --- DRW-009 -----------------------------------------------------------------------
+
+_DRAWING_EXPORT_FORMATS = frozenset({"pdf", "dxf", "dwg"})
+
+_SHEET_SELECTION = {
+    "all": "swExportData_ExportAllSheets",
+    "current": "swExportData_ExportCurrentSheet",
+    "specified": "swExportData_ExportSpecifiedSheets",
+}
+
+
+def _sheet_selection(
+    app: Any, fmt: str, requested: list[str], available: list[str]
+) -> tuple[Any, str, list[str]]:
+    """Ask SOLIDWORKS to write particular sheets, and say so when it will not.
+
+    ``IExportPdfData`` is the only route to a sheet selection, and it exists for PDF
+    alone. DXF and DWG write whatever SOLIDWORKS is configured to write, so a sheet list
+    given with those is reported as not applied rather than dropped without a word.
+    """
+    warnings: list[str] = []
+
+    if fmt != "pdf":
+        if requested:
+            warnings.append(
+                f"Sheet selection is only available for PDF; {fmt.upper()} writes what "
+                f"SOLIDWORKS is configured to write, so {', '.join(requested)} was not "
+                f"applied."
+            )
+        return None, "current" if requested else "all", warnings
+
+    export_data = try_com_member(
+        app,
+        "GetExportFileData",
+        swconst.value("swExportDataFileType_e", "swExportPdfData"),
+        default=None,
+    )
+    if export_data is None:
+        warnings.append(
+            "SOLIDWORKS did not provide PDF export data, so every sheet is written."
+        )
+        return None, "all", warnings
+
+    selection = "specified" if requested else "all"
+    applied = try_com_member(
+        export_data,
+        "SetSheets",
+        swconst.value("swExportDataSheetsToExport_e", _SHEET_SELECTION[selection]),
+        array_of_strings(requested or available),
+        default=None,
+    )
+    if applied is False:
+        warnings.append(
+            "SOLIDWORKS refused the sheet selection, so every sheet is written."
+        )
+        return export_data, "all", warnings
+    return export_data, selection, warnings
+
+
+def _file_evidence(path: Path) -> ArtifactEvidence:
+    stat = path.stat()
+    return ArtifactEvidence(
+        path=str(path),
+        exists=True,
+        size_bytes=stat.st_size,
+        modified_utc=datetime.fromtimestamp(stat.st_mtime, UTC).isoformat(),
+        sha256=hashlib.sha256(path.read_bytes()).hexdigest()
+        if stat.st_size <= 64 * 1024 * 1024
+        else None,
+    )
+
+
+@op(
+    name="sw_drawing_export",
+    tier="core",
+    domains=("drawing", "exchange"),
+    tags=("drawing", "export", "pdf", "dxf", "dwg", "sheet"),
+    summary=(
+        "Export a drawing, or chosen sheets of it, to PDF, DXF, or DWG, verifying the "
+        "written file against the format's own signature and reporting what was on the "
+        "drawing when it was written."
+    ),
+    safety=NonModelSideEffect(
+        destructive=False,
+        rationale=(
+            "Writes a drawing file under an allowed output root, and optionally a PNG "
+            "preview beside it. The file is reported with its size, timestamp, and "
+            "SHA-256. Nothing in the model changes."
+        ),
+    ),
+    partially_satisfies=("DRW-009",),
+    precondition="drawing",
+    idempotent=False,
+    timeout_s=600.0,
+)
+def drawing_export(ctx: OpContext, args: DrawingExportArgs) -> DrawingExportResult:
+    """DRW-009.
+
+    ``sw_export`` deliberately refuses drawings — its precondition is a part or an
+    assembly — because a drawing is exported per *sheet*, which no neutral-format
+    argument expresses. Sheet selection goes through ``IExportPdfData``, and that object
+    exists only for PDF: DXF and DWG take whatever SOLIDWORKS is set to write, so a
+    sheet list given with those is reported as not applied rather than quietly dropped.
+
+    The file signature is checked with the same function ``sw_export`` uses, so "it
+    wrote a PDF" means the bytes begin ``%PDF`` and not that ``SaveAs`` returned.
+    """
+    doc = _require_drawing(ctx)
+
+    checked = assert_output_path(args.output_path, ctx.config.allowed_roots)
+    fmt = format_for_extension(checked)
+    if fmt not in _DRAWING_EXPORT_FORMATS:
+        raise SwMcpError(
+            validation_error(
+                "UNSUPPORTED_DRAWING_EXPORT",
+                f"{Path(checked).suffix!r} is not a drawing export format.",
+                context={"supported": sorted(_DRAWING_EXPORT_FORMATS)},
+                remediation=[
+                    "Drawings export to PDF, DXF, or DWG.",
+                    "For a picture of the sheet, use sw_view_capture.",
+                ],
+            )
+        )
+
+    available = _sheet_names(doc)
+    requested = list(args.sheets or [])
+    unknown = [name for name in requested if name not in available]
+    if unknown:
+        raise SwMcpError(
+            validation_error(
+                "SHEET_NOT_FOUND",
+                f"This drawing has no sheet named {unknown[0]!r}.",
+                context={"sheets": available},
+                remediation=["Use sw_drawing_list to see the sheet names."],
+            )
+        )
+
+    resolved, action = resolve_output_path(checked, args.overwrite)
+    target = Path(resolved)
+    target.parent.mkdir(parents=True, exist_ok=True)
+
+    export_data, selection, warnings = _sheet_selection(
+        ctx.session.app, fmt, requested, available
+    )
+
+    errors, warning_slot = out_long(0), out_long(0)
+    doc.Extension.SaveAs(
+        str(target),
+        swconst.value("swSaveAsVersion_e", "swSaveAsCurrentVersion"),
+        swconst.value("swSaveAsOptions_e", "swSaveAsOptions_Silent"),
+        export_data if export_data is not None else null_dispatch(),
+        errors,
+        warning_slot,
+    )
+    error_code = getattr(errors, "value", errors)
+
+    if not target.is_file():
+        raise SwMcpError(
+            make_error(
+                "EXPORT_NOT_WRITTEN",
+                "solidworks",
+                f"SOLIDWORKS did not write {target.name}.",
+                context={"format": fmt, "error_code": error_code},
+                remediation=[
+                    "Check that the drawing has at least one sheet with content.",
+                    "DXF and DWG need a sheet active; PDF can take a sheet list.",
+                ],
+            )
+        )
+
+    verified, detail = _verify(fmt, target)
+    stat = target.stat()
+    if not verified:
+        warnings.append(f"The written file did not verify as {fmt}: {detail}")
+    if action == "versioned":
+        warnings.append(
+            f"Wrote {target.name} rather than the requested name, to avoid replacing an "
+            f"existing file."
+        )
+
+    preview = None
+    if args.preview_path:
+        preview_target = Path(assert_output_path(args.preview_path, ctx.config.allowed_roots))
+        captured = try_com_member(
+            doc, "SaveAs4", str(preview_target),
+            swconst.value("swSaveAsVersion_e", "swSaveAsCurrentVersion"),
+            swconst.value("swSaveAsOptions_e", "swSaveAsOptions_Silent"),
+            out_long(0), out_long(0),
+            default=None,
+        )
+        if preview_target.is_file():
+            preview = str(preview_target)
+        else:
+            warnings.append(
+                f"The preview was not written to {preview_target.name} "
+                f"(SaveAs4 returned {captured!r}); the export itself is unaffected."
+            )
+
+    # What was on the drawing at the moment it was written. DRW-009 asks for
+    # machine-readable review evidence beside the artifact, and this is it: counts,
+    # not a judgement.
+    review = {
+        "sheet_count": len(available),
+        "sheet_names": available,
+        "view_count": len(_real_views(doc)),
+        "annotation_count": len(_all_annotations(doc)),
+        "dimension_count": _display_dimensions(doc),
+    }
+
+    artifacts = [_file_evidence(target)]
+    if preview:
+        artifacts.append(_file_evidence(Path(preview)))
+
+    return DrawingExportResult(
+        saved_path=str(target),
+        format=fmt,
+        overwrite_action=action,
+        size_bytes=stat.st_size,
+        signature_verified=verified,
+        signature_detail=detail,
+        sheets_requested=requested,
+        sheets_exported=selection,
+        preview_path=preview,
+        review=review,
+        warnings=[
+            *warnings,
+            "A verified file signature means the bytes are a well-formed "
+            f"{fmt.upper()}. It says nothing about whether the drawing on those pages "
+            "is correct - that still needs a person.",
+        ],
+        artifacts=artifacts,
     )

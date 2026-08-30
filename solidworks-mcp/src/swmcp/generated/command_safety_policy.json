@@ -402,6 +402,18 @@
         "kind": "model_mutation"
       }
     },
+    "sw_drawing_export": {
+      "audited": true,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "Writes a drawing file under an allowed output root, and optionally a PNG preview beside it. The file is reported with its size, timestamp, and SHA-256. Nothing in the model changes."
+      }
+    },
     "sw_drawing_list": {
       "audited": false,
       "auto_checkpoint": false,

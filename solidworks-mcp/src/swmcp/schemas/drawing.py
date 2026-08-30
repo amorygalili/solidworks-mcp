@@ -366,3 +366,53 @@ class DrawingReviewResult(ReadResult):
             "judge whether the drawing reads correctly to an engineer."
         ),
     )
+
+
+class DrawingExportArgs(BaseArgs):
+    """DRW-009."""
+
+    output_path: str = Field(
+        min_length=1, description="Where to write the file. The extension picks the format."
+    )
+    sheets: list[str] | None = Field(
+        default=None,
+        max_length=64,
+        description=(
+            "Sheet names to export. Omit for every sheet. Only PDF honours a selection; "
+            "for DXF and DWG SOLIDWORKS writes the active sheet and the choice is "
+            "reported as not applied rather than silently ignored."
+        ),
+    )
+    overwrite: Literal["version", "replace", "fail"] = Field(
+        default="version",
+        description="What to do when the file exists. 'version' writes _v002 alongside.",
+    )
+    preview_path: str | None = Field(
+        default=None,
+        description=(
+            "Optional PNG to capture alongside the export, so a person can see what was "
+            "written. DRW-010: the counts are not a substitute for looking at it."
+        ),
+    )
+
+
+class DrawingExportResult(SideEffectResult):
+    saved_path: str
+    format: str
+    overwrite_action: str
+    size_bytes: int
+    signature_verified: bool
+    signature_detail: str
+    sheets_requested: list[str] = Field(default_factory=list)
+    sheets_exported: str = Field(
+        description="'all', 'current', or 'specified' - what SOLIDWORKS was actually told."
+    )
+    preview_path: str | None = None
+    review: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Counts of what was on the drawing when it was exported.",
+    )
+    visual_review_required: bool = Field(
+        default=True,
+        description="Always true. A verified PDF header is not a correct drawing.",
+    )

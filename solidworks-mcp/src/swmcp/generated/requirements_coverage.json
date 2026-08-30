@@ -312,6 +312,12 @@
         "sw_drawing_review"
       ]
     },
+    "DRW-009": {
+      "limitation": "A drawing exports to PDF, DXF, or DWG, with the written file checked against that format's own signature and reported with size, timestamp, and SHA-256, plus counts of what was on the drawing when it was written. Sheet selection is PDF-only, because IExportPdfData is the only route to one - a sheet list given with DXF or DWG is reported as not applied rather than dropped silently. Exporting to an image goes through sw_view_capture, and a full delivery manifest across several drawings is IO-004, which is not implemented.",
+      "tools": [
+        "sw_drawing_export"
+      ]
+    },
     "FEAT-005": {
       "limitation": "Loft boss and cut across two or more profiles, with guide curves, a centerline, the closed-loop option, start/end tangency, and thin-wall thickness. The boundary feature is a different API (InsertNetBlend) and is not implemented.",
       "tools": [
@@ -457,10 +463,10 @@
   "totals": {
     "covered_by_platform": 11,
     "fully_covered_by_a_tool": 72,
-    "in_scope": 111,
-    "partially_covered": 31,
+    "in_scope": 112,
+    "partially_covered": 32,
     "requirements_in_backlog": 152,
-    "tools": 110,
+    "tools": 111,
     "uncovered_in_scope": 0
   },
   "uncovered_in_scope": []

@@ -1,5 +1,5 @@
 {
-  "call_count": 257,
+  "call_count": 260,
   "calls": [
     {
       "argument_counts": [
@@ -929,6 +929,15 @@
       "member": "GetExecutablePath",
       "sources": [
         "swmcp/com/session.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "GetExportFileData",
+      "sources": [
+        "swmcp/handlers/drawing.py"
       ]
     },
     {
@@ -2051,9 +2060,19 @@
       "member": "SaveAs",
       "sources": [
         "swmcp/dispatch.py",
+        "swmcp/handlers/drawing.py",
         "swmcp/handlers/exchange.py",
         "swmcp/handlers/safety.py",
         "swmcp/handlers/view.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        5
+      ],
+      "member": "SaveAs4",
+      "sources": [
+        "swmcp/handlers/drawing.py"
       ]
     },
     {
@@ -2194,6 +2213,15 @@
         3
       ],
       "member": "SetPosition",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        2
+      ],
+      "member": "SetSheets",
       "sources": [
         "swmcp/handlers/drawing.py"
       ]
