@@ -16,7 +16,11 @@ from typing import Any
 
 import pytest
 
-from swmcp.com.install import STRAINED_HANDLE_COUNT, STRAINED_PRIVATE_BYTES
+from swmcp.com.install import (
+    CRITICAL_PRIVATE_BYTES,
+    STRAINED_HANDLE_COUNT,
+    STRAINED_PRIVATE_BYTES,
+)
 from swmcp.config import SwmcpConfig
 from swmcp.handlers import system as system_handlers
 from swmcp.schemas.system import HealthArgs
@@ -77,6 +81,7 @@ def _resources(*, private: int, handles: int) -> dict[str, Any]:
         "working_set_bytes": private // 4,
         "handle_count": handles,
         "strained": strained,
+        "critical": private >= CRITICAL_PRIVATE_BYTES,
         "note": "..." if strained else None,
     }
 
@@ -202,3 +207,22 @@ def _health_with(monkeypatch, session, resources):
 def test_the_thresholds_are_stated_rather_than_buried():
     assert STRAINED_PRIVATE_BYTES == 8 * 1024**3
     assert STRAINED_HANDLE_COUNT == 30_000
+
+
+def test_the_advisory_threshold_and_the_measured_wall_are_different_numbers():
+    """Two readings, two claims. Collapsing them is what made a batch stop too early.
+
+    ``strained`` says "worth watching" and is what ``sw_health`` reports. ``critical``
+    says "calls will hang" and is what anything acting on the reading must use. If these
+    were ever set equal, every consumer of the advisory number would silently become a
+    consumer of the wall.
+    """
+    from swmcp.com.install import CRITICAL_PRIVATE_BYTES
+
+    assert CRITICAL_PRIVATE_BYTES > STRAINED_PRIVATE_BYTES
+
+
+def test_a_session_between_the_two_is_reported_as_strained_but_not_critical():
+    resources = _resources(private=STRAINED_PRIVATE_BYTES + 1024**3, handles=1000)
+    assert resources["strained"] is True
+    assert resources["critical"] is False

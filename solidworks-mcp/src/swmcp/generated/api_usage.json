@@ -172,6 +172,7 @@
       ],
       "member": "CloseDoc",
       "sources": [
+        "swmcp/handlers/batch.py",
         "swmcp/handlers/document.py",
         "swmcp/handlers/safety.py"
       ]
@@ -1188,6 +1189,7 @@
       "member": "GetOpenDocumentByName",
       "sources": [
         "swmcp/com/session.py",
+        "swmcp/handlers/batch.py",
         "swmcp/handlers/document.py",
         "swmcp/handlers/safety.py"
       ]

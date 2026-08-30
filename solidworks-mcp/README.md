@@ -6,7 +6,7 @@ worker thread.
 It implements the P0 foundation and a P1 modelling vertical from
 [`docs/solidworks-target-requirements.md`](../docs/solidworks-target-requirements.md),
 plus neutral-format exchange and an atomic mutate-and-validate workflow pulled forward
-from P2: **111 operations covering all 112 in-scope requirements**, with coverage
+from P2: **112 operations covering all 113 in-scope requirements**, with coverage
 reported honestly in `src/swmcp/generated/requirements_coverage.json` rather than
 asserted.
 
@@ -365,8 +365,8 @@ coverage file, rather than left for a user to discover:
   SHA-256, plus counts of what was on the drawing when it was written. Sheet
   selection is **PDF-only**, because `IExportPdfData` is the only route to one — a
   sheet list given with DXF or DWG is reported as not applied rather than dropped
-  silently. Images go through `sw_view_capture`, and a delivery manifest across
-  several drawings is `IO-004`, which is not implemented.
+  silently. Images go through `sw_view_capture`; a delivery manifest across several
+  drawings is `IO-004`, which `sw_batch_export` covers.
 - **`DRW-001` (drawing creation)** — an explicit or default template, a named
   sheet size, scale, and projection standard, with the sheet measured back so a
   degenerate one is refused at creation rather than hanging the next call. Units
@@ -440,6 +440,14 @@ coverage file, rather than left for a user to discover:
 - **`PAR-004` (per-configuration values)** — dimension values are read and written per
   configuration. Per-configuration *feature suppression* is not; `sw_feature_edit`
   suppresses in the active configuration.
+- **`IO-004` (batch export)** — documents, configurations, and formats multiply into a
+  plan, every planned output is reported as written, failed, or skipped, and a JSON
+  manifest records each file with its size, timestamp, and SHA-256. The batch drives
+  `sw_export` and `sw_drawing_export` rather than writing files itself, so sheet
+  selection is inherited and therefore **PDF-only**. Nothing is retried: a failed output
+  is reported with its error and left alone, because a batch that silently re-attempts
+  hides the flaky document it should be surfacing. It exports drawings that exist; it
+  does not create them.
 - **`IO-003` (export options)** — tessellation quality, mesh unit, binary or ASCII, and
   the STEP protocol, with every written file verified against its format signature.
   Exporting a selected subset of bodies is not implemented.
@@ -466,8 +474,8 @@ coverage file, rather than left for a user to discover:
   snapshotted. Non-destructive edits proceed with a warning; destructive ones are
   refused unless `SWMCP_ALLOW_UNCHECKPOINTED=1`.
 
-Export (`IO-002`, `IO-003`), import (`IO-001`), and the atomic mutate-and-validate
-workflow (`REV-006`) were pulled forward from P2 because a model that cannot leave
+Export (`IO-002`, `IO-003`), batch export (`IO-004`), import (`IO-001`), and the atomic
+mutate-and-validate workflow (`REV-006`) were pulled forward from P2 because a model that cannot leave
 SOLIDWORKS or come back into it, and a sequence that can end half-applied, both undercut
 everything else. P2 proper starts with assemblies, mates, and drawings: `ASM-001` to `ASM-003`
 cover inserting a component, walking the tree, and setting component state, and

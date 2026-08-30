@@ -33,7 +33,9 @@ IN_SCOPE_REQUIREMENTS: frozenset[str] = frozenset(
         "PAR-001", "PAR-002", "PAR-003", "PAR-004", "PAR-005", "PAR-006",
         # Pulled forward from P2: export is how the model reaches anything else, and
         # an atomic sequence is what the safety layer has been building toward.
-        "IO-001", "IO-002", "IO-003", "REV-006",
+        # IO-004 joins them because a single export is rarely the deliverable: what
+        # ships is a set of files with a manifest saying what each one is.
+        "IO-001", "IO-002", "IO-003", "IO-004", "REV-006",
         # P2 — review. Inspection, caller-owned validation policy, a B-Rep hole
         # audit, and reports in both machine and human form.
         "REV-001", "REV-002", "REV-004", "REV-005", "REV-007",
@@ -91,6 +93,15 @@ DECLARED_PARTIAL: dict[str, str] = {
         "file that imports incompletely is diagnosed from the geometry rather than from "
         "a translator message. Multi-body files import as one document; splitting them "
         "into separate parts is not implemented."
+    ),
+    "IO-004": (
+        "Documents, configurations, and formats multiply into a plan, every planned "
+        "output is reported as written, failed, or skipped, and a JSON manifest records "
+        "each file with its size, timestamp, and SHA-256. Sheet selection is inherited "
+        "from sw_drawing_export and is therefore PDF-only. What is not implemented is "
+        "any retry: a failed output is reported with its error and left alone, because "
+        "a batch that silently re-attempts hides the flaky document it should surface. "
+        "The batch also does not create drawings - it exports the ones that exist."
     ),
     "IO-003": (
         "Tessellation quality, mesh unit, binary/ASCII, and the STEP protocol are "

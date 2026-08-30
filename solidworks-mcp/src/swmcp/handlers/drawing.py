@@ -17,8 +17,6 @@ was ``None`` on this build, so the ``GetFirstView`` walk is the traversal used h
 
 from __future__ import annotations
 
-import hashlib
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -33,7 +31,7 @@ from swmcp.com.marshal import (
     try_com_member,
 )
 from swmcp.context import OpContext
-from swmcp.envelope import ArtifactEvidence, Check, Verification
+from swmcp.envelope import Check, Verification, file_evidence
 from swmcp.errors import SwMcpError, make_error, validation_error
 from swmcp.handlers.exchange import _verify
 from swmcp.safety.overwrite import resolve_output_path
@@ -58,7 +56,10 @@ from swmcp.schemas.drawing import (
     DrawingViewAddArgs,
     DrawingViewAddResult,
 )
-from swmcp.schemas.exchange import format_for_extension
+from swmcp.schemas.exchange import (
+    DRAWING_EXPORT_FORMATS,
+    format_for_extension,
+)
 from swmcp.units import from_meters
 
 _PAPER_SIZES = {
@@ -1332,8 +1333,6 @@ def drawing_review(ctx: OpContext, args: DrawingReviewArgs) -> DrawingReviewResu
 
 # --- DRW-009 -----------------------------------------------------------------------
 
-_DRAWING_EXPORT_FORMATS = frozenset({"pdf", "dxf", "dwg"})
-
 _SHEET_SELECTION = {
     "all": "swExportData_ExportAllSheets",
     "current": "swExportData_ExportCurrentSheet",
@@ -1389,19 +1388,6 @@ def _sheet_selection(
     return export_data, selection, warnings
 
 
-def _file_evidence(path: Path) -> ArtifactEvidence:
-    stat = path.stat()
-    return ArtifactEvidence(
-        path=str(path),
-        exists=True,
-        size_bytes=stat.st_size,
-        modified_utc=datetime.fromtimestamp(stat.st_mtime, UTC).isoformat(),
-        sha256=hashlib.sha256(path.read_bytes()).hexdigest()
-        if stat.st_size <= 64 * 1024 * 1024
-        else None,
-    )
-
-
 @op(
     name="sw_drawing_export",
     tier="core",
@@ -1441,12 +1427,12 @@ def drawing_export(ctx: OpContext, args: DrawingExportArgs) -> DrawingExportResu
 
     checked = assert_output_path(args.output_path, ctx.config.allowed_roots)
     fmt = format_for_extension(checked)
-    if fmt not in _DRAWING_EXPORT_FORMATS:
+    if fmt not in DRAWING_EXPORT_FORMATS:
         raise SwMcpError(
             validation_error(
                 "UNSUPPORTED_DRAWING_EXPORT",
                 f"{Path(checked).suffix!r} is not a drawing export format.",
-                context={"supported": sorted(_DRAWING_EXPORT_FORMATS)},
+                context={"supported": sorted(DRAWING_EXPORT_FORMATS)},
                 remediation=[
                     "Drawings export to PDF, DXF, or DWG.",
                     "For a picture of the sheet, use sw_view_capture.",
@@ -1539,9 +1525,9 @@ def drawing_export(ctx: OpContext, args: DrawingExportArgs) -> DrawingExportResu
         "dimension_count": _display_dimensions(doc),
     }
 
-    artifacts = [_file_evidence(target)]
+    artifacts = [file_evidence(target)]
     if preview:
-        artifacts.append(_file_evidence(Path(preview)))
+        artifacts.append(file_evidence(Path(preview)))
 
     return DrawingExportResult(
         saved_path=str(target),

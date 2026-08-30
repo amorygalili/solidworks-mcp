@@ -11,6 +11,9 @@ call returned without throwing. So the catalog refuses to register:
 
 from __future__ import annotations
 
+import hashlib
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -98,6 +101,33 @@ class ArtifactEvidence(BaseModel):
     size_bytes: int
     modified_utc: str | None = None
     sha256: str | None = None
+
+
+#: Files above this size are reported without a digest. Hashing is not the expensive
+#: part — reading a multi-gigabyte export into memory to hash it is.
+MAX_DIGEST_BYTES = 64 * 1024 * 1024
+
+
+def file_evidence(path: str | Path, *, digest: bool = True) -> ArtifactEvidence:
+    """Measure a file that was just written, or record that it is not there.
+
+    Every operation that writes something needs the same four facts — that it exists,
+    how big it is, when it was written, and what it hashes to — and each one that built
+    them itself got to choose its own digest cut-off. This is the constructor.
+    """
+    target = Path(path)
+    if not target.is_file():
+        return ArtifactEvidence(path=str(target), exists=False, size_bytes=0)
+    stat = target.stat()
+    return ArtifactEvidence(
+        path=str(target),
+        exists=True,
+        size_bytes=stat.st_size,
+        modified_utc=datetime.fromtimestamp(stat.st_mtime, UTC).isoformat(),
+        sha256=hashlib.sha256(target.read_bytes()).hexdigest()
+        if digest and stat.st_size <= MAX_DIGEST_BYTES
+        else None,
+    )
 
 
 class SideEffectResult(ResultBase):

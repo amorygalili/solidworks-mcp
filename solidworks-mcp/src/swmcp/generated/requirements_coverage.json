@@ -373,6 +373,12 @@
         "sw_export"
       ]
     },
+    "IO-004": {
+      "limitation": "Documents, configurations, and formats multiply into a plan, every planned output is reported as written, failed, or skipped, and a JSON manifest records each file with its size, timestamp, and SHA-256. Sheet selection is inherited from sw_drawing_export and is therefore PDF-only. What is not implemented is any retry: a failed output is reported with its error and left alone, because a batch that silently re-attempts hides the flaky document it should surface. The batch also does not create drawings - it exports the ones that exist.",
+      "tools": [
+        "sw_batch_export"
+      ]
+    },
     "MATE-001": {
       "limitation": "Coincident, concentric, perpendicular, parallel, tangent, distance, angle, and lock mates — the types AddMate5 builds from exactly two selected entities. Width, symmetric, gear, rack-and-pinion, screw, universal joint, slot, cam, hinge, linear coupler, path, and coordinate-system mates need three or more selections or extra arguments and are rejected by the schema rather than failing at runtime.",
       "tools": [
@@ -463,10 +469,10 @@
   "totals": {
     "covered_by_platform": 11,
     "fully_covered_by_a_tool": 72,
-    "in_scope": 112,
-    "partially_covered": 32,
+    "in_scope": 113,
+    "partially_covered": 33,
     "requirements_in_backlog": 152,
-    "tools": 111,
+    "tools": 112,
     "uncovered_in_scope": 0
   },
   "uncovered_in_scope": []

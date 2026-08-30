@@ -15,6 +15,7 @@ import pytest
 from swmcp.catalog.registry import load_all_ops
 from swmcp.config import SwmcpConfig
 from swmcp.dispatch import Dispatcher
+from swmcp.errors import SwMcpError
 from swmcp.server import list_tool_descriptors, search_tools
 
 BASE = SwmcpConfig(worker_start_timeout_s=2.0)
@@ -178,3 +179,77 @@ def test_annotations_match_the_safety_projection():
         projection = project(spec.safety)
         assert tool.annotations.read_only_hint == projection.read_only, tool.name
         assert tool.annotations.destructive_hint == projection.destructive, tool.name
+
+
+def test_an_output_path_nested_in_a_list_of_items_is_still_root_checked(dispatcher, tmp_path):
+    """SAFE-004 walked one level until a tool took a list of items.
+
+    ``sw_batch_export`` is the first operation whose paths are not top-level strings:
+    the only string the old walk could see was the directory. Everything each item
+    named — its source document, its own destination — went past the gate unlooked at.
+    """
+    payload = dispatcher.call(
+        "sw_batch_export",
+        {
+            "items": [{"formats": ["step"]}],
+            "output_dir": str(tmp_path / "out"),
+            "manifest_path": r"C:\somewhere\else\manifest.json",
+        },
+    )
+    assert payload["ok"] is False
+    assert payload["error"]["code"] == "PATH_NOT_ALLOWED"
+    assert payload["error"]["context"]["field"] == "manifest_path"
+    assert dispatcher.worker.submitted == [], "refused before COM was reached"
+
+
+
+
+def test_an_output_path_inside_a_list_of_items_is_root_checked(dispatcher, tmp_path):
+    """The mechanism itself: a list of sub-models is the shape the old walk could not see."""
+    from pydantic import BaseModel
+
+    class Item(BaseModel):
+        output_path: str
+
+    class Request(BaseModel):
+        items: list[Item]
+
+    dispatcher._guard_model(Request(items=[Item(output_path=str(tmp_path / "fine.step"))]))
+
+    with pytest.raises(SwMcpError) as caught:
+        dispatcher._guard_model(
+            Request(items=[Item(output_path=r"C:\somewhere\else\sneaky.step")])
+        )
+    assert caught.value.envelope.code == "PATH_NOT_ALLOWED"
+
+
+def test_an_output_path_one_model_deep_is_root_checked(dispatcher):
+    from pydantic import BaseModel
+
+    class Inner(BaseModel):
+        output_path: str
+
+    class Outer(BaseModel):
+        inner: Inner
+
+    with pytest.raises(SwMcpError) as caught:
+        dispatcher._guard_model(Outer(inner=Inner(output_path=r"C:\somewhere\else\x.step")))
+    assert caught.value.envelope.code == "PATH_NOT_ALLOWED"
+
+
+def test_the_recursive_walk_still_reaches_the_document_target(dispatcher, tmp_path, monkeypatch):
+    """The old walk special-cased args.document; the recursion has to cover it instead."""
+    import swmcp.dispatch as dispatch_module
+    from swmcp.schemas.exchange import ExportArgs
+
+    seen: list[str] = []
+    monkeypatch.setattr(
+        dispatch_module, "prepare_document_path", lambda raw: seen.append(raw) or raw
+    )
+    dispatcher._guard_model(
+        ExportArgs(
+            output_path=str(tmp_path / "part.step"),
+            document={"path": r"C:\cad\bracket.SLDPRT"},
+        )
+    )
+    assert seen == [r"C:\cad\bracket.SLDPRT"]

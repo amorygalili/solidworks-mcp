@@ -323,9 +323,9 @@ def test_the_review_is_read_only_and_the_authoring_tools_verify():
 
 
 def test_only_drawing_formats_are_offered():
-    from swmcp.handlers.drawing import _DRAWING_EXPORT_FORMATS
+    from swmcp.schemas.exchange import DRAWING_EXPORT_FORMATS
 
-    assert {"pdf", "dxf", "dwg"} == _DRAWING_EXPORT_FORMATS
+    assert {"pdf", "dxf", "dwg"} == DRAWING_EXPORT_FORMATS
 
 
 def test_the_sheet_selection_modes_name_real_enum_members():

@@ -7,6 +7,7 @@ from typing import Any, Literal
 from pydantic import Field, model_validator
 
 from swmcp.envelope import MutationResult, ReadResult, SideEffectResult
+from swmcp.safety.overwrite import OverwritePolicy
 from swmcp.schemas.common import BaseArgs
 from swmcp.units import Length
 
@@ -383,9 +384,12 @@ class DrawingExportArgs(BaseArgs):
             "reported as not applied rather than silently ignored."
         ),
     )
-    overwrite: Literal["version", "replace", "fail"] = Field(
+    overwrite: OverwritePolicy = Field(
         default="version",
-        description="What to do when the file exists. 'version' writes _v002 alongside.",
+        description=(
+            "'version' writes name_vNNN when the target exists (default), 'forbid' "
+            "refuses and proposes a free name, 'allow' replaces the file."
+        ),
     )
     preview_path: str | None = Field(
         default=None,

@@ -221,3 +221,52 @@ def test_the_readme_headline_counts_match_the_coverage_file():
         "the README says every in-scope requirement is covered, but the coverage file "
         f"lists {totals['uncovered_in_scope']} uncovered"
     )
+
+
+def test_every_overwrite_field_speaks_the_one_policy_vocabulary():
+    """SAFE-008 has one vocabulary, and a tool that invents a second one is broken.
+
+    ``sw_drawing_export`` shipped with ``Literal["version", "replace", "fail"]``. Those
+    read like policies and are not: ``resolve_output_path`` understands only ``forbid``,
+    ``version``, and ``allow``, so ``replace`` — the value a caller would pick to *mean*
+    overwrite — fell through to the refusal branch and raised ``OUTPUT_EXISTS``. The
+    schema accepted it, the type checker was satisfied, and the behaviour was the exact
+    opposite of what was asked for. A regex cannot see that; this can.
+    """
+    from typing import get_args
+
+    from swmcp.catalog.registry import load_all_ops
+    from swmcp.safety.overwrite import OverwritePolicy
+    from swmcp.schemas.common import OUTPUT_PATH_FIELDS
+
+    expected = set(get_args(OverwritePolicy))
+    wrong: list[str] = []
+    for name, spec in sorted(load_all_ops().items()):
+        fields = spec.args_model.model_fields
+        if "overwrite" not in fields or not (OUTPUT_PATH_FIELDS & set(fields)):
+            # An 'overwrite' with no file beside it is about something else. On
+            # sw_property_set it is a bool meaning "replace a custom property of the
+            # same name", which is a different question with the same word for it.
+            continue
+        allowed = set(get_args(fields["overwrite"].annotation))
+        if allowed != expected:
+            wrong.append(f"{name}: {sorted(allowed)} instead of {sorted(expected)}")
+
+    assert not wrong, (
+        "these operations define their own overwrite vocabulary, which "
+        "resolve_output_path does not understand:\n  " + "\n  ".join(wrong)
+    )
+
+
+def test_the_overwrite_guard_would_catch_a_second_vocabulary():
+    """Guard against the guard passing vacuously if no tool has the field at all."""
+    from swmcp.catalog.registry import load_all_ops
+    from swmcp.schemas.common import OUTPUT_PATH_FIELDS
+
+    scanned = [
+        name
+        for name, spec in load_all_ops().items()
+        if "overwrite" in spec.args_model.model_fields
+        and OUTPUT_PATH_FIELDS & set(spec.args_model.model_fields)
+    ]
+    assert len(scanned) >= 5, f"only {len(scanned)} operations were scanned: {scanned}"

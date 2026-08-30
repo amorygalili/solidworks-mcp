@@ -72,11 +72,11 @@ Export a drawing, or chosen sheets of it, to PDF, DXF, or DWG, verifying the wri
     },
     "overwrite": {
       "default": "version",
-      "description": "What to do when the file exists. 'version' writes _v002 alongside.",
+      "description": "'version' writes name_vNNN when the target exists (default), 'forbid' refuses and proposes a free name, 'allow' replaces the file.",
       "enum": [
+        "forbid",
         "version",
-        "replace",
-        "fail"
+        "allow"
       ],
       "title": "Overwrite",
       "type": "string"

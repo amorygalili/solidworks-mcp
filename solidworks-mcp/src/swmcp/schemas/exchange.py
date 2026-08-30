@@ -56,6 +56,22 @@ BY_EXTENSION: dict[str, str] = {
 }
 
 
+#: The extension to *write* for a given format, derived from :data:`BY_EXTENSION`
+#: rather than spelled out a second time. A format with several accepted extensions
+#: takes the first one listed, which is why the long spelling comes first above: a batch
+#: asked for "step" writes ``.step``, and ``.stp`` remains readable on the way back in.
+EXTENSION_FOR_FORMAT: dict[str, str] = {
+    fmt: next(ext for ext, candidate in BY_EXTENSION.items() if candidate == fmt)
+    for fmt in dict.fromkeys(BY_EXTENSION.values())
+}
+
+#: Formats a *drawing* can be written to. A drawing is exported per sheet, which the
+#: neutral-format vocabulary has no argument for, so ``sw_export`` refuses drawings and
+#: ``sw_drawing_export`` handles them. Both this set and the one above are read by the
+#: batch exporter, which is why they live here rather than inside either handler.
+DRAWING_EXPORT_FORMATS: frozenset[str] = frozenset({"pdf", "dxf", "dwg"})
+
+
 def format_for_extension(path: str) -> str | None:
     """The export format implied by a path's extension, or ``None`` if unknown."""
     return BY_EXTENSION.get(Path(path).suffix.lower())

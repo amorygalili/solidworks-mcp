@@ -119,6 +119,11 @@ Probing has already caught, in code that looked correct:
   through `GetNextView`. `IDrawingDoc::GetViews` groups by sheet but returned views
   whose `GetName2` was `None` on this build, so the `GetFirstView` walk is the reliable
   traversal.
+- **SOLIDWORKS writes an STL as `.STL`** whatever case the output path was spelled in.
+  Windows resolves both spellings, so nothing fails and `target.is_file()` still passes
+  — it is invisible until the directory is listed, or until a manifest naming the file
+  is read somewhere that is not Windows. `sw_batch_export` records the name on disk and
+  warns when it differs from the one asked for.
 - `ISldWorks::GetImportFileData` is a dead end on this build: `None` for Parasolid, ACIS,
   and STL, and for STEP an object whose only reachable property is `MapConfigurationData`.
   Import options go through **user preferences**, like the export ones.
@@ -158,6 +163,17 @@ Get-Process SLDWORKS | Select-Object @{n='PrivMB';e={[int]($_.PrivateMemorySize6
 A full live run plus a demo build is enough to reach that state. Restarting SOLIDWORKS is
 the fix, but it is the user's application — ask before killing it, and check first whether
 any document open in it is theirs rather than a scratch file.
+
+**`strained` is not the wall.** `process_resources()` reports two readings and they mean
+different things. `strained` (8 GiB, or 30 000 handles) is advisory — "worth watching",
+which is all `sw_health` claims with it; a session at 9.6 GB is slower and entirely
+usable, and an eleven-minute live module ran to completion there. `critical`
+(`CRITICAL_PRIVATE_BYTES`, 11 GiB) is the measured wall. Anything that *acts* on the
+reading rather than reporting it must use `critical`: `sw_batch_export` first keyed its
+stop to `strained` and would have abandoned every multi-item batch on this machine after
+one item, for a session that was working fine. There is deliberately no critical handle
+count — the wall was measured in private bytes and inventing a handle figure would dress
+a guess as a measurement.
 
 ### Restarting it: not from sldworks.exe
 

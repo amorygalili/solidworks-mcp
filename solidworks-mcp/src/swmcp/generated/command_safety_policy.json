@@ -106,6 +106,18 @@
         "kind": "read"
       }
     },
+    "sw_batch_export": {
+      "audited": true,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "Writes each export and a JSON manifest under an allowed output root, and opens the documents it was given. A document opened by this call is opened read-only and closed again afterwards; one that was already open is never closed. No model is modified."
+      }
+    },
     "sw_body_list": {
       "audited": false,
       "auto_checkpoint": false,

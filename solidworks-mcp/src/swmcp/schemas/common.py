@@ -106,5 +106,5 @@ DOCUMENT_PATH_FIELDS: frozenset[str] = frozenset(
 #: Argument field names naming a file the server is about to create or overwrite.
 #: These are hard-refused outside the allowed roots.
 OUTPUT_PATH_FIELDS: frozenset[str] = frozenset(
-    {"output_path", "output_dir", "preview_path", "export_path", "target_path"}
+    {"output_path", "output_dir", "preview_path", "export_path", "target_path", "manifest_path"}
 )

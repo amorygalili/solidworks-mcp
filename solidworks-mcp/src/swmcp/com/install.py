@@ -246,11 +246,23 @@ def is_running() -> bool:
 
 
 #: A SOLIDWORKS session that has been driven hard for a long time accumulates private
-#: bytes and handles it never gives back. Past roughly this much, calls slow markedly
-#: and then stop returning at all — the process is paging rather than working. The
-#: number is a reporting threshold, not a limit anything enforces.
+#: bytes and handles it never gives back. Past roughly this much it is worth watching:
+#: calls slow markedly. This is a *reporting* threshold and nothing enforces it — a
+#: session at 9 GB is slower but entirely usable, and a full live suite has run to
+#: completion well past it.
 STRAINED_PRIVATE_BYTES = 8 * 1024**3
 STRAINED_HANDLE_COUNT = 30_000
+
+#: The measured wall, which is a different number and a different claim. At roughly
+#: 11.6 GB of private bytes calls went from 3s to 15s and then stopped returning at all;
+#: only a restart recovers it. Anything that *acts* on the reading rather than reporting
+#: it belongs here, not above — treating the advisory number as a stop signal makes a
+#: perfectly healthy session refuse to work.
+#:
+#: There is deliberately no critical handle count. The wall was measured in private
+#: bytes; no handle figure has been observed to fail, and inventing one would be
+#: dressing a guess as a measurement.
+CRITICAL_PRIVATE_BYTES = 11 * 1024**3
 
 
 def process_resources() -> dict[str, Any] | None:
@@ -280,6 +292,7 @@ def process_resources() -> dict[str, Any] | None:
     private = int(getattr(row, "PrivatePageCount", 0) or 0)
     handles = int(getattr(row, "HandleCount", 0) or 0)
     strained = private >= STRAINED_PRIVATE_BYTES or handles >= STRAINED_HANDLE_COUNT
+    critical = private >= CRITICAL_PRIVATE_BYTES
 
     return {
         "process_id": int(getattr(row, "ProcessId", 0) or 0),
@@ -288,11 +301,17 @@ def process_resources() -> dict[str, Any] | None:
         "working_set_bytes": int(getattr(row, "WorkingSetSize", 0) or 0),
         "handle_count": handles,
         "strained": strained,
+        "critical": critical,
         "note": (
             "A long automation session leaks private bytes and handles that SOLIDWORKS "
-            "never returns. Past this point calls slow down and then stop returning; "
-            "restarting SOLIDWORKS is the only remedy."
+            "never returns, and past this point calls slow noticeably. The session is "
+            "still usable; restarting SOLIDWORKS is what recovers the speed."
         )
-        if strained
+        if strained and not critical
+        else (
+            "This session has passed the point where calls stop returning rather than "
+            "failing. Restarting SOLIDWORKS is the only remedy."
+        )
+        if critical
         else None,
     }

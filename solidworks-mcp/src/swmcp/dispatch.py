@@ -91,21 +91,33 @@ class Dispatcher:
             ) from exc
 
     def _guard_paths(self, spec: OpSpec, args: BaseModel) -> None:
-        """SAFE-004. Output paths are refused outside the roots; inputs are normalized."""
-        for name in type(args).model_fields:
-            value = getattr(args, name, None)
-            if not isinstance(value, str) or not value:
-                continue
-            if name in OUTPUT_PATH_FIELDS:
-                assert_output_path(value, self.config.allowed_roots, field=name)
-            elif name in DOCUMENT_PATH_FIELDS:
-                prepare_document_path(value)
+        """SAFE-004. Output paths are refused outside the roots; inputs are normalized.
 
-        target = getattr(args, "document", None)
-        if target is not None and getattr(target, "path", None):
-            prepare_document_path(target.path)
-
+        The walk descends into nested models and lists of them. It did not, until an
+        operation took a *list of items* each naming its own document and output — at
+        which point every path in the request was invisible to this gate, because the
+        only string field at the top level was a directory. A guard that inspects one
+        level of a tree is not a guard.
+        """
+        self._guard_model(args)
         _ = spec  # kept for symmetry with the other gates
+
+    def _guard_model(self, model: BaseModel, depth: int = 0) -> None:
+        if depth > 8:  # pragma: no cover - no args model nests anywhere near this deep
+            return
+        for name in type(model).model_fields:
+            value = getattr(model, name, None)
+            if isinstance(value, str) and value:
+                if name in OUTPUT_PATH_FIELDS:
+                    assert_output_path(value, self.config.allowed_roots, field=name)
+                elif name in DOCUMENT_PATH_FIELDS:
+                    prepare_document_path(value)
+            elif isinstance(value, BaseModel):
+                self._guard_model(value, depth + 1)
+            elif isinstance(value, (list, tuple)):
+                for element in value:
+                    if isinstance(element, BaseModel):
+                        self._guard_model(element, depth + 1)
 
     @staticmethod
     def _guard_confirmation(spec: OpSpec, args: BaseModel) -> None:
