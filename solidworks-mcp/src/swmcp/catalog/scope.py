@@ -44,9 +44,11 @@ IN_SCOPE_REQUIREMENTS: frozenset[str] = frozenset(
         # component is. The exotic mate types are not claimed yet.
         "MATE-001", "MATE-002", "MATE-003", "MATE-004", "MATE-005", "MATE-006",
         "MATE-007", "MATE-008",
-        # P2 — drawings. Create a sheet, place model and standard-three views, and
-        # inspect what is there. Annotations, tables, and export are not claimed.
-        "DRW-001", "DRW-002", "DRW-003",
+        # P2 — drawings. Sheets, views, imported model items, notes, a bill of
+        # materials, and a review that counts rather than judges. DRW-009 (sheet
+        # export) is not claimed yet.
+        "DRW-001", "DRW-002", "DRW-003", "DRW-004", "DRW-005", "DRW-006",
+        "DRW-007", "DRW-008", "DRW-010",
         # P1 vertical — appearance and view
         "VIEW-001", "VIEW-002", "VIEW-003", "VIEW-004",
         # P1 vertical — core features, bodies, measurement
@@ -173,6 +175,41 @@ DECLARED_PARTIAL: dict[str, str] = {
         "Faces, edges, vertices, planes, and axes are addressed through the same "
         "structured references as everywhere else. Component coordinate systems as mate "
         "references are untested and are not claimed."
+    ),
+    "DRW-004": (
+        "Model dimensions and annotations are imported into the drawing's views, and "
+        "every item that arrived is reported by walking the views before and after - "
+        "InsertModelAnnotations3 returns nothing when it finds nothing, which is not the "
+        "same as failing, so 'imported nothing' is reported as exactly that. Creating "
+        "drawing dimensions directly, and setting tolerance, precision, arrow style, or "
+        "text formatting on them, are not implemented."
+    ),
+    "DRW-005": (
+        "General notes with placement, and centre marks on selected circular edges. "
+        "Hole callouts, datum symbols, GD&T, surface-finish, weld, balloon, and revision "
+        "annotations are not implemented; each needs its own symbol definition rather "
+        "than text and a position."
+    ),
+    "DRW-006": (
+        "A bill of materials in any of the four BOM types, read back cell by cell with "
+        "DisplayedText so the contents are the evidence rather than the call having "
+        "returned. Hole, revision, weldment cut-list, and general tables are not "
+        "implemented, and neither is following a row back to the component it lists."
+    ),
+    "DRW-007": (
+        "Additional sheets with their own size, scale, and projection standard, "
+        "activated or not as asked, and measured back so a sheet of zero area is refused "
+        "- NewSheet3 carries the same width/height trap as NewDocument. Changing an "
+        "existing sheet's format or template, reordering views, and layer, line, and "
+        "font standards are not implemented."
+    ),
+    "DRW-008": (
+        "Views, dimensions, notes, tables, and dangling annotations are counted and "
+        "located per sheet, and checked against caller-supplied minimums, with every "
+        "finding attributed to the call it was read from. Overlap, clipping, and "
+        "missing-callout detection are not implemented: they need annotation extents "
+        "compared against each other, and DRW-010 is explicit that approximate bounding "
+        "boxes must not be presented as proof a drawing is correct."
     ),
     "DRW-001": (
         "A drawing is created from an explicit or default template with a named sheet "

@@ -391,6 +391,17 @@
         "kind": "model_mutation"
       }
     },
+    "sw_drawing_annotate_model": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
     "sw_drawing_list": {
       "audited": false,
       "auto_checkpoint": false,
@@ -411,6 +422,49 @@
         "destructive": false,
         "kind": "non_model_side_effect",
         "rationale": "Creates a drawing document in the SOLIDWORKS session and changes what is on screen. Nothing reaches disk until it is saved."
+      }
+    },
+    "sw_drawing_note_add": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_drawing_review": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_drawing_sheet_add": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      }
+    },
+    "sw_drawing_table_add": {
+      "audited": true,
+      "auto_checkpoint": true,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
       }
     },
     "sw_drawing_view_add": {

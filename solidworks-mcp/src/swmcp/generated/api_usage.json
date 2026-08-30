@@ -1,6 +1,15 @@
 {
-  "call_count": 235,
+  "call_count": 257,
   "calls": [
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "ActivateSheet",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
     {
       "argument_counts": [
         0
@@ -165,6 +174,15 @@
       "sources": [
         "swmcp/handlers/document.py",
         "swmcp/handlers/safety.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "ColumnCount",
+      "sources": [
+        "swmcp/handlers/drawing.py"
       ]
     },
     {
@@ -426,6 +444,15 @@
     },
     {
       "argument_counts": [
+        2
+      ],
+      "member": "DisplayedText",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
         0
       ],
       "member": "Done",
@@ -633,6 +660,15 @@
       "argument_counts": [
         0
       ],
+      "member": "GetAnnotation",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
       "member": "GetArea",
       "sources": [
         "swmcp/refs/capture.py"
@@ -686,6 +722,15 @@
       "sources": [
         "swmcp/handlers/assembly.py",
         "swmcp/modeling.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "GetColumnTitle",
+      "sources": [
+        "swmcp/handlers/drawing.py"
       ]
     },
     {
@@ -840,6 +885,15 @@
       "argument_counts": [
         0
       ],
+      "member": "GetDisplayDimensionCount",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
       "member": "GetEdges",
       "sources": [
         "swmcp/handlers/feature.py",
@@ -897,6 +951,15 @@
       "sources": [
         "swmcp/modeling.py",
         "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetFirstAnnotation3",
+      "sources": [
+        "swmcp/handlers/drawing.py"
       ]
     },
     {
@@ -1046,6 +1109,15 @@
     },
     {
       "argument_counts": [
+        0
+      ],
+      "member": "GetNext3",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
         1
       ],
       "member": "GetNextDisplayDimension",
@@ -1087,6 +1159,15 @@
         0
       ],
       "member": "GetNextView",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetNoteCount",
       "sources": [
         "swmcp/handlers/drawing.py"
       ]
@@ -1163,6 +1244,15 @@
       "argument_counts": [
         0
       ],
+      "member": "GetPosition",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
       "member": "GetProperties2",
       "sources": [
         "swmcp/handlers/drawing.py"
@@ -1197,6 +1287,15 @@
     },
     {
       "argument_counts": [
+        0
+      ],
+      "member": "GetSelectedObjectCount",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
         1
       ],
       "member": "GetSelectedObjectCount2",
@@ -1212,6 +1311,24 @@
       "member": "GetSelectedObjectMark",
       "sources": [
         "swmcp/handlers/reference.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetSheetFormatName",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetSheetNames",
+      "sources": [
+        "swmcp/handlers/drawing.py"
       ]
     },
     {
@@ -1274,6 +1391,15 @@
       "argument_counts": [
         0
       ],
+      "member": "GetTableAnnotationCount",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
       "member": "GetTemplateName",
       "sources": [
         "swmcp/handlers/drawing.py"
@@ -1308,6 +1434,7 @@
       "member": "GetType",
       "sources": [
         "swmcp/com/session.py",
+        "swmcp/handlers/drawing.py",
         "swmcp/modeling.py",
         "swmcp/refs/capture.py",
         "swmcp/sketching.py"
@@ -1435,6 +1562,24 @@
     },
     {
       "argument_counts": [
+        8
+      ],
+      "member": "InsertBomTable3",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        3
+      ],
+      "member": "InsertCenterMark3",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
         3
       ],
       "member": "InsertCoordinateSystem",
@@ -1482,9 +1627,27 @@
       "argument_counts": [
         6
       ],
+      "member": "InsertModelAnnotations2",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        6
+      ],
       "member": "InsertMultiFaceDraft",
       "sources": [
         "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "InsertNote",
+      "sources": [
+        "swmcp/handlers/drawing.py"
       ]
     },
     {
@@ -1585,6 +1748,15 @@
       "member": "IsAppliedToAllConfigurations",
       "sources": [
         "swmcp/handlers/constraint.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "IsDangling",
+      "sources": [
+        "swmcp/handlers/drawing.py"
       ]
     },
     {
@@ -1791,6 +1963,15 @@
     },
     {
       "argument_counts": [
+        10
+      ],
+      "member": "NewSheet3",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
         0
       ],
       "member": "PlaneParams",
@@ -1852,6 +2033,15 @@
       "sources": [
         "swmcp/com/session.py",
         "swmcp/handlers/system.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "RowCount",
+      "sources": [
+        "swmcp/handlers/drawing.py"
       ]
     },
     {
@@ -1995,6 +2185,15 @@
         1
       ],
       "member": "SetName2",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        3
+      ],
+      "member": "SetPosition",
       "sources": [
         "swmcp/handlers/drawing.py"
       ]

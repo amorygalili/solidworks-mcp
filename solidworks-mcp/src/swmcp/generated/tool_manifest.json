@@ -1,6 +1,6 @@
 {
   "generated_from": "swmcp.catalog.registry.OPS",
-  "tool_count": 105,
+  "tool_count": 110,
   "tools": [
     {
       "domains": [
@@ -11829,6 +11829,357 @@
         "drawing"
       ],
       "fresh_checkpoint": false,
+      "handler_ref": "swmcp.handlers.drawing:drawing_annotate_model",
+      "idempotent": false,
+      "input_schema": {
+        "$defs": {
+          "DocTarget": {
+            "additionalProperties": false,
+            "description": "Which document an operation acts on.\n\nWith neither field set the active document is used. Naming both is refused rather\nthan silently preferring one.",
+            "properties": {
+              "path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Full path of an already-open document. Takes precedence over title.",
+                "title": "Path"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Window title of an open document. Refused if more than one matches.",
+                "title": "Title"
+              }
+            },
+            "title": "DocTarget",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DRW-004.",
+        "properties": {
+          "all_views": {
+            "default": true,
+            "description": "Import into every view, not just the selected one.",
+            "title": "All Views",
+            "type": "boolean"
+          },
+          "document": {
+            "$ref": "#/$defs/DocTarget",
+            "description": "Which document to act on. Defaults to the active document."
+          },
+          "eliminate_duplicates": {
+            "default": true,
+            "description": "Drop duplicate dimensions.",
+            "title": "Eliminate Duplicates",
+            "type": "boolean"
+          },
+          "hidden_feature_dimensions": {
+            "default": false,
+            "description": "Include dimensions from hidden features.",
+            "title": "Hidden Feature Dimensions",
+            "type": "boolean"
+          },
+          "kinds": {
+            "description": "Which model items to import.",
+            "items": {
+              "enum": [
+                "dimensions",
+                "notes",
+                "datums",
+                "geometric_tolerances",
+                "cosmetic_threads",
+                "surface_finishes",
+                "welds",
+                "axes",
+                "planes",
+                "points"
+              ],
+              "type": "string"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Kinds",
+            "type": "array"
+          },
+          "use_sketch_placement": {
+            "default": false,
+            "description": "Place dimensions where the sketch had them.",
+            "title": "Use Sketch Placement",
+            "type": "boolean"
+          }
+        },
+        "title": "DrawingAnnotateModelArgs",
+        "type": "object"
+      },
+      "name": "sw_drawing_annotate_model",
+      "partially_satisfies": [
+        "DRW-004"
+      ],
+      "precondition": "drawing",
+      "projection": {
+        "audited": true,
+        "auto_checkpoint": true,
+        "confirm_required": false,
+        "destructive": false,
+        "read_only": false
+      },
+      "result_schema": {
+        "$defs": {
+          "Check": {
+            "additionalProperties": false,
+            "description": "One named invariant asserted after a mutation.",
+            "properties": {
+              "detail": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Detail"
+              },
+              "name": {
+                "title": "Name",
+                "type": "string"
+              },
+              "passed": {
+                "title": "Passed",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "name",
+              "passed"
+            ],
+            "title": "Check",
+            "type": "object"
+          },
+          "CheckpointRecord": {
+            "additionalProperties": false,
+            "description": "What the auto-checkpoint layer did before a mutation ran.",
+            "properties": {
+              "checkpoint_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Checkpoint Path"
+              },
+              "created_utc": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Created Utc"
+              },
+              "method": {
+                "description": "Never optional: the caller must be able to tell a real snapshot from a skipped one. 'file_copy' does not capture unsaved session state.",
+                "enum": [
+                  "save_as_copy",
+                  "file_copy",
+                  "skipped",
+                  "reused"
+                ],
+                "title": "Method",
+                "type": "string"
+              },
+              "reason": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Why the checkpoint was skipped or reused.",
+                "title": "Reason"
+              },
+              "size_bytes": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Size Bytes"
+              },
+              "source_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Source Path"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "title": "CheckpointRecord",
+            "type": "object"
+          },
+          "Verification": {
+            "additionalProperties": false,
+            "description": "Evidence that a mutation actually happened, read back out of the model.",
+            "properties": {
+              "after": {
+                "additionalProperties": true,
+                "title": "After",
+                "type": "object"
+              },
+              "before": {
+                "additionalProperties": true,
+                "title": "Before",
+                "type": "object"
+              },
+              "checks": {
+                "description": "At least one invariant must be asserted.",
+                "items": {
+                  "$ref": "#/$defs/Check"
+                },
+                "minItems": 1,
+                "title": "Checks",
+                "type": "array"
+              },
+              "read_back": {
+                "description": "True only when the post-state was re-read from SOLIDWORKS, not assumed.",
+                "title": "Read Back",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "read_back",
+              "checks"
+            ],
+            "title": "Verification",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "annotations": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Annotations",
+            "type": "array"
+          },
+          "annotations_after": {
+            "title": "Annotations After",
+            "type": "integer"
+          },
+          "annotations_before": {
+            "title": "Annotations Before",
+            "type": "integer"
+          },
+          "checkpoint": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/CheckpointRecord"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Populated by the dispatch pipeline, not by handlers."
+          },
+          "imported": {
+            "title": "Imported",
+            "type": "integer"
+          },
+          "kinds": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Kinds",
+            "type": "array"
+          },
+          "rebuild_errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rebuild Errors",
+            "type": "array"
+          },
+          "verification": {
+            "$ref": "#/$defs/Verification"
+          },
+          "warnings": {
+            "description": "Non-fatal problems the caller should see (degraded evidence, fallbacks used).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "verification",
+          "imported",
+          "annotations_before",
+          "annotations_after"
+        ],
+        "title": "DrawingAnnotateModelResult",
+        "type": "object"
+      },
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      },
+      "satisfies": [],
+      "summary": "Import model dimensions and annotations into the drawing's views, reporting each one that arrived rather than assuming the import found anything.",
+      "tags": [
+        "drawing",
+        "dimension",
+        "annotation",
+        "model-items"
+      ],
+      "tier": "core",
+      "timeout_s": 300.0
+    },
+    {
+      "domains": [
+        "drawing"
+      ],
+      "fresh_checkpoint": false,
       "handler_ref": "swmcp.handlers.drawing:drawing_list",
       "idempotent": true,
       "input_schema": {
@@ -12348,6 +12699,1443 @@
         "sheet",
         "create",
         "template"
+      ],
+      "tier": "core",
+      "timeout_s": 300.0
+    },
+    {
+      "domains": [
+        "drawing"
+      ],
+      "fresh_checkpoint": false,
+      "handler_ref": "swmcp.handlers.drawing:drawing_note_add",
+      "idempotent": false,
+      "input_schema": {
+        "$defs": {
+          "DocTarget": {
+            "additionalProperties": false,
+            "description": "Which document an operation acts on.\n\nWith neither field set the active document is used. Naming both is refused rather\nthan silently preferring one.",
+            "properties": {
+              "path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Full path of an already-open document. Takes precedence over title.",
+                "title": "Path"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Window title of an open document. Refused if more than one matches.",
+                "title": "Title"
+              }
+            },
+            "title": "DocTarget",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DRW-005, for the note and centre-mark half.",
+        "properties": {
+          "annotation": {
+            "default": "note",
+            "enum": [
+              "note",
+              "center_mark"
+            ],
+            "title": "Annotation",
+            "type": "string"
+          },
+          "at": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                      "type": "string"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "unit": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "value"
+                      ],
+                      "type": "object"
+                    }
+                  ],
+                  "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+                },
+                "maxItems": 2,
+                "minItems": 2,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Where to place the note, [x, y] on the sheet.",
+            "title": "At"
+          },
+          "center_mark_style": {
+            "default": "single",
+            "enum": [
+              "single",
+              "linear_group",
+              "circular_group"
+            ],
+            "title": "Center Mark Style",
+            "type": "string"
+          },
+          "document": {
+            "$ref": "#/$defs/DocTarget",
+            "description": "Which document to act on. Defaults to the active document."
+          },
+          "propagate": {
+            "default": false,
+            "description": "Centre marks: propagate to similar circles.",
+            "title": "Propagate",
+            "type": "boolean"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Note text. Required for annotation='note'.",
+            "title": "Text"
+          }
+        },
+        "title": "DrawingNoteAddArgs",
+        "type": "object"
+      },
+      "name": "sw_drawing_note_add",
+      "partially_satisfies": [
+        "DRW-005"
+      ],
+      "precondition": "drawing",
+      "projection": {
+        "audited": true,
+        "auto_checkpoint": true,
+        "confirm_required": false,
+        "destructive": false,
+        "read_only": false
+      },
+      "result_schema": {
+        "$defs": {
+          "Check": {
+            "additionalProperties": false,
+            "description": "One named invariant asserted after a mutation.",
+            "properties": {
+              "detail": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Detail"
+              },
+              "name": {
+                "title": "Name",
+                "type": "string"
+              },
+              "passed": {
+                "title": "Passed",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "name",
+              "passed"
+            ],
+            "title": "Check",
+            "type": "object"
+          },
+          "CheckpointRecord": {
+            "additionalProperties": false,
+            "description": "What the auto-checkpoint layer did before a mutation ran.",
+            "properties": {
+              "checkpoint_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Checkpoint Path"
+              },
+              "created_utc": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Created Utc"
+              },
+              "method": {
+                "description": "Never optional: the caller must be able to tell a real snapshot from a skipped one. 'file_copy' does not capture unsaved session state.",
+                "enum": [
+                  "save_as_copy",
+                  "file_copy",
+                  "skipped",
+                  "reused"
+                ],
+                "title": "Method",
+                "type": "string"
+              },
+              "reason": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Why the checkpoint was skipped or reused.",
+                "title": "Reason"
+              },
+              "size_bytes": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Size Bytes"
+              },
+              "source_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Source Path"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "title": "CheckpointRecord",
+            "type": "object"
+          },
+          "Verification": {
+            "additionalProperties": false,
+            "description": "Evidence that a mutation actually happened, read back out of the model.",
+            "properties": {
+              "after": {
+                "additionalProperties": true,
+                "title": "After",
+                "type": "object"
+              },
+              "before": {
+                "additionalProperties": true,
+                "title": "Before",
+                "type": "object"
+              },
+              "checks": {
+                "description": "At least one invariant must be asserted.",
+                "items": {
+                  "$ref": "#/$defs/Check"
+                },
+                "minItems": 1,
+                "title": "Checks",
+                "type": "array"
+              },
+              "read_back": {
+                "description": "True only when the post-state was re-read from SOLIDWORKS, not assumed.",
+                "title": "Read Back",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "read_back",
+              "checks"
+            ],
+            "title": "Verification",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "annotation": {
+            "title": "Annotation",
+            "type": "string"
+          },
+          "annotations_after": {
+            "title": "Annotations After",
+            "type": "integer"
+          },
+          "annotations_before": {
+            "title": "Annotations Before",
+            "type": "integer"
+          },
+          "checkpoint": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/CheckpointRecord"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Populated by the dispatch pipeline, not by handlers."
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "position_mm": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Position Mm",
+            "type": "array"
+          },
+          "rebuild_errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rebuild Errors",
+            "type": "array"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Text"
+          },
+          "verification": {
+            "$ref": "#/$defs/Verification"
+          },
+          "warnings": {
+            "description": "Non-fatal problems the caller should see (degraded evidence, fallbacks used).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "verification",
+          "annotation",
+          "name",
+          "annotations_before",
+          "annotations_after"
+        ],
+        "title": "DrawingNoteAddResult",
+        "type": "object"
+      },
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      },
+      "satisfies": [],
+      "summary": "Add a general note or a centre mark to the active sheet, verified by finding the annotation on the sheet afterwards with its type and position.",
+      "tags": [
+        "drawing",
+        "note",
+        "annotation",
+        "center-mark"
+      ],
+      "tier": "core",
+      "timeout_s": 300.0
+    },
+    {
+      "domains": [
+        "drawing",
+        "review"
+      ],
+      "fresh_checkpoint": false,
+      "handler_ref": "swmcp.handlers.drawing:drawing_review",
+      "idempotent": true,
+      "input_schema": {
+        "$defs": {
+          "DocTarget": {
+            "additionalProperties": false,
+            "description": "Which document an operation acts on.\n\nWith neither field set the active document is used. Naming both is refused rather\nthan silently preferring one.",
+            "properties": {
+              "path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Full path of an already-open document. Takes precedence over title.",
+                "title": "Path"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Window title of an open document. Refused if more than one matches.",
+                "title": "Title"
+              }
+            },
+            "title": "DocTarget",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DRW-008. The policy is the caller's; the measurements are this tool's.",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocTarget",
+            "description": "Which document to act on. Defaults to the active document."
+          },
+          "require_dimensions": {
+            "default": 0,
+            "description": "Fewest dimensions the drawing should carry.",
+            "maximum": 500,
+            "minimum": 0,
+            "title": "Require Dimensions",
+            "type": "integer"
+          },
+          "require_sheet_format": {
+            "default": false,
+            "description": "Treat a sheet with no format as a finding.",
+            "title": "Require Sheet Format",
+            "type": "boolean"
+          },
+          "require_views": {
+            "default": 1,
+            "description": "Fewest views each sheet should carry.",
+            "maximum": 50,
+            "minimum": 0,
+            "title": "Require Views",
+            "type": "integer"
+          }
+        },
+        "title": "DrawingReviewArgs",
+        "type": "object"
+      },
+      "name": "sw_drawing_review",
+      "partially_satisfies": [
+        "DRW-008"
+      ],
+      "precondition": "drawing",
+      "projection": {
+        "audited": false,
+        "auto_checkpoint": false,
+        "confirm_required": false,
+        "destructive": false,
+        "read_only": true
+      },
+      "result_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "annotation_count": {
+            "title": "Annotation Count",
+            "type": "integer"
+          },
+          "dangling_count": {
+            "title": "Dangling Count",
+            "type": "integer"
+          },
+          "dimension_count": {
+            "title": "Dimension Count",
+            "type": "integer"
+          },
+          "findings": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "note_count": {
+            "title": "Note Count",
+            "type": "integer"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "boolean"
+          },
+          "sheet_count": {
+            "title": "Sheet Count",
+            "type": "integer"
+          },
+          "table_count": {
+            "title": "Table Count",
+            "type": "integer"
+          },
+          "view_count": {
+            "title": "View Count",
+            "type": "integer"
+          },
+          "visual_review_required": {
+            "default": true,
+            "description": "Always true. This counts and positions annotations; it does not and cannot judge whether the drawing reads correctly to an engineer.",
+            "title": "Visual Review Required",
+            "type": "boolean"
+          },
+          "warnings": {
+            "description": "Non-fatal problems the caller should see (degraded evidence, fallbacks used).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "passed",
+          "sheet_count",
+          "view_count",
+          "annotation_count",
+          "dimension_count",
+          "note_count",
+          "table_count",
+          "dangling_count"
+        ],
+        "title": "DrawingReviewResult",
+        "type": "object"
+      },
+      "safety": {
+        "kind": "read"
+      },
+      "satisfies": [
+        "DRW-010"
+      ],
+      "summary": "Count and locate a drawing's views, dimensions, notes, tables, and dangling annotations against caller-supplied minimums. Never a substitute for a person reading the drawing.",
+      "tags": [
+        "drawing",
+        "review",
+        "validate",
+        "annotation"
+      ],
+      "tier": "core",
+      "timeout_s": 300.0
+    },
+    {
+      "domains": [
+        "drawing"
+      ],
+      "fresh_checkpoint": false,
+      "handler_ref": "swmcp.handlers.drawing:drawing_sheet_add",
+      "idempotent": false,
+      "input_schema": {
+        "$defs": {
+          "DocTarget": {
+            "additionalProperties": false,
+            "description": "Which document an operation acts on.\n\nWith neither field set the active document is used. Naming both is refused rather\nthan silently preferring one.",
+            "properties": {
+              "path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Full path of an already-open document. Takes precedence over title.",
+                "title": "Path"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Window title of an open document. Refused if more than one matches.",
+                "title": "Title"
+              }
+            },
+            "title": "DocTarget",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DRW-007.",
+        "properties": {
+          "activate": {
+            "default": true,
+            "description": "Make the new sheet current.",
+            "title": "Activate",
+            "type": "boolean"
+          },
+          "document": {
+            "$ref": "#/$defs/DocTarget",
+            "description": "Which document to act on. Defaults to the active document."
+          },
+          "height": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                    "type": "string"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "unit": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "value"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Required for paper_size='custom'.",
+            "title": "Height"
+          },
+          "name": {
+            "description": "Name for the new sheet.",
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "paper_size": {
+            "default": "a",
+            "description": "Sheet size.",
+            "enum": [
+              "a",
+              "a_vertical",
+              "b",
+              "c",
+              "d",
+              "e",
+              "a4",
+              "a4_vertical",
+              "a3",
+              "a2",
+              "a1",
+              "a0",
+              "custom"
+            ],
+            "title": "Paper Size",
+            "type": "string"
+          },
+          "projection": {
+            "default": "third_angle",
+            "enum": [
+              "first_angle",
+              "third_angle"
+            ],
+            "title": "Projection",
+            "type": "string"
+          },
+          "scale": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "maxItems": 2,
+                "minItems": 2,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "[numerator, denominator].",
+            "title": "Scale"
+          },
+          "width": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                    "type": "string"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "unit": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "value"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Required for paper_size='custom'.",
+            "title": "Width"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "DrawingSheetAddArgs",
+        "type": "object"
+      },
+      "name": "sw_drawing_sheet_add",
+      "partially_satisfies": [
+        "DRW-007"
+      ],
+      "precondition": "drawing",
+      "projection": {
+        "audited": true,
+        "auto_checkpoint": true,
+        "confirm_required": false,
+        "destructive": false,
+        "read_only": false
+      },
+      "result_schema": {
+        "$defs": {
+          "Check": {
+            "additionalProperties": false,
+            "description": "One named invariant asserted after a mutation.",
+            "properties": {
+              "detail": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Detail"
+              },
+              "name": {
+                "title": "Name",
+                "type": "string"
+              },
+              "passed": {
+                "title": "Passed",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "name",
+              "passed"
+            ],
+            "title": "Check",
+            "type": "object"
+          },
+          "CheckpointRecord": {
+            "additionalProperties": false,
+            "description": "What the auto-checkpoint layer did before a mutation ran.",
+            "properties": {
+              "checkpoint_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Checkpoint Path"
+              },
+              "created_utc": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Created Utc"
+              },
+              "method": {
+                "description": "Never optional: the caller must be able to tell a real snapshot from a skipped one. 'file_copy' does not capture unsaved session state.",
+                "enum": [
+                  "save_as_copy",
+                  "file_copy",
+                  "skipped",
+                  "reused"
+                ],
+                "title": "Method",
+                "type": "string"
+              },
+              "reason": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Why the checkpoint was skipped or reused.",
+                "title": "Reason"
+              },
+              "size_bytes": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Size Bytes"
+              },
+              "source_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Source Path"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "title": "CheckpointRecord",
+            "type": "object"
+          },
+          "Verification": {
+            "additionalProperties": false,
+            "description": "Evidence that a mutation actually happened, read back out of the model.",
+            "properties": {
+              "after": {
+                "additionalProperties": true,
+                "title": "After",
+                "type": "object"
+              },
+              "before": {
+                "additionalProperties": true,
+                "title": "Before",
+                "type": "object"
+              },
+              "checks": {
+                "description": "At least one invariant must be asserted.",
+                "items": {
+                  "$ref": "#/$defs/Check"
+                },
+                "minItems": 1,
+                "title": "Checks",
+                "type": "array"
+              },
+              "read_back": {
+                "description": "True only when the post-state was re-read from SOLIDWORKS, not assumed.",
+                "title": "Read Back",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "read_back",
+              "checks"
+            ],
+            "title": "Verification",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "active_sheet": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Active Sheet"
+          },
+          "checkpoint": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/CheckpointRecord"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Populated by the dispatch pipeline, not by handlers."
+          },
+          "height_mm": {
+            "title": "Height Mm",
+            "type": "number"
+          },
+          "paper_size": {
+            "title": "Paper Size",
+            "type": "string"
+          },
+          "rebuild_errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rebuild Errors",
+            "type": "array"
+          },
+          "scale": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Scale",
+            "type": "array"
+          },
+          "sheet_name": {
+            "title": "Sheet Name",
+            "type": "string"
+          },
+          "sheet_names": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sheet Names",
+            "type": "array"
+          },
+          "sheets_after": {
+            "title": "Sheets After",
+            "type": "integer"
+          },
+          "sheets_before": {
+            "title": "Sheets Before",
+            "type": "integer"
+          },
+          "verification": {
+            "$ref": "#/$defs/Verification"
+          },
+          "warnings": {
+            "description": "Non-fatal problems the caller should see (degraded evidence, fallbacks used).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          },
+          "width_mm": {
+            "title": "Width Mm",
+            "type": "number"
+          }
+        },
+        "required": [
+          "verification",
+          "sheet_name",
+          "paper_size",
+          "width_mm",
+          "height_mm",
+          "scale",
+          "sheets_before",
+          "sheets_after"
+        ],
+        "title": "DrawingSheetAddResult",
+        "type": "object"
+      },
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      },
+      "satisfies": [],
+      "summary": "Add a sheet with its own size, scale, and projection standard, measured back so a sheet of zero area is refused rather than left to hang the next view.",
+      "tags": [
+        "drawing",
+        "sheet",
+        "add"
+      ],
+      "tier": "core",
+      "timeout_s": 300.0
+    },
+    {
+      "domains": [
+        "drawing"
+      ],
+      "fresh_checkpoint": false,
+      "handler_ref": "swmcp.handlers.drawing:drawing_table_add",
+      "idempotent": false,
+      "input_schema": {
+        "$defs": {
+          "DocTarget": {
+            "additionalProperties": false,
+            "description": "Which document an operation acts on.\n\nWith neither field set the active document is used. Naming both is refused rather\nthan silently preferring one.",
+            "properties": {
+              "path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Full path of an already-open document. Takes precedence over title.",
+                "title": "Path"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Window title of an open document. Refused if more than one matches.",
+                "title": "Title"
+              }
+            },
+            "title": "DocTarget",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DRW-006, for the BOM half.",
+        "properties": {
+          "at": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                      "type": "string"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "unit": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "value"
+                      ],
+                      "type": "object"
+                    }
+                  ],
+                  "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+                },
+                "maxItems": 2,
+                "minItems": 2,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Table anchor position, [x, y] on the sheet.",
+            "title": "At"
+          },
+          "bom_type": {
+            "default": "parts_only",
+            "description": "Which BOM to build.",
+            "enum": [
+              "parts_only",
+              "top_level_only",
+              "indented",
+              "flattened"
+            ],
+            "title": "Bom Type",
+            "type": "string"
+          },
+          "configuration": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Configuration the quantities come from.",
+            "title": "Configuration"
+          },
+          "document": {
+            "$ref": "#/$defs/DocTarget",
+            "description": "Which document to act on. Defaults to the active document."
+          },
+          "template_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Explicit table template.",
+            "title": "Template Path"
+          }
+        },
+        "title": "DrawingTableAddArgs",
+        "type": "object"
+      },
+      "name": "sw_drawing_table_add",
+      "partially_satisfies": [
+        "DRW-006"
+      ],
+      "precondition": "drawing",
+      "projection": {
+        "audited": true,
+        "auto_checkpoint": true,
+        "confirm_required": false,
+        "destructive": false,
+        "read_only": false
+      },
+      "result_schema": {
+        "$defs": {
+          "Check": {
+            "additionalProperties": false,
+            "description": "One named invariant asserted after a mutation.",
+            "properties": {
+              "detail": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Detail"
+              },
+              "name": {
+                "title": "Name",
+                "type": "string"
+              },
+              "passed": {
+                "title": "Passed",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "name",
+              "passed"
+            ],
+            "title": "Check",
+            "type": "object"
+          },
+          "CheckpointRecord": {
+            "additionalProperties": false,
+            "description": "What the auto-checkpoint layer did before a mutation ran.",
+            "properties": {
+              "checkpoint_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Checkpoint Path"
+              },
+              "created_utc": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Created Utc"
+              },
+              "method": {
+                "description": "Never optional: the caller must be able to tell a real snapshot from a skipped one. 'file_copy' does not capture unsaved session state.",
+                "enum": [
+                  "save_as_copy",
+                  "file_copy",
+                  "skipped",
+                  "reused"
+                ],
+                "title": "Method",
+                "type": "string"
+              },
+              "reason": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Why the checkpoint was skipped or reused.",
+                "title": "Reason"
+              },
+              "size_bytes": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Size Bytes"
+              },
+              "source_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Source Path"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "title": "CheckpointRecord",
+            "type": "object"
+          },
+          "Verification": {
+            "additionalProperties": false,
+            "description": "Evidence that a mutation actually happened, read back out of the model.",
+            "properties": {
+              "after": {
+                "additionalProperties": true,
+                "title": "After",
+                "type": "object"
+              },
+              "before": {
+                "additionalProperties": true,
+                "title": "Before",
+                "type": "object"
+              },
+              "checks": {
+                "description": "At least one invariant must be asserted.",
+                "items": {
+                  "$ref": "#/$defs/Check"
+                },
+                "minItems": 1,
+                "title": "Checks",
+                "type": "array"
+              },
+              "read_back": {
+                "description": "True only when the post-state was re-read from SOLIDWORKS, not assumed.",
+                "title": "Read Back",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "read_back",
+              "checks"
+            ],
+            "title": "Verification",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "checkpoint": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/CheckpointRecord"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Populated by the dispatch pipeline, not by handlers."
+          },
+          "column_count": {
+            "title": "Column Count",
+            "type": "integer"
+          },
+          "column_titles": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Column Titles",
+            "type": "array"
+          },
+          "rebuild_errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rebuild Errors",
+            "type": "array"
+          },
+          "row_count": {
+            "title": "Row Count",
+            "type": "integer"
+          },
+          "rows": {
+            "items": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "table_type": {
+            "title": "Table Type",
+            "type": "string"
+          },
+          "tables_after": {
+            "title": "Tables After",
+            "type": "integer"
+          },
+          "tables_before": {
+            "title": "Tables Before",
+            "type": "integer"
+          },
+          "verification": {
+            "$ref": "#/$defs/Verification"
+          },
+          "warnings": {
+            "description": "Non-fatal problems the caller should see (degraded evidence, fallbacks used).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "verification",
+          "table_type",
+          "row_count",
+          "column_count",
+          "tables_before",
+          "tables_after"
+        ],
+        "title": "DrawingTableAddResult",
+        "type": "object"
+      },
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      },
+      "satisfies": [],
+      "summary": "Insert a bill of materials on the active sheet and read every cell back, so the table's contents are the evidence rather than the call having returned.",
+      "tags": [
+        "drawing",
+        "bom",
+        "table"
       ],
       "tier": "core",
       "timeout_s": 300.0

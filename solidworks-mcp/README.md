@@ -6,7 +6,7 @@ worker thread.
 It implements the P0 foundation and a P1 modelling vertical from
 [`docs/solidworks-target-requirements.md`](../docs/solidworks-target-requirements.md),
 plus neutral-format exchange and an atomic mutate-and-validate workflow pulled forward
-from P2: **105 operations covering all 105 in-scope requirements**, with coverage
+from P2: **110 operations covering all 111 in-scope requirements**, with coverage
 reported honestly in `src/swmcp/generated/requirements_coverage.json` rather than
 asserted.
 
@@ -125,7 +125,7 @@ Angles default to degrees and accept `"45deg"`, `"1.57rad"`, or `{"value": 0.25,
 | surface | create a surface by planar fill, offset, extend, or knit |
 | exchange | export STEP, IGES, STL, 3MF, OBJ, PLY, Parasolid, SAT, VRML, PDF, DXF, DWG; import STEP, IGES, Parasolid, SAT, STL with diagnostics |
 | assembly | insert a component, walk the component tree, set suppression, fixed state, visibility, and configuration, add/list/edit/delete mates, probe candidate mate entities and judge a pair before building it, report how constrained each component is, check interference |
-| drawing | create a sheet with an explicit template, size, scale, and projection standard; place model and standard-three views; list sheets and views with position, outline, scale, and referenced model |
+| drawing | create a drawing and add sheets with explicit template, size, scale, and projection standard; place model and standard-three views; import model dimensions; add notes and centre marks; insert a bill of materials read back cell by cell; list sheets and views; review counts against caller-supplied minimums |
 | review | inspect a document, validate it against caller-supplied policy, audit holes in the B-Rep, write JSON and Markdown reports, safe execute: run a sequence under one checkpoint and roll it back if an invariant fails |
 
 Per-tool reference with full JSON schemas: `src/swmcp/generated/docs/`.
@@ -332,6 +332,34 @@ coverage file, rather than left for a user to discover:
 - **`REV-005` (reports)** — a policy review written as both JSON and Markdown, each
   finding attributed to what it read. The report covers validation findings; it does
   not embed previews or the hole audit.
+- **`DRW-004` (model items)** — model dimensions and annotations are imported
+  into the views, and every item that arrived is reported by walking the views
+  before and after. `InsertModelAnnotations3` returns nothing when it finds
+  nothing, which is not the same as failing, so "imported nothing" is reported
+  as exactly that. Creating drawing dimensions directly, and setting tolerance,
+  precision, arrow style, or text formatting, are not implemented.
+- **`DRW-005` (annotations)** — general notes with placement, and centre marks on
+  selected circular edges. Hole callouts, datum symbols, GD&T, surface-finish,
+  weld, balloon, and revision annotations are not implemented; each needs its own
+  symbol definition rather than text and a position.
+- **`DRW-006` (tables)** — a bill of materials in any of the four BOM types, read
+  back cell by cell with `DisplayedText` so the contents are the evidence rather
+  than the call having returned. Hole, revision, weldment cut-list, and general
+  tables are not implemented, and neither is following a row back to the
+  component it lists.
+- **`DRW-007` (sheets)** — additional sheets with their own size, scale, and
+  projection standard, activated or not as asked, and measured back so a sheet of
+  zero area is refused — `NewSheet3` carries the same width/height trap as
+  `NewDocument`. Changing an existing sheet's format, reordering views, and layer,
+  line, and font standards are not implemented.
+- **`DRW-008` (drawing review)** — views, dimensions, notes, tables, and dangling
+  annotations counted and located per sheet against caller-supplied minimums,
+  every finding attributed to the call it was read from. Overlap, clipping, and
+  missing-callout detection are not implemented: they need annotation extents
+  compared against each other, and `DRW-010` is explicit that approximate
+  bounding boxes must not be presented as proof a drawing is correct — which is
+  why `sw_drawing_review` sets `visual_review_required` unconditionally and says
+  in its own warnings that a person still has to look at it.
 - **`DRW-001` (drawing creation)** — an explicit or default template, a named
   sheet size, scale, and projection standard, with the sheet measured back so a
   degenerate one is refused at creation rather than hanging the next call. Units
@@ -439,6 +467,5 @@ cover inserting a component, walking the tree, and setting component state, and
 `MATE-001` to `MATE-008` cover adding, listing, probing, editing, and deleting mates,
 reporting how constrained each component is, and detecting interference. Component
 transforms (`ASM-004`), the rest of the assembly domain (`ASM-005` to `ASM-007`), and
-the rest of the drawing domain (`DRW-004` to `DRW-010`: annotations, tables,
-extra sheets, and sheet export), and the rest of P2 and P3 — motion, delivery,
-sheet metal, weldments, simulation — are not implemented.
+per-sheet drawing export (`DRW-009`), and the rest of P2 and P3 — motion,
+delivery, sheet metal, weldments, simulation — are not implemented.

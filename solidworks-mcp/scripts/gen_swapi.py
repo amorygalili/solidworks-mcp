@@ -81,6 +81,25 @@ INTERFACES = (
     "IDrawingDoc",
     "IView",
     "ISheet",
+    # Drawing annotations and tables (DRW-004 to DRW-009). Every annotation reaches the
+    # sheet through IAnnotation, which is what carries position, layer and attachment;
+    # the specific kinds hang off it. The table interfaces are how a BOM or hole table
+    # is read back cell by cell, which is the only evidence that one was really built.
+    "IAnnotation",
+    "INote",
+    "ICenterMark",
+    "IDatumTag",
+    "IGtol",
+    "IWeldSymbol",
+    "IBomFeature",
+    "ITableAnnotation",
+    "IBomTableAnnotation",
+    "IRevisionTableAnnotation",
+    "IHoleTableAnnotation",
+    "ILayerMgr",
+    "ILayer",
+    "IModelViewManager",
+    "IExportPdfData",
 )
 
 

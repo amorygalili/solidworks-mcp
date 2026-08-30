@@ -93,6 +93,9 @@
     "DRW-003": [
       "sw_drawing_list"
     ],
+    "DRW-010": [
+      "sw_drawing_review"
+    ],
     "FEAT-001": [
       "sw_feature_extrude_boss"
     ],
@@ -279,6 +282,36 @@
         "sw_drawing_view_add"
       ]
     },
+    "DRW-004": {
+      "limitation": "Model dimensions and annotations are imported into the drawing's views, and every item that arrived is reported by walking the views before and after - InsertModelAnnotations3 returns nothing when it finds nothing, which is not the same as failing, so 'imported nothing' is reported as exactly that. Creating drawing dimensions directly, and setting tolerance, precision, arrow style, or text formatting on them, are not implemented.",
+      "tools": [
+        "sw_drawing_annotate_model"
+      ]
+    },
+    "DRW-005": {
+      "limitation": "General notes with placement, and centre marks on selected circular edges. Hole callouts, datum symbols, GD&T, surface-finish, weld, balloon, and revision annotations are not implemented; each needs its own symbol definition rather than text and a position.",
+      "tools": [
+        "sw_drawing_note_add"
+      ]
+    },
+    "DRW-006": {
+      "limitation": "A bill of materials in any of the four BOM types, read back cell by cell with DisplayedText so the contents are the evidence rather than the call having returned. Hole, revision, weldment cut-list, and general tables are not implemented, and neither is following a row back to the component it lists.",
+      "tools": [
+        "sw_drawing_table_add"
+      ]
+    },
+    "DRW-007": {
+      "limitation": "Additional sheets with their own size, scale, and projection standard, activated or not as asked, and measured back so a sheet of zero area is refused - NewSheet3 carries the same width/height trap as NewDocument. Changing an existing sheet's format or template, reordering views, and layer, line, and font standards are not implemented.",
+      "tools": [
+        "sw_drawing_sheet_add"
+      ]
+    },
+    "DRW-008": {
+      "limitation": "Views, dimensions, notes, tables, and dangling annotations are counted and located per sheet, and checked against caller-supplied minimums, with every finding attributed to the call it was read from. Overlap, clipping, and missing-callout detection are not implemented: they need annotation extents compared against each other, and DRW-010 is explicit that approximate bounding boxes must not be presented as proof a drawing is correct.",
+      "tools": [
+        "sw_drawing_review"
+      ]
+    },
     "FEAT-005": {
       "limitation": "Loft boss and cut across two or more profiles, with guide curves, a centerline, the closed-loop option, start/end tangency, and thin-wall thickness. The boundary feature is a different API (InsertNetBlend) and is not implemented.",
       "tools": [
@@ -423,11 +456,11 @@
   },
   "totals": {
     "covered_by_platform": 11,
-    "fully_covered_by_a_tool": 71,
-    "in_scope": 105,
-    "partially_covered": 26,
+    "fully_covered_by_a_tool": 72,
+    "in_scope": 111,
+    "partially_covered": 31,
     "requirements_in_backlog": 152,
-    "tools": 105,
+    "tools": 110,
     "uncovered_in_scope": 0
   },
   "uncovered_in_scope": []

@@ -29,10 +29,20 @@ from swmcp.envelope import Check, Verification
 from swmcp.errors import SwMcpError, make_error, validation_error
 from swmcp.safety.paths import normalize_cad_path
 from swmcp.schemas.drawing import (
+    DrawingAnnotateModelArgs,
+    DrawingAnnotateModelResult,
     DrawingListArgs,
     DrawingListResult,
     DrawingNewArgs,
     DrawingNewResult,
+    DrawingNoteAddArgs,
+    DrawingNoteAddResult,
+    DrawingReviewArgs,
+    DrawingReviewResult,
+    DrawingSheetAddArgs,
+    DrawingSheetAddResult,
+    DrawingTableAddArgs,
+    DrawingTableAddResult,
     DrawingViewAddArgs,
     DrawingViewAddResult,
 )
@@ -554,6 +564,15 @@ def drawing_list(ctx: OpContext, args: DrawingListArgs) -> DrawingListResult:
         current["views"].append(described)
         view_total += 1
 
+    # GetFirstView walks the ACTIVE sheet only, so a drawing's other sheets never appear
+    # in it. They are taken from GetSheetNames instead and reported without views, which
+    # is honest: enumerating their views would mean activating each one, and a read-only
+    # operation must not change which sheet the user is looking at.
+    walked = {entry["name"] for entry in sheets}
+    for name in _sheet_names(doc):
+        if name not in walked:
+            sheets.append({"name": name, "active": False, "views": []})
+
     # The sheet geometry comes from ISheet, which the walk does not hand back.
     for entry in sheets:
         if entry["name"] == active_name and active is not None:
@@ -570,8 +589,8 @@ def drawing_list(ctx: OpContext, args: DrawingListArgs) -> DrawingListResult:
     missing = [entry["name"] for entry in sheets if "width_mm" not in entry]
     if missing:
         warnings.append(
-            f"Size and scale were only read for the active sheet; {', '.join(missing)} "
-            f"report their views only. Activate a sheet to measure it."
+            f"Only the active sheet can be measured and walked; {', '.join(missing)} "
+            f"are listed by name with no size or views. Activate a sheet to inspect it."
         )
 
     return DrawingListResult(
@@ -580,4 +599,719 @@ def drawing_list(ctx: OpContext, args: DrawingListArgs) -> DrawingListResult:
         sheets=sheets,
         view_count=view_total,
         warnings=warnings,
+    )
+
+
+# --- DRW-004 to DRW-008 -----------------------------------------------------------
+
+_ANNOTATION_KINDS = {
+    "cosmetic_threads": "swInsertCThreads",
+    "datums": "swInsertDatums",
+    "dimensions": "swInsertDimensions",
+    "geometric_tolerances": "swInsertGTols",
+    "notes": "swInsertNotes",
+    "surface_finishes": "swInsertSFSymbols",
+    "welds": "swInsertWelds",
+    "axes": "swInsertAxes",
+    "planes": "swInsertPlanes",
+    "points": "swInsertPoints",
+}
+
+_ANNOTATION_NAMES = {
+    swconst.value("swAnnotationType_e", member): name
+    for name, member in (
+        ("cosmetic_thread", "swCThread"),
+        ("datum_tag", "swDatumTag"),
+        ("datum_target", "swDatumTargetSym"),
+        ("dimension", "swDisplayDimension"),
+        ("geometric_tolerance", "swGTol"),
+        ("note", "swNote"),
+        ("surface_finish", "swSFSymbol"),
+        ("weld_symbol", "swWeldSymbol"),
+        ("custom_symbol", "swCustomSymbol"),
+        ("leader", "swLeader"),
+        ("block", "swBlock"),
+        ("center_mark", "swCenterMarkSym"),
+        ("table", "swTableAnnotation"),
+        ("center_line", "swCenterLine"),
+        ("datum_origin", "swDatumOrigin"),
+        ("revision_cloud", "swRevisionCloud"),
+    )
+}
+
+_BOM_TYPES = {
+    "parts_only": "swBomType_PartsOnly",
+    "top_level_only": "swBomType_TopLevelOnly",
+    "indented": "swBomType_Indented",
+    "flattened": "swBomType_Flattened",
+}
+
+_CENTER_MARK_STYLES = {
+    "single": "swCenterMark_Single",
+    "linear_group": "swCenterMark_LinearGroup",
+    "circular_group": "swCenterMark_CircularGroup",
+}
+
+
+def _describe_annotation(annotation: Any) -> dict[str, Any]:
+    raw_type = try_com_member(annotation, "GetType", default=None)
+    position = try_com_member(annotation, "GetPosition", default=None)
+    entry: dict[str, Any] = {
+        "name": str(try_com_member(annotation, "GetName", default="") or ""),
+        "type": _ANNOTATION_NAMES.get(raw_type, f"unknown({raw_type})"),
+    }
+    if isinstance(position, (tuple, list)) and len(position) >= 2:
+        entry["position_mm"] = [round(from_meters(float(v)), 6) for v in position[:2]]
+    return entry
+
+
+def _annotations_of(view: Any) -> list[Any]:
+    found: list[Any] = []
+    annotation = try_com_member(view, "GetFirstAnnotation3", default=None)
+    guard = 0
+    while annotation is not None and guard < 5000:
+        guard += 1
+        found.append(annotation)
+        annotation = try_com_member(annotation, "GetNext3", default=None)
+    return found
+
+
+def _all_annotations(doc: Any) -> list[Any]:
+    return [a for view in _walk_views(doc) for a in _annotations_of(view)]
+
+
+def _display_dimensions(doc: Any) -> int:
+    """Dimensions across every view.
+
+    They are *not* reachable through the ``GetFirstAnnotation3`` walk — a view can
+    report one display dimension and zero annotations at the same time — so anything
+    counting imported dimensions has to ask the views directly.
+    """
+    return sum(
+        int(try_com_member(view, "GetDisplayDimensionCount", default=0) or 0)
+        for view in _walk_views(doc)
+    )
+
+
+def _sheet_names(doc: Any) -> list[str]:
+    raw = try_com_member(doc, "GetSheetNames", default=None)
+    return [str(name) for name in raw] if isinstance(raw, (tuple, list)) else []
+
+
+def _table_count(doc: Any) -> int:
+    return sum(
+        int(try_com_member(view, "GetTableAnnotationCount", default=0) or 0)
+        for view in _walk_views(doc)
+    )
+
+
+@op(
+    name="sw_drawing_sheet_add",
+    tier="core",
+    domains=("drawing",),
+    tags=("drawing", "sheet", "add"),
+    summary=(
+        "Add a sheet with its own size, scale, and projection standard, measured back "
+        "so a sheet of zero area is refused rather than left to hang the next view."
+    ),
+    safety=ModelMutation(destructive=False),
+    partially_satisfies=("DRW-007",),
+    precondition="drawing",
+    idempotent=False,
+    timeout_s=300.0,
+)
+def drawing_sheet_add(ctx: OpContext, args: DrawingSheetAddArgs) -> DrawingSheetAddResult:
+    """DRW-007 for sheets.
+
+    ``NewSheet3`` carries the same trap as ``NewDocument``: its width and height are
+    read only for a user-defined size, so the schema refuses that size without them.
+    """
+    doc = _require_drawing(ctx)
+    before = _sheet_names(doc)
+    if args.name in before:
+        raise SwMcpError(
+            validation_error(
+                "SHEET_NAME_TAKEN",
+                f"This drawing already has a sheet named {args.name!r}.",
+                remediation=["Sheet names must be unique; pick another."],
+            )
+        )
+
+    previously_active = try_com_member(
+        try_com_member(doc, "GetCurrentSheet", default=None), "GetName", default=None
+    )
+    scale = args.scale or [1.0, 1.0]
+    made = try_com_member(
+        doc,
+        "NewSheet3",
+        args.name,
+        swconst.value("swDwgPaperSizes_e", _PAPER_SIZES[args.paper_size]),
+        swconst.value("swDwgTemplates_e", "swDwgTemplateNone"),
+        float(scale[0]),
+        float(scale[1]),
+        args.projection == "first_angle",
+        "",
+        float(args.width or 0.0),
+        float(args.height or 0.0),
+        "Default",
+        default=None,
+    )
+
+    after = _sheet_names(doc)
+    if not made or args.name not in after:
+        raise SwMcpError(
+            make_error(
+                "DRAWING_SHEET_FAILED",
+                "solidworks",
+                f"SOLIDWORKS did not add a sheet named {args.name!r}.",
+                context={"returned": made, "sheets": after},
+                remediation=["Sheet names must be unique within the drawing."],
+            )
+        )
+
+    # NewSheet3 activates the sheet it made, so it can be measured directly.
+    sheet = try_com_member(doc, "GetCurrentSheet", default=None)
+    geometry = _sheet_geometry(sheet)
+    if not geometry or geometry["width_mm"] <= 0 or geometry["height_mm"] <= 0:
+        raise SwMcpError(
+            make_error(
+                "DRAWING_SHEET_DEGENERATE",
+                "solidworks",
+                f"The new sheet measures {geometry.get('width_mm')} x "
+                f"{geometry.get('height_mm')} mm, which is unusable.",
+                context={"sheet": geometry},
+                remediation=[
+                    "A sheet with no area makes SOLIDWORKS loop forever when a view is "
+                    "placed on it, so it is reported now rather than hanging later.",
+                ],
+            )
+        )
+
+    if not args.activate and previously_active:
+        try_com_member(doc, "ActivateSheet", previously_active, default=None)
+
+    active = try_com_member(
+        try_com_member(doc, "GetCurrentSheet", default=None), "GetName", default=None
+    )
+    return DrawingSheetAddResult(
+        sheet_name=args.name,
+        paper_size=geometry["paper_size"],
+        width_mm=geometry["width_mm"],
+        height_mm=geometry["height_mm"],
+        scale=geometry["scale"],
+        active_sheet=str(active) if active else None,
+        sheets_before=len(before),
+        sheets_after=len(after),
+        sheet_names=after,
+        verification=Verification(
+            read_back=True,
+            before={"sheet_count": len(before), "sheets": before},
+            after={"sheet_count": len(after), "sheets": after, "sheet": geometry},
+            checks=[
+                Check(
+                    name="sheet_is_listed",
+                    passed=args.name in after,
+                    detail=f"{len(before)} -> {len(after)} sheet(s)",
+                ),
+                Check(
+                    name="sheet_has_area",
+                    passed=geometry["width_mm"] > 0 and geometry["height_mm"] > 0,
+                    detail=f"{geometry['width_mm']} x {geometry['height_mm']} mm",
+                ),
+                Check(
+                    name="activation_is_as_asked",
+                    passed=(str(active) == args.name) == args.activate,
+                    detail=f"active sheet is {active!r}",
+                ),
+            ],
+        ),
+    )
+
+
+@op(
+    name="sw_drawing_annotate_model",
+    tier="core",
+    domains=("drawing",),
+    tags=("drawing", "dimension", "annotation", "model-items"),
+    summary=(
+        "Import model dimensions and annotations into the drawing's views, reporting "
+        "each one that arrived rather than assuming the import found anything."
+    ),
+    safety=ModelMutation(destructive=False),
+    partially_satisfies=("DRW-004",),
+    precondition="drawing",
+    idempotent=False,
+    timeout_s=300.0,
+)
+def drawing_annotate_model(
+    ctx: OpContext, args: DrawingAnnotateModelArgs
+) -> DrawingAnnotateModelResult:
+    """DRW-004.
+
+    **Version 2, deliberately.** ``InsertModelAnnotations3`` and ``4`` return ``None``
+    and import nothing on this build, for a part whose dimensions are every one of them
+    ``MarkedForDrawing``; ``InsertModelAnnotations2`` returns ``True`` and places them.
+    That came out of trying all three against the same part, and it is why this calls
+    the oldest of the family rather than the newest.
+
+    A falsy return means nothing was found to import, which is not the same as failing:
+    a model whose sketches were never dimensioned has nothing to bring across. The count
+    comes from measuring the views before and after, so "imported nothing" is reported
+    as exactly that rather than as success.
+    """
+    doc = _require_drawing(ctx)
+    before_annotations = _all_annotations(doc)
+    before_dimensions = _display_dimensions(doc)
+
+    types = 0
+    for kind in args.kinds:
+        types |= swconst.value("swInsertAnnotation_e", _ANNOTATION_KINDS[kind])
+
+    returned = try_com_member(
+        doc,
+        "InsertModelAnnotations2",
+        swconst.value("swImportModelItemsSource_e", "swImportModelItemsFromEntireModel"),
+        types,
+        args.all_views,
+        args.eliminate_duplicates,
+        args.hidden_feature_dimensions,
+        args.use_sketch_placement,
+        default=None,
+    )
+
+    after_annotations = _all_annotations(doc)
+    after_dimensions = _display_dimensions(doc)
+    before_names = {
+        str(try_com_member(a, "GetName", default="") or "") for a in before_annotations
+    }
+    described = [
+        _describe_annotation(a)
+        for a in after_annotations
+        if str(try_com_member(a, "GetName", default="") or "") not in before_names
+    ]
+    # Display dimensions are not part of the annotation walk at all, so they are counted
+    # from the views and appended here rather than being invisible.
+    gained = after_dimensions - before_dimensions
+    described.extend({"type": "dimension", "name": ""} for _ in range(max(gained, 0)))
+
+    warnings: list[str] = []
+    if not described:
+        warnings.append(
+            "Nothing was imported. The model has no items of the requested kinds that "
+            "are marked for drawings - a part whose sketches were never dimensioned has "
+            "no dimensions to bring across."
+        )
+
+    before_total = len(before_annotations) + before_dimensions
+    after_total = len(after_annotations) + after_dimensions
+    return DrawingAnnotateModelResult(
+        imported=len(described),
+        annotations=described,
+        annotations_before=before_total,
+        annotations_after=after_total,
+        kinds=list(args.kinds),
+        warnings=warnings,
+        verification=Verification(
+            read_back=True,
+            before={
+                "annotation_count": len(before_annotations),
+                "dimension_count": before_dimensions,
+            },
+            after={
+                "annotation_count": len(after_annotations),
+                "dimension_count": after_dimensions,
+                "imported": described,
+            },
+            checks=[
+                Check(
+                    name="counts_match_what_was_reported",
+                    passed=after_total - before_total == len(described),
+                    detail=f"{before_total} -> {after_total}, {len(described)} new",
+                ),
+                Check(
+                    name="import_call_was_made",
+                    # A falsy return is how this reports "nothing to import", which is
+                    # not a failure, so it is described rather than raised on.
+                    passed=True,
+                    detail=f"InsertModelAnnotations2 returned {returned!r}",
+                ),
+            ],
+        ),
+    )
+
+
+@op(
+    name="sw_drawing_note_add",
+    tier="core",
+    domains=("drawing",),
+    tags=("drawing", "note", "annotation", "center-mark"),
+    summary=(
+        "Add a general note or a centre mark to the active sheet, verified by finding "
+        "the annotation on the sheet afterwards with its type and position."
+    ),
+    safety=ModelMutation(destructive=False),
+    partially_satisfies=("DRW-005",),
+    precondition="drawing",
+    idempotent=False,
+    timeout_s=300.0,
+)
+def drawing_note_add(ctx: OpContext, args: DrawingNoteAddArgs) -> DrawingNoteAddResult:
+    """DRW-005 for notes and centre marks."""
+    doc = _require_drawing(ctx)
+    before = _all_annotations(doc)
+    before_names = {str(try_com_member(a, "GetName", default="") or "") for a in before}
+
+    if args.annotation == "note":
+        note = try_com_member(doc, "InsertNote", args.text, default=None)
+        if note is None:
+            raise SwMcpError(
+                make_error(
+                    "DRAWING_NOTE_FAILED",
+                    "solidworks",
+                    "SOLIDWORKS did not create the note.",
+                    remediation=["A note needs an active drawing sheet."],
+                )
+            )
+        annotation = try_com_member(note, "GetAnnotation", default=None)
+        if args.at is not None and annotation is not None:
+            try_com_member(
+                annotation,
+                "SetPosition",
+                float(args.at[0]),
+                float(args.at[1]),
+                0.0,
+                default=None,
+            )
+    else:
+        selected = int(try_com_member(doc, "GetSelectedObjectCount", default=0) or 0)
+        if not selected:
+            raise SwMcpError(
+                validation_error(
+                    "NOTHING_SELECTED",
+                    "A centre mark is placed on selected circular edges, and nothing is "
+                    "selected.",
+                    remediation=[
+                        "Select the circles first with sw_selection_set or sw_probe_faces.",
+                    ],
+                )
+            )
+        made = try_com_member(
+            doc,
+            "InsertCenterMark3",
+            swconst.value("swCenterMarkStyle_e", _CENTER_MARK_STYLES[args.center_mark_style]),
+            args.propagate,
+            False,
+            default=None,
+        )
+        if not made:
+            raise SwMcpError(
+                make_error(
+                    "DRAWING_CENTER_MARK_FAILED",
+                    "solidworks",
+                    "SOLIDWORKS did not place a centre mark.",
+                    remediation=["Centre marks need circular edges selected in a view."],
+                )
+            )
+
+    after = _all_annotations(doc)
+    fresh = [
+        a
+        for a in after
+        if str(try_com_member(a, "GetName", default="") or "") not in before_names
+    ]
+    if not fresh:
+        raise SwMcpError(
+            make_error(
+                "DRAWING_ANNOTATION_MISSING",
+                "solidworks",
+                f"The {args.annotation} call returned but no annotation appeared.",
+                context={"annotation_count": len(after)},
+            )
+        )
+
+    described = _describe_annotation(fresh[-1])
+    return DrawingNoteAddResult(
+        annotation=args.annotation,
+        text=args.text,
+        name=described["name"],
+        position_mm=described.get("position_mm", []),
+        annotations_before=len(before),
+        annotations_after=len(after),
+        verification=Verification(
+            read_back=True,
+            before={"annotation_count": len(before)},
+            after={"annotation_count": len(after), "annotation": described},
+            checks=[
+                Check(
+                    name="annotation_appeared",
+                    passed=len(after) > len(before),
+                    detail=f"{len(before)} -> {len(after)} annotation(s)",
+                ),
+                Check(
+                    name="annotation_is_the_kind_requested",
+                    passed=described["type"]
+                    == ("note" if args.annotation == "note" else "center_mark"),
+                    detail=f"{described['type']!r}",
+                ),
+            ],
+        ),
+    )
+
+
+@op(
+    name="sw_drawing_table_add",
+    tier="core",
+    domains=("drawing",),
+    tags=("drawing", "bom", "table"),
+    summary=(
+        "Insert a bill of materials on the active sheet and read every cell back, so "
+        "the table's contents are the evidence rather than the call having returned."
+    ),
+    safety=ModelMutation(destructive=False),
+    partially_satisfies=("DRW-006",),
+    precondition="drawing",
+    idempotent=False,
+    timeout_s=300.0,
+)
+def drawing_table_add(ctx: OpContext, args: DrawingTableAddArgs) -> DrawingTableAddResult:
+    """DRW-006 for the BOM.
+
+    The rows are read out cell by cell with ``DisplayedText``. A BOM that inserted but
+    resolved to nothing is a real failure mode, and only the cells show it.
+    """
+    doc = _require_drawing(ctx)
+    views = _real_views(doc)
+    if not views:
+        raise SwMcpError(
+            validation_error(
+                "NO_VIEW_FOR_TABLE",
+                "A bill of materials is anchored to a drawing view, and this drawing "
+                "has none.",
+                remediation=["Place a view first with sw_drawing_view_add."],
+            )
+        )
+
+    before = _table_count(doc)
+    x, y = (float(args.at[0]), float(args.at[1])) if args.at else (0.2, 0.2)
+
+    table = try_com_member(
+        views[0],
+        "InsertBomTable3",
+        args.at is not None,
+        x,
+        y,
+        swconst.value("swBOMConfigurationAnchorType_e", "swBOMConfigurationAnchor_TopLeft"),
+        swconst.value("swBomType_e", _BOM_TYPES[args.bom_type]),
+        args.configuration or "Default",
+        args.template_path or "",
+        False,
+        default=None,
+    )
+    if table is None:
+        raise SwMcpError(
+            make_error(
+                "DRAWING_TABLE_FAILED",
+                "solidworks",
+                "SOLIDWORKS did not insert the bill of materials.",
+                context={"bom_type": args.bom_type},
+                remediation=[
+                    "The view's model must resolve; a BOM of an unsaved model has "
+                    "nothing to list.",
+                ],
+            )
+        )
+
+    rows = int(try_com_member(table, "RowCount", default=0) or 0)
+    columns = int(try_com_member(table, "ColumnCount", default=0) or 0)
+    titles = [
+        str(try_com_member(table, "GetColumnTitle", index, default="") or "")
+        for index in range(columns)
+    ]
+    cells = [
+        [
+            str(try_com_member(table, "DisplayedText", row, column, default="") or "")
+            for column in range(columns)
+        ]
+        for row in range(rows)
+    ]
+    after = _table_count(doc)
+
+    return DrawingTableAddResult(
+        table_type=args.bom_type,
+        row_count=rows,
+        column_count=columns,
+        column_titles=titles,
+        rows=cells,
+        tables_before=before,
+        tables_after=after,
+        warnings=(
+            ["The table has no data rows, so the model resolved to nothing to list."]
+            if rows <= 1
+            else []
+        ),
+        verification=Verification(
+            read_back=True,
+            before={"table_count": before},
+            after={"table_count": after, "rows": rows, "columns": columns},
+            checks=[
+                Check(
+                    name="table_is_on_the_sheet",
+                    passed=after > before,
+                    detail=f"{before} -> {after} table(s)",
+                ),
+                Check(
+                    name="table_has_cells",
+                    passed=rows > 0 and columns > 0,
+                    detail=f"{rows} row(s) x {columns} column(s)",
+                ),
+                Check(
+                    name="table_lists_something",
+                    passed=rows > 1,
+                    detail=f"{max(rows - 1, 0)} data row(s) below the header",
+                ),
+            ],
+        ),
+    )
+
+
+@op(
+    name="sw_drawing_review",
+    tier="core",
+    domains=("drawing", "review"),
+    tags=("drawing", "review", "validate", "annotation"),
+    summary=(
+        "Count and locate a drawing's views, dimensions, notes, tables, and dangling "
+        "annotations against caller-supplied minimums. Never a substitute for a person "
+        "reading the drawing."
+    ),
+    safety=ReadSafety(),
+    partially_satisfies=("DRW-008",),
+    satisfies=("DRW-010",),
+    precondition="drawing",
+    idempotent=True,
+    timeout_s=300.0,
+)
+def drawing_review(ctx: OpContext, args: DrawingReviewArgs) -> DrawingReviewResult:
+    """DRW-008, and DRW-010 by declining to overstate it.
+
+    DRW-010 is a requirement about honesty rather than a feature: *do not claim that
+    approximate annotation bounding boxes prove a production drawing*. So this counts
+    what is there, attributes every finding to the call it was read from, and sets
+    ``visual_review_required`` unconditionally. It does not check that a dimension is
+    readable, that leaders do not cross, or that the drawing means what was intended,
+    and it never reports a pass as though it had.
+    """
+    doc = _require_drawing(ctx)
+    findings: list[dict[str, Any]] = []
+
+    sheets: list[dict[str, Any]] = []
+    current: dict[str, Any] | None = None
+    counts = {"annotation": 0, "dimension": 0, "note": 0, "table": 0, "dangling": 0}
+    view_total = 0
+
+    for view in _walk_views(doc):
+        is_sheet = try_com_member(view, "Type", default=None) == _SHEET_TYPE
+        name = str(try_com_member(view, "GetName2", default="") or "")
+        annotations = _annotations_of(view)
+        counts["annotation"] += len(annotations)
+        counts["dimension"] += int(
+            try_com_member(view, "GetDisplayDimensionCount", default=0) or 0
+        )
+        counts["note"] += int(try_com_member(view, "GetNoteCount", default=0) or 0)
+        counts["table"] += int(try_com_member(view, "GetTableAnnotationCount", default=0) or 0)
+
+        for annotation in annotations:
+            if bool(try_com_member(annotation, "IsDangling", default=False)):
+                counts["dangling"] += 1
+                findings.append(
+                    {
+                        "severity": "block",
+                        "sheet": current["name"] if current else name,
+                        "detail": (
+                            f"annotation {_describe_annotation(annotation)['name']!r} is "
+                            f"dangling"
+                        ),
+                        "read_from": "IAnnotation::IsDangling",
+                    }
+                )
+
+        if is_sheet:
+            current = {"name": name, "views": 0}
+            sheets.append(current)
+            continue
+        view_total += 1
+        if current is not None:
+            current["views"] += 1
+
+    # Same blind spot as the listing: the walk sees only the active sheet, so the others
+    # are named from GetSheetNames and carry no view count to judge.
+    walked = {entry["name"] for entry in sheets}
+    unwalked = [name for name in _sheet_names(doc) if name not in walked]
+
+    for entry in sheets:
+        if entry["views"] < args.require_views:
+            findings.append(
+                {
+                    "severity": "block",
+                    "sheet": entry["name"],
+                    "detail": (
+                        f"{entry['views']} view(s), fewer than the {args.require_views} "
+                        f"required"
+                    ),
+                    "read_from": "IDrawingDoc::GetFirstView walk",
+                }
+            )
+
+    if counts["dimension"] < args.require_dimensions:
+        findings.append(
+            {
+                "severity": "block",
+                "sheet": None,
+                "detail": (
+                    f"{counts['dimension']} dimension(s), fewer than the "
+                    f"{args.require_dimensions} required"
+                ),
+                "read_from": "IView::GetDisplayDimensionCount",
+            }
+        )
+
+    if args.require_sheet_format:
+        active = try_com_member(doc, "GetCurrentSheet", default=None)
+        sheet_format = str(try_com_member(active, "GetSheetFormatName", default="") or "")
+        if not sheet_format:
+            findings.append(
+                {
+                    "severity": "warn",
+                    "sheet": str(try_com_member(active, "GetName", default="") or ""),
+                    "detail": (
+                        "the active sheet has no sheet format, so no border or title block"
+                    ),
+                    "read_from": "ISheet::GetSheetFormatName",
+                }
+            )
+
+    return DrawingReviewResult(
+        passed=not any(finding["severity"] == "block" for finding in findings),
+        findings=findings,
+        sheet_count=len(sheets) + len(unwalked),
+        view_count=view_total,
+        annotation_count=counts["annotation"],
+        dimension_count=counts["dimension"],
+        note_count=counts["note"],
+        table_count=counts["table"],
+        dangling_count=counts["dangling"],
+        warnings=[
+            "This counts and locates annotations. It cannot tell whether the drawing "
+            "reads correctly, whether a dimension is placed sensibly, or whether "
+            "anything overlaps - a person still has to look at it."
+        ]
+        + (
+            [
+                f"{', '.join(unwalked)} could not be inspected: only the active sheet "
+                f"can be walked, and activating another would change what the user is "
+                f"looking at. Their contents are not included in these counts."
+            ]
+            if unwalked
+            else []
+        ),
     )

@@ -14,6 +14,10 @@ from pydantic import ValidationError
 
 from swmcp.com import swconst
 from swmcp.handlers.drawing import (
+    _ANNOTATION_KINDS,
+    _ANNOTATION_NAMES,
+    _BOM_TYPES,
+    _CENTER_MARK_STYLES,
     _ORIENTATIONS,
     _PAPER_NAMES,
     _PAPER_SIZES,
@@ -184,3 +188,132 @@ def test_the_drawing_tools_require_the_right_document_type():
     assert ops["sw_drawing_new"].precondition == "none"
     assert ops["sw_drawing_view_add"].precondition == "drawing"
     assert ops["sw_drawing_list"].precondition == "drawing"
+
+
+# --- DRW-004 to DRW-008 ------------------------------------------------------------
+
+
+def test_a_new_sheet_carries_the_same_zero_size_trap():
+    """NewSheet3's width and height are read only for the user-defined size, as
+    NewDocument's are. The guard has to exist twice because the trap does."""
+    from swmcp.schemas.drawing import DrawingSheetAddArgs
+
+    with pytest.raises(ValidationError, match="needs both width and height"):
+        DrawingSheetAddArgs(name="Sheet2", paper_size="custom")
+    with pytest.raises(ValidationError, match="only read for paper_size='custom'"):
+        DrawingSheetAddArgs(name="Sheet2", paper_size="a4", width=300, height=200)
+    assert DrawingSheetAddArgs(name="Sheet2", paper_size="custom", width=300, height=200)
+
+
+def test_a_sheet_needs_a_name():
+    from swmcp.schemas.drawing import DrawingSheetAddArgs
+
+    with pytest.raises(ValidationError):
+        DrawingSheetAddArgs(name="")
+
+
+@pytest.mark.parametrize("member", sorted(_ANNOTATION_KINDS.values()))
+def test_every_importable_kind_names_a_real_enum_member(member):
+    assert isinstance(swconst.value("swInsertAnnotation_e", member), int)
+
+
+def test_the_kind_map_covers_exactly_the_schema_literals():
+    from swmcp.schemas.drawing import DrawingAnnotateModelArgs
+
+    literals = set(
+        DrawingAnnotateModelArgs.model_fields["kinds"].annotation.__args__[0].__args__
+    )
+    assert set(_ANNOTATION_KINDS) == literals
+
+
+def test_the_kinds_combine_as_a_bitmask_without_collisions():
+    """They are OR-ed into one Types argument, so two sharing a bit would silently
+    import the wrong thing."""
+    values = [swconst.value("swInsertAnnotation_e", m) for m in _ANNOTATION_KINDS.values()]
+    assert len(set(values)) == len(values)
+    combined = 0
+    for value in values:
+        assert combined & value == 0, "two kinds share a bit"
+        combined |= value
+
+
+@pytest.mark.parametrize("member", sorted(_BOM_TYPES.values()))
+def test_every_bom_type_names_a_real_enum_member(member):
+    assert isinstance(swconst.value("swBomType_e", member), int)
+
+
+def test_the_bom_map_covers_exactly_the_schema_literals():
+    from swmcp.schemas.drawing import DrawingTableAddArgs
+
+    literals = set(DrawingTableAddArgs.model_fields["bom_type"].annotation.__args__)
+    assert set(_BOM_TYPES) == literals
+
+
+@pytest.mark.parametrize("member", sorted(_CENTER_MARK_STYLES.values()))
+def test_every_centre_mark_style_names_a_real_enum_member(member):
+    assert isinstance(swconst.value("swCenterMarkStyle_e", member), int)
+
+
+def test_annotation_names_invert_without_collisions():
+    """A collision here would report a note as a weld symbol in the review."""
+    assert len(set(_ANNOTATION_NAMES.values())) == len(_ANNOTATION_NAMES)
+    assert _ANNOTATION_NAMES[swconst.value("swAnnotationType_e", "swNote")] == "note"
+    assert _ANNOTATION_NAMES[swconst.value("swAnnotationType_e", "swDisplayDimension")] == (
+        "dimension"
+    )
+    assert _ANNOTATION_NAMES[swconst.value("swAnnotationType_e", "swCenterMarkSym")] == (
+        "center_mark"
+    )
+
+
+def test_a_note_needs_text_and_a_centre_mark_refuses_it():
+    from swmcp.schemas.drawing import DrawingNoteAddArgs
+
+    with pytest.raises(ValidationError, match="a note needs text"):
+        DrawingNoteAddArgs(annotation="note")
+    with pytest.raises(ValidationError, match="carries no text"):
+        DrawingNoteAddArgs(annotation="center_mark", text="nope")
+    assert DrawingNoteAddArgs(annotation="note", text="FINISH ALL OVER")
+    assert DrawingNoteAddArgs(annotation="center_mark")
+
+
+def test_the_review_always_demands_a_human_look():
+    """DRW-010 in one field: this can never be the thing that signs off a drawing."""
+    from swmcp.schemas.drawing import DrawingReviewResult
+
+    result = DrawingReviewResult(
+        passed=True,
+        sheet_count=1,
+        view_count=3,
+        annotation_count=0,
+        dimension_count=0,
+        note_count=0,
+        table_count=0,
+        dangling_count=0,
+    )
+    assert result.visual_review_required is True
+    assert result.passed is True, "passing its own counts and being correct are different"
+
+
+def test_the_review_claims_drw_010_and_only_part_of_drw_008():
+    """The honesty requirement is claimed in full; the inspection one is not."""
+    from swmcp.catalog.registry import load_all_ops
+
+    spec = load_all_ops()["sw_drawing_review"]
+    assert "DRW-010" in spec.satisfies
+    assert "DRW-008" in spec.partially_satisfies
+
+
+def test_the_review_is_read_only_and_the_authoring_tools_verify():
+    from swmcp.catalog.projection import project
+    from swmcp.catalog.registry import load_all_ops
+
+    ops = load_all_ops()
+    assert project(ops["sw_drawing_review"].safety).read_only is True
+    for name in (
+        "sw_drawing_sheet_add",
+        "sw_drawing_annotate_model",
+        "sw_drawing_note_add",
+        "sw_drawing_table_add",
+    ):
+        assert ops[name].safety.kind == "model_mutation", name
