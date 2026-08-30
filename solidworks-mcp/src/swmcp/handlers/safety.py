@@ -258,6 +258,7 @@ def checkpoint_restore(ctx: OpContext, args: CheckpointRestoreArgs) -> Checkpoin
     satisfies=("SAFE-006",),
     precondition="none",
     idempotent=True,
+    needs_session=False,
 )
 def audit_tail(ctx: OpContext, args: AuditTailArgs) -> AuditTailResult:
     entries = read_recent(args.limit * 4, config=ctx.config)
@@ -284,6 +285,7 @@ def audit_tail(ctx: OpContext, args: AuditTailArgs) -> AuditTailResult:
     satisfies=("SAFE-009",),
     precondition="none",
     idempotent=True,
+    needs_session=False,
 )
 def explain_error(ctx: OpContext, args: ExplainErrorArgs) -> ExplainErrorResult:
     _ = ctx
@@ -370,6 +372,7 @@ def explain_error(ctx: OpContext, args: ExplainErrorArgs) -> ExplainErrorResult:
     satisfies=("SAFE-004", "SAFE-008"),
     precondition="none",
     idempotent=True,
+    needs_session=False,
 )
 def path_policy(ctx: OpContext, args: PathPolicyArgs) -> PathPolicyResult:
     roots = [str(root) for root in ctx.config.allowed_roots]

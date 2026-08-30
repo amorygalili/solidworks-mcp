@@ -40,9 +40,10 @@ IN_SCOPE_REQUIREMENTS: frozenset[str] = frozenset(
         # P2 — assemblies. The first vertical of P2: insert, inspect, and set component
         # state. Transforms (ASM-004) and the rest of ASM are not claimed yet.
         "ASM-001", "ASM-002", "ASM-003",
-        # P2 — mates. Add and inspect; editing and the exotic mate types are not
-        # claimed yet.
-        "MATE-001", "MATE-002", "MATE-003", "MATE-004", "MATE-006", "MATE-008",
+        # P2 — mates. Add, inspect, probe, edit, and report how constrained each
+        # component is. The exotic mate types are not claimed yet.
+        "MATE-001", "MATE-002", "MATE-003", "MATE-004", "MATE-005", "MATE-006",
+        "MATE-007", "MATE-008",
         # P1 vertical — appearance and view
         "VIEW-001", "VIEW-002", "VIEW-003", "VIEW-004",
         # P1 vertical — core features, bodies, measurement
@@ -108,10 +109,6 @@ DECLARED_PARTIAL: dict[str, str] = {
         "Box, cylinder, sphere, cone, frustum, torus, wedge, and prism, each built as "
         "an ordinary sketch and boss. Helix and spring are not implemented."
     ),
-    "REF-005": (
-        "Face, planar-face, cylindrical-face, feature-face, body-ownership, and ray probes "
-        "are implemented. Candidate mate entities require the assembly domain (P2)."
-    ),
     "SK-008": (
         "Sketch text with alignment, path following, mirroring, width factor, and "
         "character spacing. Font is not settable: InsertSketchText takes no font and "
@@ -173,6 +170,25 @@ DECLARED_PARTIAL: dict[str, str] = {
         "Faces, edges, vertices, planes, and axes are addressed through the same "
         "structured references as everywhere else. Component coordinate systems as mate "
         "references are untested and are not claimed."
+    ),
+    "MATE-005": (
+        "Candidate mate entities are listed per component with the mate types each could "
+        "take, and a specific pair is judged before it is built. Two halves of that "
+        "verdict are measured — whether both references still resolve, and whether they "
+        "sit on two different components — but whether the geometry can take the mate is "
+        "*predicted* from entity type rather than ruled on by SOLIDWORKS. There is no "
+        "validate-only mate call: AddMate5 has no dry-run flag, ForPositioningOnly moves "
+        "the component, and IMateEntity2 exists only on a mate already built. "
+        "sw_safe_execute is how to get a conclusive answer with rollback."
+    ),
+    "MATE-007": (
+        "Per-component constrained status — fully, under, or over-constrained — with the "
+        "mates holding each component, read from IComponent2::GetConstrainedStatus. "
+        "Which axes remain free, and angular or linear travel along them, are not "
+        "reported: IComponent2::GetRemainingDOFs answers swRemainingDofs_Unavailable on "
+        "this build in every state probed, including through InvokeTypes with the twelve "
+        "parameters declared [out], and including for the fixed root component that has "
+        "its own enum value. The tool calls it anyway and reports what it said."
     ),
     "MATE-006": (
         "Rename, suppress, unsuppress, and delete one mate. Deleting a range or all "

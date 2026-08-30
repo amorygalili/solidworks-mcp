@@ -48,6 +48,7 @@ _ = ModelMutation  # re-exported for symmetry with other handler modules
     precondition="none",
     idempotent=True,
     timeout_s=240.0,
+    needs_session=False,
 )
 def connect(ctx: OpContext, args: ConnectArgs) -> ConnectResult:
     was_running = ctx.session.attached
@@ -76,6 +77,7 @@ def connect(ctx: OpContext, args: ConnectArgs) -> ConnectResult:
     satisfies=("SYS-002",),
     precondition="none",
     idempotent=True,
+    needs_session=False,
 )
 def system_info(ctx: OpContext, args: SystemInfoArgs) -> SystemInfoResult:
     _ = args
@@ -97,6 +99,7 @@ def system_info(ctx: OpContext, args: SystemInfoArgs) -> SystemInfoResult:
     precondition="none",
     idempotent=True,
     timeout_s=30.0,
+    needs_session=False,
 )
 def health(ctx: OpContext, args: HealthArgs) -> HealthResult:
     snapshot = ctx.worker.health_snapshot() if ctx.worker is not None else {}
@@ -106,6 +109,21 @@ def health(ctx: OpContext, args: HealthArgs) -> HealthResult:
     if not install.found:
         issues.append("SOLIDWORKS is not registered on this machine.")
     issues.extend(install.notes)
+
+    # How to start SOLIDWORKS is only an issue while it is stopped. Said against a
+    # healthy attached session it is a false alarm, and a report that cries wolf is
+    # worse than one that says less.
+    if not ctx.session.attached and install.platform_managed:
+        where = (
+            f"from {install.platform_shortcut}"
+            if install.platform_shortcut
+            else "from the 3DEXPERIENCE Platform"
+        )
+        issues.append(
+            "SOLIDWORKS is not running, and this 3DEXPERIENCE-managed install cannot be "
+            f"started automatically — the Platform requires an interactive sign-in. "
+            f"Launch it {where}, then connect again."
+        )
 
     probe: dict[str, Any] | None = None
     if args.probe:
@@ -167,22 +185,29 @@ def health(ctx: OpContext, args: HealthArgs) -> HealthResult:
     precondition="none",
     idempotent=True,
     timeout_s=60.0,
+    needs_session=False,
 )
 def capabilities(ctx: OpContext, args: CapabilitiesArgs) -> CapabilitiesResult:
     _ = args
-    app = ctx.session.app
     install = ctx.session.install()
 
-    templates = {}
-    for kind, preference in (("part", 8), ("assembly", 9), ("drawing", 10)):
-        value = try_com_member(app, "GetUserPreferenceStringValue", preference, default=None)
-        templates[kind] = str(value) if value else None
+    # Reading ``session.app`` would attach, and a capability probe has to answer on a
+    # machine where SOLIDWORKS is not running — that is when a caller most needs to know
+    # what is available. The template paths are the only part that needs a live session,
+    # so they report as unknown rather than taking the whole probe down with them.
+    attached = ctx.session.attached
+    templates: dict[str, str | None] = {"part": None, "assembly": None, "drawing": None}
+    if attached:
+        app = ctx.session.app
+        for kind, preference in (("part", 8), ("assembly", 9), ("drawing", 10)):
+            value = try_com_member(app, "GetUserPreferenceStringValue", preference, default=None)
+            templates[kind] = str(value) if value else None
 
     from pathlib import Path
 
     return CapabilitiesResult(
         capabilities={
-            "attach": ctx.session.attached,
+            "attach": attached,
             "default_templates": templates,
             "templates_present": {
                 kind: bool(path and Path(path).is_file()) for kind, path in templates.items()
@@ -190,17 +215,30 @@ def capabilities(ctx: OpContext, args: CapabilitiesArgs) -> CapabilitiesResult:
             "constant_table": swconst.table_info(),
             "api_table": apiver.table_info(),
             "revision": ctx.session.system_info().get("revision"),
+            # How SOLIDWORKS has to be started here, which is a capability in its own
+            # right: a 3DEXPERIENCE-managed install cannot be launched by COM at all.
+            "launch_mode": install.launch_mode,
         },
         evidence={
             "install_root": install.install_root,
             "registered_prog_ids": list(install.registered_progids),
             "template_dirs": list(install.template_dirs),
+            "platform_launcher": install.platform_launcher,
+            "platform_shortcut": install.platform_shortcut,
             "probe_method": (
                 "Templates come from GetUserPreferenceStringValue and are then checked "
                 "on disk; the registry supplies the install location."
             ),
             "api_versions": apiver.usage_report(),
         },
+        warnings=(
+            []
+            if attached
+            else [
+                "SOLIDWORKS is not attached, so the default template paths could not be "
+                "read. Everything else here is read from the registry and this package."
+            ]
+        ),
     )
 
 

@@ -723,6 +723,7 @@
       ],
       "member": "GetConstrainedStatus",
       "sources": [
+        "swmcp/handlers/mate.py",
         "swmcp/sketching.py"
       ]
     },
@@ -1534,7 +1535,8 @@
       ],
       "member": "IsFixed",
       "sources": [
-        "swmcp/handlers/assembly.py"
+        "swmcp/handlers/assembly.py",
+        "swmcp/handlers/mate.py"
       ]
     },
     {

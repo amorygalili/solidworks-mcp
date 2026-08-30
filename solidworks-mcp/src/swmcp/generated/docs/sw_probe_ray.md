@@ -14,7 +14,7 @@ Cast a ray into the model and capture a reference to the first face it hits. Use
 | Auto-checkpointed | False |
 | Idempotent | True |
 | Timeout | 180s |
-| Partially satisfies | `REF-005` |
+| Satisfies | `REF-005` |
 
 ## Input schema
 

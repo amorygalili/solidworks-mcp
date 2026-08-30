@@ -97,6 +97,14 @@ class OpSpec:
     handler: Callable[..., Any]
     handler_ref: str
     timeout_s: float
+    #: Whether the dispatcher must attach to SOLIDWORKS before the handler runs.
+    #:
+    #: False for the operations that have to work when SOLIDWORKS is *not* running:
+    #: the one that starts it, and the diagnostics whose whole purpose is to explain a
+    #: machine where it is missing or wedged. ``precondition`` cannot express this — it
+    #: says whether a *document* is needed, and ``sw_doc_new`` needs no document but
+    #: very much needs a session.
+    needs_session: bool = True
     #: Take a new snapshot even if a recent one exists. The debounce window
     #: exists to stop a burst of edits writing a file each time, but an
     #: operation that promises to undo *itself* cannot be rolled back to a

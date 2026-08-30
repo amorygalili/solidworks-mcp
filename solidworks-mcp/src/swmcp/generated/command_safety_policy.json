@@ -652,6 +652,16 @@
         "kind": "model_mutation"
       }
     },
+    "sw_mate_dof": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
     "sw_mate_edit": {
       "audited": true,
       "auto_checkpoint": true,
@@ -664,6 +674,16 @@
       }
     },
     "sw_mate_list": {
+      "audited": false,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": true,
+      "safety": {
+        "kind": "read"
+      }
+    },
+    "sw_mate_probe": {
       "audited": false,
       "auto_checkpoint": false,
       "confirm_required": false,

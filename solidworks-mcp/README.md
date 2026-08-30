@@ -6,7 +6,7 @@ worker thread.
 It implements the P0 foundation and a P1 modelling vertical from
 [`docs/solidworks-target-requirements.md`](../docs/solidworks-target-requirements.md),
 plus neutral-format exchange and an atomic mutate-and-validate workflow pulled forward
-from P2: **100 operations covering all 100 in-scope requirements**, with coverage
+from P2: **102 operations covering all 102 in-scope requirements**, with coverage
 reported honestly in `src/swmcp/generated/requirements_coverage.json` rather than
 asserted.
 
@@ -124,7 +124,7 @@ Angles default to degrees and accept `"45deg"`, `"1.57rad"`, or `{"value": 0.25,
 | material | assign a part material and read the density and mass it produces |
 | surface | create a surface by planar fill, offset, extend, or knit |
 | exchange | export STEP, IGES, STL, 3MF, OBJ, PLY, Parasolid, SAT, VRML, PDF, DXF, DWG; import STEP, IGES, Parasolid, SAT, STL with diagnostics |
-| assembly | insert a component, walk the component tree, set suppression, fixed state, visibility, and configuration, add/list/edit/delete mates, check interference |
+| assembly | insert a component, walk the component tree, set suppression, fixed state, visibility, and configuration, add/list/edit/delete mates, probe candidate mate entities and judge a pair before building it, report how constrained each component is, check interference |
 | review | inspect a document, validate it against caller-supplied policy, audit holes in the B-Rep, write JSON and Markdown reports, safe execute: run a sequence under one checkpoint and roll it back if an invariant fails |
 
 Per-tool reference with full JSON schemas: `src/swmcp/generated/docs/`.
@@ -156,7 +156,7 @@ only the documents the run created are closed, addressed by title.
 ## Development
 
 ```bash
-uv run pytest                       # 541 tests, no SOLIDWORKS needed
+uv run pytest                       # 572 tests, no SOLIDWORKS needed
 uv run pytest -m live tests/live/test_live_sketch.py   # one module: minutes
 uv run pytest -m "live and not slow"  # the quick live pass
 uv run pytest -m live               # the FULL live suite: ~90 minutes
@@ -275,6 +275,29 @@ Install discovery reads the registry rather than globbing `Program Files`: this 
 installs to `Dassault Systemes/SOLIDWORKS 3DEXPERIENCE R2026x/SOLIDWORKS`, not the
 `SOLIDWORKS Corp` path every comparable project assumes.
 
+**A 3DEXPERIENCE-managed install cannot be started automatically at all**, and the
+server says so rather than trying. COM activation resolves the ProgID to the executable
+in `LocalServer32` — `sldworks.exe` — and a managed build refuses to start that way: the
+caller gets `CO_E_SERVER_EXEC_FAILURE` and the user gets a modal dialog demanding a
+Platform launch. That dialog then blocks every subsequent API call, so the visible
+symptom is a hung session rather than a failed launch.
+
+Going through the Platform does not rescue it. Running the Platform shortcut starts
+`CATSTART` and `SWXDesktopLauncher`, which raise a **3DEXPERIENCE login window and wait
+for a human**; SOLIDWORKS never appears until someone signs in. An automated launch would
+burn its whole timeout and leave a login prompt on the user's desktop — the same harm as
+the direct launch, arrived at more slowly. So `sw_connect` with `start_if_missing`
+detects a managed install by the `CATSTART.exe` beside it and **refuses in a second**
+with `SOLIDWORKS_PLATFORM_LAUNCH_REQUIRED`, naming the shortcut to run. Nothing is
+spawned, and a test asserts that nothing ever will be.
+
+`sw_system_info` and `sw_capabilities` report the `launch_mode` — `com_activation` or
+`platform_manual` — so a caller can branch before trying. Both, along with `sw_health`,
+`sw_explain_error`, `sw_path_policy`, `sw_audit_tail`, and `sw_api_search`, answer while
+SOLIDWORKS is **stopped**: the dispatcher attaches only for operations that need a
+session, so the diagnostics that exist to explain a missing or wedged SOLIDWORKS are
+reachable when it is missing or wedged.
+
 ## Known limitations
 
 These are declared in `src/swmcp/catalog/scope.py` and reported in the generated
@@ -284,8 +307,6 @@ coverage file, rather than left for a user to discover:
   table-driven, fill, and variable patterns are rejected by the schema, not at runtime.
 - **`SK-007` (sketch editing)** — move, rotate, scale, mirror, offset, and trim.
   Extend, split, and sketch pattern are not implemented.
-- **`REF-005` (probes)** — face, edge, planar, cylindrical, body-ownership, and ray
-  probes. Candidate *mate* entities need the assembly domain, which is P2.
 - **`ASM-001` (component insert)** — insert at a position, with a chosen configuration
   and optional fixed state. Placing at an arbitrary *transform* is not implemented:
   `AddComponent5` takes only X/Y/Z, and building a `MathTransform` for
@@ -310,6 +331,23 @@ coverage file, rather than left for a user to discover:
 - **`REV-005` (reports)** — a policy review written as both JSON and Markdown, each
   finding attributed to what it read. The report covers validation findings; it does
   not embed previews or the hole audit.
+- **`MATE-005` (mate probe)** — candidate mate entities are listed per component
+  with the mate types each could take, and a specific pair is judged before it is
+  built. Two halves of that verdict are *measured* — whether both references still
+  resolve, and whether they sit on two different components — but whether the
+  geometry can take the mate is *predicted* from entity type, never ruled on by
+  SOLIDWORKS. There is no validate-only mate call: `AddMate5` has no dry-run flag,
+  `ForPositioningOnly` moves the component, and `IMateEntity2` — where SOLIDWORKS
+  keeps its own answer — exists only on a mate already built. So `proven` is always
+  false, and `sw_safe_execute` is how to get a conclusive answer with rollback.
+- **`MATE-007` (degrees of freedom)** — per-component constrained status, with the
+  mates holding each component, read from `IComponent2::GetConstrainedStatus`.
+  Which axes remain free, and travel along them, are not reported:
+  `IComponent2::GetRemainingDOFs` answers `swRemainingDofs_Unavailable` on this
+  build in every state probed — no mates, after a forced rebuild, after a mate,
+  component selected and unselected — including through `InvokeTypes` with all
+  twelve parameters declared `[out]`, and including for the fixed root component
+  that has its own enum value. The tool calls it anyway and reports what it said.
 - **`MATE-006` (mate editing)** — rename, suppress, unsuppress, and delete one mate.
   Deleting a range or all mates at once, and replaying a mate sequence under a
   checkpoint, are not implemented — though `sw_safe_execute` already rolls back a
@@ -380,8 +418,10 @@ coverage file, rather than left for a user to discover:
 Export (`IO-002`, `IO-003`), import (`IO-001`), and the atomic mutate-and-validate
 workflow (`REV-006`) were pulled forward from P2 because a model that cannot leave
 SOLIDWORKS or come back into it, and a sequence that can end half-applied, both undercut
-everything else. P2 proper starts with
-assemblies: `ASM-001` to `ASM-003` cover inserting a component, walking the tree, and
-setting component state. Component transforms (`ASM-004`) and the rest of P2 and P3 —
-mates, motion, drawings, sheet metal, weldments, simulation — are not
-implemented.
+everything else. P2 proper starts with assemblies and mates: `ASM-001` to `ASM-003`
+cover inserting a component, walking the tree, and setting component state, and
+`MATE-001` to `MATE-008` cover adding, listing, probing, editing, and deleting mates,
+reporting how constrained each component is, and detecting interference. Component
+transforms (`ASM-004`), the rest of the assembly domain (`ASM-005` to `ASM-007`), and
+the rest of P2 and P3 — motion, drawings, delivery, sheet metal, weldments,
+simulation — are not implemented.

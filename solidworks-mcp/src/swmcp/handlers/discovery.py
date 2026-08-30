@@ -335,6 +335,7 @@ def api_invoke_write(ctx: OpContext, args: ApiInvokeWriteArgs) -> ApiInvokeWrite
     precondition="none",
     idempotent=True,
     timeout_s=120.0,
+    needs_session=False,
 )
 def api_search(ctx: OpContext, args: ApiSearchArgs) -> ApiSearchResult:
     query = args.query.lower().strip()

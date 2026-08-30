@@ -135,3 +135,33 @@ Get-Process SLDWORKS | Select-Object @{n='PrivMB';e={[int]($_.PrivateMemorySize6
 A full live run plus a demo build is enough to reach that state. Restarting SOLIDWORKS is
 the fix, but it is the user's application — ask before killing it, and check first whether
 any document open in it is theirs rather than a scratch file.
+
+### Restarting it: not from sldworks.exe
+
+This install is 3DEXPERIENCE-managed, and such a build **refuses to start** from
+`sldworks.exe` or from COM activation — COM resolves the ProgID's `LocalServer32` to
+exactly that executable, so `com.Dispatch(progid)` fails with `CO_E_SERVER_EXEC_FAILURE`,
+and starting the exe directly puts a modal dialog on the user's screen: *"SOLIDWORKS
+Design must be launched from the 3DEXPERIENCE Platform."*
+
+**Nor from the Platform shortcut, unattended.** Running it starts `CATSTART` and
+`SWXDesktopLauncher`, which raise a 3DEXPERIENCE **login window** and wait for a human —
+SOLIDWORKS never starts until someone signs in. `SwSession._launch` therefore detects a
+managed install (by `CATSTART.exe` in a sibling platform tree) and *refuses* with
+`SOLIDWORKS_PLATFORM_LAUNCH_REQUIRED` rather than spawning anything. There is no
+automated restart on this machine: **ask the user to launch SOLIDWORKS** from
+
+```powershell
+Start-Process "C:\Users\Public\Desktop\SOLIDWORKS Design.lnk"
+```
+
+and sign in. `sw_health` and `sw_system_info` answer while it is stopped, so they are how
+to confirm it is back.
+
+**A modal dialog looks exactly like a hung session, and is not the memory wall.** One live
+run stalled for ~8 hours this way. The two are distinguishable from the audit log: memory
+exhaustion degrades progressively and never recovers, while a dialog stalls completely and
+then returns to normal speed the moment it is dismissed. That run showed a 56-minute
+`sw_doc_close`, then silence, then 1.6s calls — so it was a dialog, and the fix was on the
+user's screen rather than in the code. If calls hang for minutes, ask the user what
+SOLIDWORKS is showing before waiting it out.

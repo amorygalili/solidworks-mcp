@@ -197,3 +197,159 @@ def test_interference_defaults_match_solidworks_own():
     assert args.ignore_hidden_bodies is False
     assert args.treat_subassemblies_as_components is False
     assert args.include_multibody_part_interferences is False
+
+
+# --- probing a mate before building it (MATE-005) --------------------------------
+
+
+def test_every_mate_type_has_a_compatibility_rule():
+    """A mate the schema offers but the rules do not know would be judged as unknown."""
+    from swmcp.handlers.mate import _MATE_RULES, _MATE_TYPES
+
+    assert set(_MATE_RULES) == set(_MATE_TYPES)
+
+
+def test_the_entity_classes_used_by_the_rules_are_all_reachable():
+    """A rule naming a class no geometry maps to could never match anything."""
+    from swmcp.handlers.mate import _ENTITY_CLASS, _MATE_RULES
+
+    reachable = set(_ENTITY_CLASS.values())
+    for mate_type, (allowed, requires_one) in _MATE_RULES.items():
+        for group in (allowed, requires_one):
+            if group is None:
+                continue
+            unreachable = set(group) - reachable
+            assert not unreachable, f"{mate_type} allows unreachable classes {unreachable}"
+
+
+def test_captured_geometry_types_are_classified():
+    """Every surface and curve type a capture can emit must map to a mate class.
+
+    An unmapped type falls through to "unknown", which no rule allows — so a perfectly
+    mateable cylindrical face would be reported as unable to take a concentric mate.
+    """
+    from swmcp.handlers.mate import _ENTITY_CLASS
+    from swmcp.refs.capture import _SURFACE_TYPE
+
+    mateable = {"planar_face", "cylindrical_face", "conical_face", "spherical_face"}
+    for geometry_type in mateable:
+        assert geometry_type in _SURFACE_TYPE.values(), f"{geometry_type} is not a capture output"
+        assert geometry_type in _ENTITY_CLASS, f"{geometry_type} has no mate class"
+
+
+def test_two_planar_faces_can_take_a_coincident_mate_but_not_a_concentric_one():
+    from swmcp.handlers.mate import _pair_reasons
+
+    assert _pair_reasons("coincident", "plane", "plane") == []
+    assert _pair_reasons("concentric", "plane", "plane")
+
+
+def test_a_tangent_mate_needs_one_curved_entity():
+    """The rule that needs a second clause: both sides are allowed, yet the pair is not."""
+    from swmcp.handlers.mate import _pair_reasons
+
+    assert _pair_reasons("tangent", "plane", "cylinder") == []
+    reasons = _pair_reasons("tangent", "plane", "plane")
+    assert reasons and "curved" in reasons[0]
+
+
+def test_a_lock_mate_accepts_any_pair():
+    """Lock constrains the components, not the geometry, so no pair is refused."""
+    from swmcp.handlers.mate import _ENTITY_CLASS, _pair_reasons
+
+    for entity_class in set(_ENTITY_CLASS.values()):
+        assert _pair_reasons("lock", entity_class, entity_class) == []
+
+
+def test_a_cylindrical_face_offers_concentric_and_a_planar_face_does_not():
+    from swmcp.handlers.mate import _mate_types_for
+
+    assert "concentric" in _mate_types_for("cylinder")
+    assert "concentric" not in _mate_types_for("plane")
+    assert "coincident" in _mate_types_for("plane")
+
+
+def test_the_probe_never_claims_its_verdict_is_proven():
+    """MATE-005 is declared partial precisely because this field cannot become true."""
+    from swmcp.schemas.mate import MateProbeResult
+
+    assert MateProbeResult(mode="pair", feasible=True).proven is False
+    assert MateProbeResult(mode="candidates").proven is False
+
+
+def test_probing_a_pair_needs_exactly_two_references():
+    from swmcp.schemas.mate import MateProbeArgs
+
+    with pytest.raises(ValidationError):
+        MateProbeArgs(refs=[REF])
+    with pytest.raises(ValidationError):
+        MateProbeArgs(refs=[REF, REF, REF])
+    assert MateProbeArgs(refs=[REF, REF], mate_type="coincident")
+
+
+def test_listing_candidates_needs_no_references_at_all():
+    from swmcp.schemas.mate import MateProbeArgs
+
+    args = MateProbeArgs()
+    assert args.refs is None
+    assert args.mate_type is None
+    assert args.entity_class == "face"
+    assert args.limit == 25
+
+
+def test_the_probe_is_read_only():
+    """It must not be a side effect: it resolves references but never selects them.
+
+    An earlier draft selected both entities to prove they were selectable, which is a
+    UI change and would have made the tool a non_model_side_effect owing artifact
+    evidence it has none of.
+    """
+    from swmcp.catalog.projection import project
+    from swmcp.catalog.registry import load_all_ops
+
+    ops = load_all_ops()
+    assert project(ops["sw_mate_probe"].safety).read_only is True
+    assert project(ops["sw_mate_dof"].safety).read_only is True
+
+
+# --- degrees of freedom (MATE-007) ----------------------------------------------
+
+
+def test_constrained_statuses_map_to_real_enum_members_without_collisions():
+    from swmcp.handlers.mate import _CONSTRAINED_NAMES
+
+    assert len(set(_CONSTRAINED_NAMES.values())) == len(_CONSTRAINED_NAMES)
+    assert _CONSTRAINED_NAMES[swconst.value("swConstrainedStatus_e", "swFullyConstrained")] == (
+        "fully_constrained"
+    )
+    assert _CONSTRAINED_NAMES[swconst.value("swConstrainedStatus_e", "swUnderConstrained")] == (
+        "under_constrained"
+    )
+
+
+def test_the_constrained_map_covers_the_whole_enum():
+    """An unmapped status would be reported as unknown(4) rather than over-constrained."""
+    from swmcp.com.swconst import members
+    from swmcp.handlers.mate import _CONSTRAINED_NAMES
+
+    assert set(members("swConstrainedStatus_e").values()) == set(_CONSTRAINED_NAMES)
+
+
+def test_remaining_dofs_is_called_with_the_arity_the_type_library_declares():
+    """Twelve pure-out parameters; the type library accepts none or all of them."""
+    from swmcp.com import apiver
+
+    assert apiver.arities("GetRemainingDOFs") == {0, 12}
+    assert apiver.interfaces_declaring("GetRemainingDOFs") == ("IComponent2",)
+
+
+def test_an_unavailable_dof_answer_is_not_reported_as_available():
+    from swmcp.schemas.mate import MateDofResult
+
+    assert MateDofResult(component_count=0).remaining_dofs_available is False
+
+
+def test_a_dof_report_defaults_to_every_component():
+    from swmcp.schemas.mate import MateDofArgs
+
+    assert MateDofArgs().components is None

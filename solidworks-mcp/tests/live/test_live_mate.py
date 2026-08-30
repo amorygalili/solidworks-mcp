@@ -428,3 +428,219 @@ def test_interference_check_refuses_a_part_document(call):
     call("sw_doc_new", {"doc_type": "part"})
     payload = call("sw_interference_check", {}, expect_ok=False)
     assert not payload["ok"]
+
+
+# --- MATE-005: probing before building ------------------------------------------
+
+
+def test_the_probe_lists_mateable_entities_on_both_components(call, pair):
+    probed = call("sw_mate_probe", {"limit": 60})["result"]
+
+    assert probed["mode"] == "candidates"
+    assert probed["matched"] > 0
+    components = {c["component"] for c in probed["candidates"]}
+    assert len(components) == 2, f"both blocks should offer candidates, saw {components}"
+    for candidate in probed["candidates"]:
+        assert candidate["entity_class"] == "plane", "a block has only planar faces"
+        assert "coincident" in candidate["mate_types"]
+        assert candidate["tool_args"]["ref"], "a candidate must be paste-ready"
+
+
+def test_asking_for_a_concentric_mate_excludes_every_planar_face(call, pair):
+    """The filter has to actually filter: two blocks offer nothing concentric."""
+    probed = call("sw_mate_probe", {"mate_type": "concentric", "limit": 60})["result"]
+
+    assert probed["mate_type"] == "concentric"
+    assert probed["candidates"] == []
+    assert probed["matched"] == 0
+
+
+def test_candidates_can_be_narrowed_to_one_component(call, pair):
+    first = pair[0]["name"]
+    probed = call("sw_mate_probe", {"components": [first], "limit": 60})["result"]
+
+    assert probed["candidates"], "the named component should still offer faces"
+    assert {c["component"] for c in probed["candidates"]} == {first}
+
+
+def test_a_named_component_that_owns_nothing_is_reported_not_ignored(call, pair):
+    probed = call("sw_mate_probe", {"components": ["not-a-component-1"], "limit": 60})["result"]
+
+    assert probed["candidates"] == []
+    assert any("not-a-component-1" in w for w in probed["warnings"])
+
+
+def test_a_pair_the_probe_calls_feasible_really_mates(call, pair):
+    """The test that makes the prediction worth having: judged, then built.
+
+    A probe that says yes to a mate SOLIDWORKS then refuses is worse than no probe at
+    all, so the same two references go straight into sw_mate_add.
+    """
+    right = _facing(call, 0, positive=True)
+    left = _facing(call, 0, positive=False)
+    refs = [right[0]["tool_args"]["ref"], left[-1]["tool_args"]["ref"]]
+
+    probed = call("sw_mate_probe", {"mate_type": "coincident", "refs": refs})["result"]
+    assert probed["mode"] == "pair"
+    assert probed["feasible"] is True
+    assert probed["resolved"] is True
+    assert probed["different_components"] is True
+    assert probed["reasons"] == []
+    assert probed["proven"] is False, "a prediction must never claim to be a ruling"
+
+    mated = call("sw_mate_add", {"mate_type": "coincident", "refs": refs})["result"]
+    assert mated["entity_count"] == 2
+    assert all(check["passed"] for check in mated["verification"]["checks"])
+
+
+def test_two_faces_on_one_component_are_refused_for_certain(call, pair):
+    """The one verdict that is measured rather than predicted."""
+    faces = _faces(call)
+    first = faces[0]["reference"]["semantic"]["component_path"]
+    same = [f for f in faces if f["reference"]["semantic"]["component_path"] == first]
+    assert len(same) >= 2, "one block should show several faces"
+
+    probed = call(
+        "sw_mate_probe",
+        {
+            "mate_type": "coincident",
+            "refs": [same[0]["tool_args"]["ref"], same[1]["tool_args"]["ref"]],
+        },
+    )["result"]
+
+    assert probed["feasible"] is False
+    assert probed["different_components"] is False
+    assert any("different components" in reason for reason in probed["reasons"])
+
+
+def test_a_concentric_mate_on_two_flat_faces_is_predicted_to_fail(call, pair):
+    right = _facing(call, 0, positive=True)
+    left = _facing(call, 0, positive=False)
+    refs = [right[0]["tool_args"]["ref"], left[-1]["tool_args"]["ref"]]
+
+    probed = call("sw_mate_probe", {"mate_type": "concentric", "refs": refs})["result"]
+
+    assert probed["feasible"] is False
+    assert any("concentric" in reason for reason in probed["reasons"])
+    assert "coincident" in probed["also_possible"], "the pair should still suit a coincident mate"
+
+
+def test_the_predicted_refusal_is_the_one_solidworks_gives(call, pair):
+    """The other half of the honesty check: predicted no, actual no."""
+    right = _facing(call, 0, positive=True)
+    left = _facing(call, 0, positive=False)
+    refs = [right[0]["tool_args"]["ref"], left[-1]["tool_args"]["ref"]]
+
+    assert call("sw_mate_probe", {"mate_type": "concentric", "refs": refs})["result"][
+        "feasible"
+    ] is False
+    payload = call(
+        "sw_mate_add", {"mate_type": "concentric", "refs": refs}, expect_ok=False
+    )
+    assert payload["error"]["code"] == "MATE_FAILED"
+
+
+def test_judging_a_pair_without_a_mate_type_is_refused(call, pair):
+    faces = _faces(call)
+    payload = call(
+        "sw_mate_probe",
+        {"refs": [faces[0]["tool_args"]["ref"], faces[1]["tool_args"]["ref"]]},
+        expect_ok=False,
+    )
+    assert payload["error"]["code"] == "MATE_TYPE_REQUIRED"
+
+
+def test_a_stale_reference_is_reported_rather_than_raised(call, pair):
+    """A probe that throws on a dead reference cannot do its job."""
+    faces = _faces(call)
+    stale = dict(faces[0]["tool_args"]["ref"])
+    stale["persistent"] = {"scheme": "GetPersistReference3", "data_b64": "AAAA"}
+    stale["semantic"] = dict(stale["semantic"], signature="0" * 16, geometry_type="torus_face")
+
+    probed = call(
+        "sw_mate_probe",
+        {"mate_type": "coincident", "refs": [stale, faces[1]["tool_args"]["ref"]]},
+    )["result"]
+
+    assert probed["feasible"] is False
+    assert probed["resolved"] is False
+    assert any("does not resolve" in reason for reason in probed["reasons"])
+
+
+# --- MATE-007: how constrained each component is --------------------------------
+
+
+def test_an_unmated_assembly_reports_a_free_component(call, pair):
+    report = call("sw_mate_dof")["result"]
+
+    assert report["component_count"] == 2
+    # SOLIDWORKS fixes the first component of an assembly, so exactly one is free.
+    assert report["fully_constrained"] == 1
+    assert report["under_constrained"] == 1
+    assert len(report["under_constrained_components"]) == 1
+    assert any("under-constrained" in w for w in report["warnings"])
+
+    fixed = [c for c in report["components"] if c["fixed"]]
+    assert len(fixed) == 1
+    assert fixed[0]["constrained_status"] == "fully_constrained"
+    assert fixed[0]["mate_count"] == 0
+
+
+def test_a_mate_is_attributed_to_the_components_it_holds(call, pair):
+    right = _facing(call, 0, positive=True)
+    left = _facing(call, 0, positive=False)
+    call(
+        "sw_mate_add",
+        {
+            "mate_type": "coincident",
+            "refs": [right[0]["tool_args"]["ref"], left[-1]["tool_args"]["ref"]],
+            "name": "Butt",
+        },
+    )
+
+    report = call("sw_mate_dof")["result"]
+    holding = [c for c in report["components"] if c["mate_count"] > 0]
+
+    assert len(holding) == 2, "a mate holds both of the components it joins"
+    for component in holding:
+        assert component["mates"] == ["Butt"]
+
+
+def test_one_coincident_mate_does_not_fully_constrain_a_block(call, pair):
+    """Three degrees of freedom go; three remain, and the report must not overclaim."""
+    right = _facing(call, 0, positive=True)
+    left = _facing(call, 0, positive=False)
+    call(
+        "sw_mate_add",
+        {
+            "mate_type": "coincident",
+            "refs": [right[0]["tool_args"]["ref"], left[-1]["tool_args"]["ref"]],
+        },
+    )
+
+    report = call("sw_mate_dof")["result"]
+    assert report["under_constrained"] == 1
+    assert report["over_constrained"] == 0
+
+
+def test_the_report_can_be_narrowed_to_one_component(call, pair):
+    first = pair[0]["name"]
+    report = call("sw_mate_dof", {"components": [first]})["result"]
+
+    assert report["component_count"] == 1
+    assert report["components"][0]["name"] == first
+
+
+def test_unavailable_degrees_of_freedom_are_declared_not_invented(call, pair):
+    """GetRemainingDOFs does not answer on this build, and the report says so.
+
+    The failure this guards against is reporting six zeroed axes as a measurement. If a
+    future SOLIDWORKS starts answering, this test fails and the limitation gets lifted
+    rather than quietly outliving its cause.
+    """
+    report = call("sw_mate_dof")["result"]
+
+    assert report["remaining_dofs_available"] is False
+    assert any("GetRemainingDOFs" in w for w in report["warnings"])
+    for component in report["components"]:
+        assert component["remaining_dofs_status"] == "swRemainingDofs_Unavailable"

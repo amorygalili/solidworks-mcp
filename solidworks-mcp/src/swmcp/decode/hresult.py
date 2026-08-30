@@ -100,6 +100,20 @@ HRESULT_TABLE: dict[int, HResultInfo] = {
         "The SOLIDWORKS ProgID is not registered on this machine.",
         ["Confirm SOLIDWORKS is installed; the version-suffixed ProgID may differ."],
     ),
+    0x80080005: HResultInfo(
+        "COM_SERVER_EXEC_FAILED",
+        "CO_E_SERVER_EXEC_FAILURE",
+        "Windows could not start the SOLIDWORKS executable that COM activation points at.",
+        [
+            "A 3DEXPERIENCE-managed install refuses to start this way: COM resolves the "
+            "ProgID to sldworks.exe, and that build must be launched from the "
+            "3DEXPERIENCE Platform. Start SOLIDWORKS from the Platform, or from the "
+            "desktop shortcut it created, then connect again.",
+            "The server launches such an install through its Platform shortcut when it "
+            "can find one; sw_system_info reports the launch_mode it will use.",
+            "COM also cannot start a server across elevation levels.",
+        ],
+    ),
     0x80020003: HResultInfo(
         "COM_MEMBER_NOT_FOUND",
         "DISP_E_MEMBERNOTFOUND",

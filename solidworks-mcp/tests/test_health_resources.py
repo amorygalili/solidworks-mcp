@@ -26,9 +26,19 @@ from swmcp.schemas.system import HealthArgs
 class FakeInstall:
     found: bool = True
     notes: list[str] = field(default_factory=list)
+    platform_launcher: str | None = None
+    platform_shortcut: str | None = None
+
+    @property
+    def platform_managed(self) -> bool:
+        return self.platform_launcher is not None
 
 
 class FakeSession:
+    #: These tests are about a *running* SOLIDWORKS whose process is strained, so the
+    #: double is attached. Install notes are only reported as issues when it is not.
+    attached = True
+
     def install(self) -> FakeInstall:
         return FakeInstall()
 
@@ -131,6 +141,51 @@ def test_health_still_answers_when_the_process_cannot_be_read(monkeypatch):
 
     assert result.healthy is True
     assert result.process is None
+
+
+def test_how_to_start_solidworks_is_an_issue_only_while_it_is_stopped(monkeypatch):
+    """A managed install always needs a hand-launch; that is news only when it is down.
+
+    Reported unconditionally it makes every health check on a perfectly good session
+    come back unhealthy — advice about starting SOLIDWORKS is not a problem when
+    SOLIDWORKS is already running, and a report that cries wolf gets ignored.
+    """
+    shortcut = "SOLIDWORKS Design.lnk"
+
+    class Managed(FakeSession):
+        def install(self) -> FakeInstall:
+            return FakeInstall(platform_launcher="CATSTART.exe", platform_shortcut=shortcut)
+
+    class Detached(Managed):
+        attached = False
+
+    healthy = _resources(private=1 * 1024**3, handles=5_000)
+
+    running = _health_with(monkeypatch, Managed(), healthy)
+    assert running.issues == [], "an attached session must not be told how to start"
+    assert running.healthy is True
+
+    stopped = _health_with(monkeypatch, Detached(), healthy)
+    assert any(shortcut in issue for issue in stopped.issues), (
+        "when it is stopped, naming the shortcut to run is the whole point"
+    )
+
+
+def _health_with(monkeypatch, session, resources):
+    from swmcp.catalog.registry import OPS, load_all_ops
+    from swmcp.context import OpContext
+
+    load_all_ops()
+    monkeypatch.setattr(system_handlers, "process_resources", lambda: resources)
+    ctx = OpContext(
+        session=session,
+        config=SwmcpConfig(),
+        checkpoints=None,
+        spec=OPS["sw_health"],
+        request_id="test",
+        worker=FakeWorker(None),
+    )
+    return system_handlers.health(ctx, HealthArgs(probe=False))
 
 
 def test_the_thresholds_are_stated_rather_than_buried():

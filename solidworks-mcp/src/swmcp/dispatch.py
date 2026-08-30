@@ -220,7 +220,12 @@ class Dispatcher:
 
     def _run_on_worker(self, spec: OpSpec, args: BaseModel, request_id: str) -> BaseModel:
         def job(session: SwSession) -> BaseModel:
-            session.ensure()
+            # sw_connect launches SOLIDWORKS, and the diagnostics exist to describe a
+            # machine where it is not running. Attaching here first made both
+            # impossible: every one of them failed with SOLIDWORKS_NOT_RUNNING before
+            # its handler was ever reached.
+            if spec.needs_session:
+                session.ensure()
             ctx = OpContext(
                 session=session,
                 config=self.config,

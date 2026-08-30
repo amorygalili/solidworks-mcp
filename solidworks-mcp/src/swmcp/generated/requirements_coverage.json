@@ -170,6 +170,11 @@
       "sw_ref_capture",
       "sw_ref_resolve"
     ],
+    "REF-005": [
+      "sw_mate_probe",
+      "sw_probe_faces",
+      "sw_probe_ray"
+    ],
     "REF-006": [
       "sw_probe_faces",
       "sw_ref_resolve"
@@ -332,11 +337,23 @@
         "sw_mate_add"
       ]
     },
+    "MATE-005": {
+      "limitation": "Candidate mate entities are listed per component with the mate types each could take, and a specific pair is judged before it is built. Two halves of that verdict are measured — whether both references still resolve, and whether they sit on two different components — but whether the geometry can take the mate is *predicted* from entity type rather than ruled on by SOLIDWORKS. There is no validate-only mate call: AddMate5 has no dry-run flag, ForPositioningOnly moves the component, and IMateEntity2 exists only on a mate already built. sw_safe_execute is how to get a conclusive answer with rollback.",
+      "tools": [
+        "sw_mate_probe"
+      ]
+    },
     "MATE-006": {
       "limitation": "Rename, suppress, unsuppress, and delete one mate. Deleting a range or all mates at once, and replaying a mate sequence under a checkpoint, are not implemented — though sw_safe_execute already rolls back a sequence of any tools.",
       "tools": [
         "sw_mate_delete",
         "sw_mate_edit"
+      ]
+    },
+    "MATE-007": {
+      "limitation": "Per-component constrained status — fully, under, or over-constrained — with the mates holding each component, read from IComponent2::GetConstrainedStatus. Which axes remain free, and angular or linear travel along them, are not reported: IComponent2::GetRemainingDOFs answers swRemainingDofs_Unavailable on this build in every state probed, including through InvokeTypes with the twelve parameters declared [out], and including for the fixed root component that has its own enum value. The tool calls it anyway and reports what it said.",
+      "tools": [
+        "sw_mate_dof"
       ]
     },
     "MATE-008": {
@@ -350,13 +367,6 @@
       "tools": [
         "sw_dimension_list",
         "sw_dimension_set"
-      ]
-    },
-    "REF-005": {
-      "limitation": "Face, planar-face, cylindrical-face, feature-face, body-ownership, and ray probes are implemented. Candidate mate entities require the assembly domain (P2).",
-      "tools": [
-        "sw_probe_faces",
-        "sw_probe_ray"
       ]
     },
     "REV-001": {
@@ -398,11 +408,11 @@
   },
   "totals": {
     "covered_by_platform": 11,
-    "fully_covered_by_a_tool": 69,
-    "in_scope": 100,
-    "partially_covered": 23,
+    "fully_covered_by_a_tool": 70,
+    "in_scope": 102,
+    "partially_covered": 24,
     "requirements_in_backlog": 152,
-    "tools": 100,
+    "tools": 102,
     "uncovered_in_scope": 0
   },
   "uncovered_in_scope": []

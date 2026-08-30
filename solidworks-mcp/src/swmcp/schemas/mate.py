@@ -1,4 +1,4 @@
-"""Assembly mates (MATE-001, MATE-002, MATE-003, MATE-004)."""
+"""Assembly mates (MATE-001 to MATE-008)."""
 
 from __future__ import annotations
 
@@ -139,6 +139,111 @@ class MateDeleteResult(MutationResult):
     deleted: bool
     mates_before: int
     mates_after: int
+
+
+class MateProbeArgs(BaseArgs):
+    """MATE-005. Either list candidate entities, or judge one specific pair.
+
+    Passing ``refs`` switches the tool from listing candidates to judging that pair.
+    """
+
+    refs: list[EntityRef] | None = Field(
+        default=None,
+        min_length=2,
+        max_length=2,
+        description=(
+            "Two entities to judge as a mate pair. Omit to list candidate entities "
+            "instead."
+        ),
+    )
+    mate_type: MateType | None = Field(
+        default=None,
+        description=(
+            "The mate being considered. With refs, this is what gets judged; without "
+            "them, only entities that could take this mate are listed."
+        ),
+    )
+    components: list[str] | None = Field(
+        default=None,
+        max_length=64,
+        description=(
+            "Restrict candidates to these component instance names, as sw_asm_tree "
+            "reports them, e.g. ['bracket-1']."
+        ),
+    )
+    entity_class: Literal["face", "edge"] = Field(
+        default="face", description="Which kind of entity to list as a candidate."
+    )
+    limit: int = Field(default=25, ge=1, le=200, description="Most candidates to return.")
+
+
+class MateProbeResult(ReadResult):
+    """What the probe could establish, kept separate from what it only predicts.
+
+    ``feasible`` is a *prediction* and ``proven`` is therefore always false: SOLIDWORKS
+    exposes no validate-only mate call, so the only conclusive test is building the
+    mate. ``resolved`` and ``different_components`` are measured, not predicted.
+    """
+
+    mode: Literal["candidates", "pair"]
+    mate_type: str | None = None
+    feasible: bool | None = Field(
+        default=None, description="Pair mode: whether the mate is predicted to build."
+    )
+    proven: bool = Field(
+        default=False,
+        description=(
+            "Always false. A prediction from entity geometry, never a SOLIDWORKS "
+            "verdict; sw_safe_execute is how to get a conclusive answer with rollback."
+        ),
+    )
+    resolved: bool | None = Field(
+        default=None, description="Pair mode: whether both references still resolve."
+    )
+    different_components: bool | None = Field(
+        default=None, description="Pair mode: whether the two entities are on two components."
+    )
+    reasons: list[str] = Field(
+        default_factory=list, description="Why the mate is predicted to fail, most specific first."
+    )
+    entities: list[dict[str, Any]] = Field(
+        default_factory=list, description="Pair mode: what each reference resolved to."
+    )
+    also_possible: list[str] = Field(
+        default_factory=list, description="Other mate types this pair could take."
+    )
+    candidates: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Candidate mode: mateable entities, each with paste-ready tool_args.",
+    )
+    examined: int = 0
+    matched: int = 0
+
+
+class MateDofArgs(BaseArgs):
+    """MATE-007."""
+
+    components: list[str] | None = Field(
+        default=None,
+        max_length=64,
+        description="Restrict the report to these component instance names.",
+    )
+
+
+class MateDofResult(ReadResult):
+    component_count: int
+    components: list[dict[str, Any]] = Field(default_factory=list)
+    fully_constrained: int = 0
+    under_constrained: int = 0
+    over_constrained: int = 0
+    under_constrained_components: list[str] = Field(default_factory=list)
+    remaining_dofs_available: bool = Field(
+        default=False,
+        description=(
+            "Whether IComponent2::GetRemainingDOFs answered on this build. When false, "
+            "per-axis travel is not reported and the constrained status is all there is."
+        ),
+    )
 
 
 class InterferenceCheckArgs(BaseArgs):

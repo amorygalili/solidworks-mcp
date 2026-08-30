@@ -130,6 +130,18 @@ def null_dispatch() -> Any:
     return VARIANT(pythoncom.VT_DISPATCH, None)
 
 
+def out_dispatch() -> Any:
+    """An ``[out] IDispatch*`` slot, e.g. the geometry ``GetRemainingDOFs`` hands back.
+
+    Distinct from :func:`null_dispatch`: that is a null *input*, this is an empty
+    *output*. ``GetRemainingDOFs`` rejects ``VT_BYREF | VT_VARIANT`` with "Type
+    mismatch" at its second parameter and accepts only this form, which is not
+    something the type library says — it declares the parameter as a plain ``[out]``.
+    """
+    _require_com()
+    return VARIANT(pythoncom.VT_BYREF | pythoncom.VT_DISPATCH, None)
+
+
 def array_of_doubles(values: Sequence[float]) -> Any:
     _require_com()
     return VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8, [float(v) for v in values])

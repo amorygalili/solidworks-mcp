@@ -22,6 +22,26 @@ from swmcp.com.progid import BASE_PROGID, PROBE_MAJORS, progid_for_major
 _LOCAL_SERVER = re.compile(r'^"?(?P<path>[^"]+?\.exe)"?', re.IGNORECASE)
 _TEMPLATE_ROOT = Path(os.environ.get("PROGRAMDATA", r"C:\ProgramData")) / "SolidWorks"
 
+#: The 3DEXPERIENCE Platform launcher. Its presence beside the install is what makes an
+#: install *managed*: such a build refuses to start from sldworks.exe, and therefore
+#: refuses to start from COM activation too, which resolves the ProgID's LocalServer32
+#: to exactly that executable.
+PLATFORM_LAUNCHER = "CATSTART.exe"
+
+def _shortcut_roots() -> tuple[Path, ...]:
+    """Where Windows keeps shortcuts.
+
+    Read from the environment rather than spelled out, so a redirected profile or a
+    system drive that is not C: still resolves.
+    """
+    roots = [
+        Path(os.environ.get("PUBLIC", "")) / "Desktop",
+        Path.home() / "Desktop",
+        Path(os.environ.get("PROGRAMDATA", "")) / "Microsoft/Windows/Start Menu/Programs",
+        Path(os.environ.get("APPDATA", "")) / "Microsoft/Windows/Start Menu/Programs",
+    ]
+    return tuple(root for root in roots if root.parts and root.is_dir())
+
 
 @dataclass(frozen=True, slots=True)
 class InstallInfo:
@@ -32,6 +52,25 @@ class InstallInfo:
     registered_progids: tuple[str, ...] = ()
     template_dirs: tuple[str, ...] = ()
     notes: list[str] = field(default_factory=list)
+    #: The Platform launcher, when this install is 3DEXPERIENCE-managed.
+    platform_launcher: str | None = None
+    #: A Platform-created shortcut that starts SOLIDWORKS the way it demands.
+    platform_shortcut: str | None = None
+
+    @property
+    def platform_managed(self) -> bool:
+        """Whether COM activation will be refused for this install."""
+        return self.platform_launcher is not None
+
+    @property
+    def launch_mode(self) -> str:
+        """How this install has to be started.
+
+        ``platform_manual`` is not a variant of "the server starts it" — it means the
+        server *cannot*. A Platform launch requires an interactive 3DEXPERIENCE
+        sign-in, so a human has to do it and ``start_if_missing`` is refused.
+        """
+        return "platform_manual" if self.platform_managed else "com_activation"
 
 
 def _read_registry(root: str, key: str, value: str = "") -> str | None:
@@ -116,6 +155,13 @@ def find_install() -> InstallInfo:
             "The installation may have been moved or removed."
         )
 
+    # Being Platform-managed is not a *fault*, so it does not belong in notes — that
+    # field means something is wrong with the installation, and a permanent entry there
+    # makes every health check report an unhealthy machine. It is reported structurally
+    # instead, through launch_mode and platform_shortcut.
+    launcher = find_platform_launcher(install_root)
+    shortcut = find_platform_shortcut(launcher)
+
     return InstallInfo(
         found=bool(executable),
         executable=executable,
@@ -124,7 +170,70 @@ def find_install() -> InstallInfo:
         registered_progids=registered_progids(),
         template_dirs=_template_dirs(),
         notes=notes,
+        platform_launcher=launcher,
+        platform_shortcut=shortcut,
     )
+
+
+def find_platform_launcher(install_root: str | None) -> str | None:
+    """``CATSTART.exe`` for a 3DEXPERIENCE-managed install, or ``None``.
+
+    ``install_root`` is the directory holding ``sldworks.exe``; the launcher lives in a
+    sibling platform tree — ``../win_b64/code/bin/CATSTART.exe`` on this release. The
+    architecture directory is globbed rather than named, because it is the part most
+    likely to differ between releases.
+    """
+    if not install_root:
+        return None
+    parent = Path(install_root).parent
+    direct = parent / "win_b64" / "code" / "bin" / PLATFORM_LAUNCHER
+    if direct.is_file():
+        return str(direct)
+    for candidate in sorted(parent.glob(f"*/code/bin/{PLATFORM_LAUNCHER}")):
+        if candidate.is_file():
+            return str(candidate)
+    return None
+
+
+def _shortcut_target(path: Path) -> tuple[str | None, str | None]:
+    """Resolve a ``.lnk`` to its target and arguments, or ``(None, None)``."""
+    try:
+        import win32com.client
+    except ImportError:  # pragma: no cover - non-Windows
+        return None, None
+    try:
+        shell = win32com.client.Dispatch("WScript.Shell")
+        link = shell.CreateShortCut(str(path))
+        return str(link.TargetPath or ""), str(link.Arguments or "")
+    except Exception:
+        return None, None
+
+
+def find_platform_shortcut(launcher: str | None) -> str | None:
+    """A Platform-created shortcut that launches SOLIDWORKS through ``launcher``.
+
+    The shortcut is what gets started, never a reconstructed command line: its
+    arguments carry the tenant id and 3DRegistryURL of whoever installed SOLIDWORKS.
+    Those are per-account values that belong to the user, so they are read from the
+    user's own shortcut at launch time rather than copied into this package.
+    """
+    if not launcher:
+        return None
+    wanted = Path(launcher).name.lower()
+
+    matches: list[Path] = []
+    for root in _shortcut_roots():
+        for link in sorted(root.rglob("*.lnk")):
+            target, _arguments = _shortcut_target(link)
+            if target and Path(target).name.lower() == wanted:
+                matches.append(link)
+
+    if not matches:
+        return None
+    # A Platform install makes several CATSTART shortcuts — Design, Visualize, and so
+    # on. Only the one that starts SOLIDWORKS itself is any use here.
+    preferred = [m for m in matches if "solidworks" in m.stem.lower()]
+    return str((preferred or matches)[0])
 
 
 def is_running() -> bool:

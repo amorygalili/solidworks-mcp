@@ -14,8 +14,7 @@ Find faces or edges by their geometry — type, radius, area, normal direction, 
 | Auto-checkpointed | False |
 | Idempotent | True |
 | Timeout | 300s |
-| Satisfies | `REF-006` |
-| Partially satisfies | `REF-005` |
+| Satisfies | `REF-005`, `REF-006` |
 
 ## Input schema
 

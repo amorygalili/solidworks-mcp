@@ -1,4 +1,4 @@
-"""Assembly mates (MATE-001 to MATE-004).
+"""Assembly mates (MATE-001 to MATE-008).
 
 ``AddMate5`` reports through an ``[out]`` status rather than by returning nothing, and
 that status is the trap here: ``swAddMateError_NoError`` is **1**, while **0** is
@@ -19,12 +19,16 @@ from swmcp.com.marshal import (
     call_with_outparams,
     normalize_sequence,
     null_dispatch,
+    out_dispatch,
     out_long,
     try_com_member,
 )
 from swmcp.context import OpContext
 from swmcp.envelope import Check, Verification
 from swmcp.errors import SwMcpError, make_error
+from swmcp.handlers.assembly import _components
+from swmcp.refs.model import EntityRef
+from swmcp.refs.probes import ProbeFilters, probe_entities
 from swmcp.refs.resolve import resolve
 from swmcp.schemas.mate import (
     InterferenceCheckArgs,
@@ -33,10 +37,14 @@ from swmcp.schemas.mate import (
     MateAddResult,
     MateDeleteArgs,
     MateDeleteResult,
+    MateDofArgs,
+    MateDofResult,
     MateEditArgs,
     MateEditResult,
     MateListArgs,
     MateListResult,
+    MateProbeArgs,
+    MateProbeResult,
 )
 from swmcp.units import from_meters, from_radians
 
@@ -302,6 +310,436 @@ def mate_list(ctx: OpContext, args: MateListArgs) -> MateListResult:
         mate_count=len(mates),
         mates=mates,
         suppressed_count=sum(1 for mate in mates if mate["suppressed"]),
+    )
+
+
+# --- probing and degrees of freedom ---------------------------------------------
+
+#: How a captured geometry type behaves when SOLIDWORKS builds a mate from it.
+#:
+#: The names on the right are this module's own vocabulary, not ``swMateEntityType_e``.
+#: That enum can only be read back off a mate that already exists — ``IMateEntity2`` is
+#: reachable through ``IMate2::MateEntity`` and nowhere else — which is precisely what a
+#: probe cannot do. So the classification is derived from the geometry the capture
+#: already measured, and the prediction built on it is labelled as one.
+_ENTITY_CLASS = {
+    "planar_face": "plane",
+    "plane": "plane",
+    "cylindrical_face": "cylinder",
+    "conical_face": "cone",
+    "spherical_face": "sphere",
+    "toroidal_face": "torus",
+    "line_edge": "line",
+    "axis": "line",
+    "circular_edge": "circle",
+    "vertex": "point",
+    "point": "point",
+}
+
+_CURVED = frozenset({"cylinder", "cone", "sphere", "torus"})
+
+#: For each mate: the classes both entities must belong to, and a set at least one of
+#: them must come from. ``None`` means no restriction — a lock mate takes any two
+#: entities, because it constrains the components rather than the geometry.
+_MATE_RULES: dict[str, tuple[frozenset[str] | None, frozenset[str] | None]] = {
+    "coincident": (frozenset({"plane", "line", "point", "circle"}), None),
+    "concentric": (frozenset({"cylinder", "cone", "sphere", "circle", "line"}), None),
+    "parallel": (frozenset({"plane", "line", "cylinder", "cone"}), None),
+    "perpendicular": (frozenset({"plane", "line", "cylinder", "cone"}), None),
+    "tangent": (frozenset({"plane", "line"}) | _CURVED, _CURVED),
+    "distance": (
+        frozenset({"plane", "line", "point", "circle", "cylinder", "sphere"}),
+        None,
+    ),
+    "angle": (frozenset({"plane", "line", "cylinder", "cone"}), None),
+    "lock": (None, None),
+}
+
+_CONSTRAINED_NAMES = {
+    swconst.value("swConstrainedStatus_e", member): name
+    for member, name in (
+        ("swUnknownConstraint", "unknown"),
+        ("swUnderConstrained", "under_constrained"),
+        ("swFullyConstrained", "fully_constrained"),
+        ("swOverConstrained", "over_constrained"),
+        ("swNoSolution", "no_solution"),
+        ("swInvalidSolution", "invalid_solution"),
+        ("swAutosolveOff", "autosolve_off"),
+    )
+}
+
+
+def _entity_class(ref: EntityRef) -> str:
+    """The mate class of a captured reference, falling back to its kind."""
+    return _ENTITY_CLASS.get(ref.semantic.geometry_type) or _ENTITY_CLASS.get(ref.kind, "unknown")
+
+
+def _mate_types_for(entity_class: str) -> list[str]:
+    """Every mate type this class could take, paired with something suitable."""
+    return sorted(
+        name
+        for name, (allowed, _) in _MATE_RULES.items()
+        if allowed is None or entity_class in allowed
+    )
+
+
+def _pair_reasons(mate_type: str, first: str, second: str) -> list[str]:
+    """Why this mate is predicted to fail for these two entity classes."""
+    allowed, requires_one = _MATE_RULES[mate_type]
+    reasons: list[str] = []
+
+    if allowed is not None and [c for c in (first, second) if c not in allowed]:
+        reasons.append(
+            f"a {mate_type} mate is built from {', '.join(sorted(allowed))} entities; "
+            f"this pair is {first} and {second}"
+        )
+    if requires_one is not None and not ({first, second} & requires_one):
+        reasons.append(
+            f"a {mate_type} mate needs at least one curved entity "
+            f"({', '.join(sorted(requires_one))}); both of these are flat"
+        )
+    return reasons
+
+
+def _component_of(ref: EntityRef) -> str:
+    """The component instance name, as sw_asm_tree reports it."""
+    return "/".join(ref.semantic.component_path)
+
+
+def _resolve_for_probe(
+    ctx: OpContext, doc: Any, ref: EntityRef
+) -> tuple[EntityRef | None, str | None]:
+    """Resolve without raising: a probe reports a bad reference, it does not fail on one."""
+    try:
+        resolution = resolve(ctx.session, doc, ref, max_candidates=ctx.config.max_candidates)
+    except SwMcpError as exc:
+        return None, f"{exc.envelope.code}: {exc.envelope.message}"
+    return resolution.refreshed, None
+
+
+@op(
+    name="sw_mate_probe",
+    tier="core",
+    domains=("assembly",),
+    tags=("mate", "assembly", "probe", "dry-run", "candidates"),
+    summary=(
+        "List the entities in an assembly that could take a given mate, or judge one "
+        "pair before creating it. The verdict is a prediction from geometry, not a "
+        "SOLIDWORKS ruling."
+    ),
+    safety=ReadSafety(),
+    satisfies=("REF-005",),
+    partially_satisfies=("MATE-005",),
+    precondition="assembly",
+    idempotent=True,
+    timeout_s=300.0,
+)
+def mate_probe(ctx: OpContext, args: MateProbeArgs) -> MateProbeResult:
+    """MATE-005, and the candidate-mate-entity half of REF-005.
+
+    Two things are measured and one is predicted, and the result keeps them apart.
+    Measured: whether each reference still resolves, and which component each entity
+    belongs to — a mate between two faces of one component is refused by SOLIDWORKS,
+    and that is the failure this catches for certain. Predicted: whether the geometry
+    can take the mate, from the entity classes the capture already measured.
+
+    There is no honest way to make the second half conclusive. ``AddMate5`` has no
+    dry-run flag, ``ForPositioningOnly`` moves the component, and ``IMateEntity2`` —
+    where SOLIDWORKS keeps its own answer — exists only on a mate that has already been
+    built. So ``proven`` is always false, and ``sw_safe_execute`` is the tool that gets
+    a conclusive answer by building the mate and rolling it back.
+    """
+    doc = ctx.require_doc()
+
+    if args.refs is not None:
+        return _probe_pair(ctx, doc, args)
+    return _probe_candidates(ctx, doc, args)
+
+
+def _probe_pair(ctx: OpContext, doc: Any, args: MateProbeArgs) -> MateProbeResult:
+    if args.mate_type is None:
+        raise SwMcpError(
+            make_error(
+                "MATE_TYPE_REQUIRED",
+                "validation",
+                "Judging a pair needs a mate_type; there is nothing to judge without one.",
+                remediation=[
+                    "Pass mate_type, or omit refs to list candidate entities instead.",
+                ],
+            )
+        )
+
+    reasons: list[str] = []
+    entities: list[dict[str, Any]] = []
+    classes: list[str] = []
+    components: list[str] = []
+
+    for index, ref in enumerate(args.refs or []):
+        refreshed, failure = _resolve_for_probe(ctx, doc, ref)
+        if refreshed is None:
+            reasons.append(f"reference {index + 1} does not resolve — {failure}")
+            entities.append({"index": index, "resolved": False, "detail": failure})
+            continue
+        entity_class = _entity_class(refreshed)
+        component = _component_of(refreshed)
+        classes.append(entity_class)
+        components.append(component)
+        entities.append(
+            {
+                "index": index,
+                "resolved": True,
+                "label": refreshed.label,
+                "geometry_type": refreshed.semantic.geometry_type,
+                "entity_class": entity_class,
+                "component": component,
+                "mate_types": _mate_types_for(entity_class),
+            }
+        )
+
+    resolved = len(classes) == 2
+    different = None
+    also_possible: list[str] = []
+    if resolved:
+        # Two entities on one component is the one failure that is certain rather than
+        # predicted: a mate joins components, so SOLIDWORKS refuses it outright.
+        different = not (components[0] and components[0] == components[1])
+        if not different:
+            reasons.append(
+                f"both entities are on component {components[0]!r}; a mate joins two "
+                f"different components"
+            )
+        reasons.extend(_pair_reasons(args.mate_type, classes[0], classes[1]))
+        also_possible = [
+            name
+            for name in sorted(_MATE_RULES)
+            if name != args.mate_type and not _pair_reasons(name, classes[0], classes[1])
+        ]
+
+    return MateProbeResult(
+        mode="pair",
+        mate_type=args.mate_type,
+        feasible=resolved and not reasons,
+        resolved=resolved,
+        different_components=different,
+        reasons=reasons,
+        entities=entities,
+        also_possible=also_possible,
+        matched=len(classes),
+        warnings=[
+            "feasible is predicted from entity geometry, not ruled on by SOLIDWORKS. "
+            "Use sw_safe_execute to build the mate under a checkpoint for a certain "
+            "answer."
+        ],
+    )
+
+
+def _probe_candidates(ctx: OpContext, doc: Any, args: MateProbeArgs) -> MateProbeResult:
+    found, examined = probe_entities(
+        ctx.session,
+        doc,
+        entity_class=args.entity_class,
+        filters=ProbeFilters(),
+        limit=ctx.config.max_candidates,
+    )
+
+    wanted = set(args.components or [])
+    candidates: list[dict[str, Any]] = []
+    for ref in found:
+        component = _component_of(ref)
+        if wanted and component not in wanted:
+            continue
+        entity_class = _entity_class(ref)
+        mate_types = _mate_types_for(entity_class)
+        if args.mate_type is not None and args.mate_type not in mate_types:
+            continue
+        candidates.append(
+            {
+                "label": ref.label,
+                "component": component,
+                "geometry_type": ref.semantic.geometry_type,
+                "entity_class": entity_class,
+                "mate_types": mate_types,
+                "measurements": ref.semantic.measurements.model_dump(
+                    mode="json", exclude_none=True
+                ),
+                "tool_args": ref.tool_args(),
+            }
+        )
+
+    matched = len(candidates)
+    warnings: list[str] = []
+    if wanted:
+        missing = sorted(wanted - {c["component"] for c in candidates})
+        if missing:
+            warnings.append(
+                f"no candidate entities were found on {', '.join(missing)}; check the "
+                f"instance names with sw_asm_tree."
+            )
+    if matched > args.limit:
+        warnings.append(
+            f"{matched} entities matched and the first {args.limit} are listed; narrow "
+            f"with components or mate_type rather than assuming the first is correct."
+        )
+
+    return MateProbeResult(
+        mode="candidates",
+        mate_type=args.mate_type,
+        candidates=candidates[: args.limit],
+        examined=examined,
+        matched=matched,
+        warnings=warnings,
+    )
+
+
+def _remaining_dofs(component: Any) -> tuple[int | None, str | None]:
+    """``GetRemainingDOFs``, which answers ``Unavailable`` on this build.
+
+    Probed on SOLIDWORKS 2026 across every state that could plausibly matter — no
+    mates, after a forced rebuild, after a mate, with the component selected and
+    unselected, for a fixed root component and a free one — it returned
+    ``swRemainingDofs_Unavailable`` every time, with all twelve ``[out]`` slots
+    untouched. That is SOLIDWORKS answering, not a marshalling mistake: the same call
+    through ``InvokeTypes`` with the parameters declared ``[out]`` returns the identical
+    tuple, and the fixed root component never reports the ``RootComponent`` value the
+    enum reserves for it.
+
+    It is still called rather than assumed dead, so a build that does answer starts
+    being reported without a code change.
+    """
+    r1_status, r1_point = out_long(0), out_dispatch()
+    r1_dir_status, r1_dir = out_long(0), out_dispatch()
+    r2_status, r2_point = out_long(0), out_dispatch()
+    r2_dir_status, r2_dir = out_long(0), out_dispatch()
+    t1_status, t1_dir = out_long(0), out_dispatch()
+    t2_status, t2_dir = out_long(0), out_dispatch()
+    slots = (
+        r1_status,
+        r1_point,
+        r1_dir_status,
+        r1_dir,
+        r2_status,
+        r2_point,
+        r2_dir_status,
+        r2_dir,
+        t1_status,
+        t1_dir,
+        t2_status,
+        t2_dir,
+    )
+    try:
+        raw, _outs = call_with_outparams(
+            component.GetRemainingDOFs,
+            r1_status,
+            r1_point,
+            r1_dir_status,
+            r1_dir,
+            r2_status,
+            r2_point,
+            r2_dir_status,
+            r2_dir,
+            t1_status,
+            t1_dir,
+            t2_status,
+            t2_dir,
+            outparams=slots,
+        )
+    except Exception:
+        return None, None
+    if not isinstance(raw, int):
+        return None, None
+    return raw, swconst.name_of("swRemainingDofs_e", raw)
+
+
+@op(
+    name="sw_mate_dof",
+    tier="core",
+    domains=("assembly",),
+    tags=("mate", "assembly", "dof", "constrained", "review"),
+    summary=(
+        "Report how constrained each component is and which mates hold it, so an "
+        "under-constrained component is named rather than discovered when it moves."
+    ),
+    safety=ReadSafety(),
+    partially_satisfies=("MATE-007",),
+    precondition="assembly",
+    idempotent=True,
+    timeout_s=300.0,
+)
+def mate_dof(ctx: OpContext, args: MateDofArgs) -> MateDofResult:
+    """MATE-007, as far as this build allows.
+
+    ``IComponent2::GetConstrainedStatus`` answers reliably and is what the report is
+    built on. The per-axis detail — which rotations and translations remain, and about
+    what point — would come from ``GetRemainingDOFs``, which does not answer here; see
+    :func:`_remaining_dofs` for what was tried. The result says so in
+    ``remaining_dofs_available`` rather than reporting six zeroed axes as though they
+    were a measurement.
+    """
+    doc = ctx.require_doc()
+    wanted = set(args.components or [])
+
+    # Mates are read once and attributed to components, rather than asking each
+    # component for its own mates: sw_mate_list already describes a mate exactly this
+    # way, and two readings of the same mate could disagree.
+    mates = [_describe_mate(feature) for feature in _mate_features(doc)]
+
+    described: list[dict[str, Any]] = []
+    counts = {"fully_constrained": 0, "under_constrained": 0, "over_constrained": 0}
+    under: list[str] = []
+    any_dofs = False
+
+    for component in _components(doc):
+        name = str(try_com_member(component, "Name2", default="") or "")
+        if wanted and name not in wanted:
+            continue
+
+        raw_status = try_com_member(component, "GetConstrainedStatus", default=None)
+        status = _CONSTRAINED_NAMES.get(raw_status, f"unknown({raw_status})")
+        holding = [m["name"] for m in mates if name in m["components"]]
+        dof_raw, dof_name = _remaining_dofs(component)
+        if dof_name is not None and dof_name != "swRemainingDofs_Unavailable":
+            any_dofs = True
+
+        if status in counts:
+            counts[status] += 1
+        if status == "under_constrained":
+            under.append(name)
+
+        described.append(
+            {
+                "name": name,
+                "constrained_status": status,
+                "fixed": bool(try_com_member(component, "IsFixed", default=False)),
+                "suppressed": bool(try_com_member(component, "IsSuppressed", default=False)),
+                "mate_count": len(holding),
+                "mates": holding,
+                "remaining_dofs_status": dof_name,
+                "remaining_dofs_raw": dof_raw,
+            }
+        )
+
+    warnings: list[str] = []
+    if described and not any_dofs:
+        warnings.append(
+            "IComponent2::GetRemainingDOFs answered swRemainingDofs_Unavailable for "
+            "every component, so which axes remain free is not reported. The "
+            "constrained status is measured and is unaffected."
+        )
+    if under:
+        warnings.append(
+            f"{len(under)} component(s) are under-constrained and can still move: "
+            f"{', '.join(under)}."
+        )
+
+    return MateDofResult(
+        component_count=len(described),
+        components=described,
+        fully_constrained=counts["fully_constrained"],
+        under_constrained=counts["under_constrained"],
+        over_constrained=counts["over_constrained"],
+        under_constrained_components=under,
+        remaining_dofs_available=any_dofs,
+        warnings=warnings,
     )
 
 

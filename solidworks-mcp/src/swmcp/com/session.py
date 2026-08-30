@@ -227,15 +227,73 @@ class SwSession:
         return restored
 
     def _launch(self, progid: str, *, visible: bool) -> None:
+        """Start SOLIDWORKS the way this installation allows.
+
+        COM activation resolves the ProgID to the ``LocalServer32`` executable, which is
+        ``sldworks.exe``. A 3DEXPERIENCE-managed install refuses to start that way: the
+        user gets a modal dialog saying SOLIDWORKS "must be launched from the
+        3DEXPERIENCE Platform", and the caller gets ``CO_E_SERVER_EXEC_FAILURE`` with no
+        indication of why. Such an install is started through its Platform shortcut
+        instead, and then attached to once it registers itself.
+        """
         import win32com.client as com
 
+        install = self.install()
         with _LaunchGuard(self._config.com_lock_timeout_s):
-            self._app = com.Dispatch(progid)
+            if install.platform_managed:
+                self._launch_via_platform(install)
+            else:
+                self._app = com.Dispatch(progid)
             self._launched_here = True
-            # Visibility is a nicety; a headless start is still usable.
+            # Visibility is a nicety; a headless start is still usable. A Platform
+            # launch always shows the UI, and asking it not to is not honoured.
             with contextlib.suppress(Exception):
                 self._app.Visible = visible
             self._wait_until_ready()
+
+    def _launch_via_platform(self, install: InstallInfo) -> None:
+        """Refuse to start a Platform-managed install, and say what to run instead.
+
+        An earlier version of this ran the Platform shortcut. Measured, that is not a
+        launch: ``CATSTART`` and ``SWXDesktopLauncher`` start, raise a 3DEXPERIENCE
+        **login** window, and wait for a human. SOLIDWORKS never appears until someone
+        signs in, so an automated caller burns its entire timeout and leaves a login
+        prompt on the user's screen — the same harm as starting sldworks.exe directly,
+        arrived at more slowly.
+
+        There is no unattended path here, so this refuses at once and names the
+        shortcut. Failing in a second with an instruction beats failing in four minutes
+        with a dialog.
+        """
+        raise SwMcpError(
+            make_error(
+                "SOLIDWORKS_PLATFORM_LAUNCH_REQUIRED",
+                "worker",
+                "This SOLIDWORKS is 3DEXPERIENCE-managed and cannot be started "
+                "automatically: the Platform requires an interactive sign-in that no "
+                "API caller can complete.",
+                context={
+                    "platform_launcher": install.platform_launcher,
+                    "platform_shortcut": install.platform_shortcut,
+                    "executable": install.executable,
+                },
+                remediation=[
+                    (
+                        f"Start SOLIDWORKS yourself from {install.platform_shortcut}, "
+                        "sign in to the 3DEXPERIENCE Platform, then connect again."
+                    )
+                    if install.platform_shortcut
+                    else (
+                        "Start SOLIDWORKS from the 3DEXPERIENCE Platform, or from the "
+                        "desktop shortcut it created, then connect again."
+                    ),
+                    "Do not start sldworks.exe directly: a managed build refuses, and "
+                    "the modal dialog it raises blocks every API call until dismissed.",
+                    "sw_health and sw_system_info answer while SOLIDWORKS is stopped, "
+                    "so they can be used to confirm when it is back.",
+                ],
+            )
+        )
 
     def _wait_until_ready(self, timeout_s: float = 180.0) -> None:
         deadline = time.monotonic() + timeout_s
@@ -275,6 +333,9 @@ class SwSession:
                 "registered_prog_ids": list(install.registered_progids),
                 "template_dirs": list(install.template_dirs),
                 "notes": list(install.notes),
+                "launch_mode": install.launch_mode,
+                "platform_launcher": install.platform_launcher,
+                "platform_shortcut": install.platform_shortcut,
             },
             "constants": swconst.table_info(),
             "preference_overrides": dict(self._preference_overrides),

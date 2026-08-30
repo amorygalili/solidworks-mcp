@@ -260,8 +260,7 @@ def ref_resolve(ctx: OpContext, args: RefResolveArgs) -> RefResolveResult:
         "an ambiguous reference down to exactly one entity before acting on it."
     ),
     safety=ReadSafety(),
-    satisfies=("REF-006",),
-    partially_satisfies=("REF-005",),
+    satisfies=("REF-005", "REF-006"),
     precondition="part_or_assembly",
     idempotent=True,
     timeout_s=300.0,
@@ -323,7 +322,7 @@ def probe_faces(ctx: OpContext, args: ProbeFacesArgs) -> ProbeFacesResult:
         "Useful when a face is easier to describe by where it is than by what it is."
     ),
     safety=ReadSafety(),
-    partially_satisfies=("REF-005",),
+    satisfies=("REF-005",),
     precondition="part_or_assembly",
     idempotent=True,
     timeout_s=180.0,
