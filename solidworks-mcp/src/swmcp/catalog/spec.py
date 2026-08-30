@@ -31,6 +31,8 @@ Domain = Literal[
     "feature",
     "body",
     "measure",
+    "assembly",
+    "drawing",
 ]
 
 DocPrecondition = Literal["none", "any", "part", "assembly", "drawing", "part_or_assembly"]

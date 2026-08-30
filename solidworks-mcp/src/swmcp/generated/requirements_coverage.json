@@ -90,6 +90,9 @@
     "DOC-007": [
       "sw_doc_undo"
     ],
+    "DRW-003": [
+      "sw_drawing_list"
+    ],
     "FEAT-001": [
       "sw_feature_extrude_boss"
     ],
@@ -264,6 +267,18 @@
         "sw_asm_insert"
       ]
     },
+    "DRW-001": {
+      "limitation": "A drawing is created from an explicit or default template with a named sheet size, scale, and projection standard, and the sheet is measured back so a degenerate one is refused at creation. Units and title-block/property mapping are not implemented: the sheet format that carries a title block comes from the template, and NewDocument reports swDwgTemplateNone for the sheet it builds, so a drawing made here has no border or title block unless the template supplies one. That is reported as a warning rather than silently accepted.",
+      "tools": [
+        "sw_drawing_new"
+      ]
+    },
+    "DRW-002": {
+      "limitation": "Model views in any of the ten standard orientations, and the standard three-view arrangement in either projection standard, each verified by reading the created view's position, scale, referenced model, and configuration back. Section, detail, auxiliary, broken-out, crop, relative, and exploded views are not implemented: each needs a sketched profile or a parent view selection rather than a position, and they are rejected by the schema rather than failing at runtime.",
+      "tools": [
+        "sw_drawing_view_add"
+      ]
+    },
     "FEAT-005": {
       "limitation": "Loft boss and cut across two or more profiles, with guide curves, a centerline, the closed-loop option, start/end tangency, and thin-wall thickness. The boundary feature is a different API (InsertNetBlend) and is not implemented.",
       "tools": [
@@ -408,11 +423,11 @@
   },
   "totals": {
     "covered_by_platform": 11,
-    "fully_covered_by_a_tool": 70,
-    "in_scope": 102,
-    "partially_covered": 24,
+    "fully_covered_by_a_tool": 71,
+    "in_scope": 105,
+    "partially_covered": 26,
     "requirements_in_backlog": 152,
-    "tools": 102,
+    "tools": 105,
     "uncovered_in_scope": 0
   },
   "uncovered_in_scope": []

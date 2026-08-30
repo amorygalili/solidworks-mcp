@@ -6,7 +6,7 @@ worker thread.
 It implements the P0 foundation and a P1 modelling vertical from
 [`docs/solidworks-target-requirements.md`](../docs/solidworks-target-requirements.md),
 plus neutral-format exchange and an atomic mutate-and-validate workflow pulled forward
-from P2: **102 operations covering all 102 in-scope requirements**, with coverage
+from P2: **105 operations covering all 105 in-scope requirements**, with coverage
 reported honestly in `src/swmcp/generated/requirements_coverage.json` rather than
 asserted.
 
@@ -125,6 +125,7 @@ Angles default to degrees and accept `"45deg"`, `"1.57rad"`, or `{"value": 0.25,
 | surface | create a surface by planar fill, offset, extend, or knit |
 | exchange | export STEP, IGES, STL, 3MF, OBJ, PLY, Parasolid, SAT, VRML, PDF, DXF, DWG; import STEP, IGES, Parasolid, SAT, STL with diagnostics |
 | assembly | insert a component, walk the component tree, set suppression, fixed state, visibility, and configuration, add/list/edit/delete mates, probe candidate mate entities and judge a pair before building it, report how constrained each component is, check interference |
+| drawing | create a sheet with an explicit template, size, scale, and projection standard; place model and standard-three views; list sheets and views with position, outline, scale, and referenced model |
 | review | inspect a document, validate it against caller-supplied policy, audit holes in the B-Rep, write JSON and Markdown reports, safe execute: run a sequence under one checkpoint and roll it back if an invariant fails |
 
 Per-tool reference with full JSON schemas: `src/swmcp/generated/docs/`.
@@ -156,7 +157,7 @@ only the documents the run created are closed, addressed by title.
 ## Development
 
 ```bash
-uv run pytest                       # 575 tests, no SOLIDWORKS needed
+uv run pytest                       # 610 tests, no SOLIDWORKS needed
 uv run pytest -m live tests/live/test_live_sketch.py   # one module: minutes
 uv run pytest -m "live and not slow"  # the quick live pass
 uv run pytest -m live               # the FULL live suite: ~90 minutes
@@ -331,6 +332,21 @@ coverage file, rather than left for a user to discover:
 - **`REV-005` (reports)** — a policy review written as both JSON and Markdown, each
   finding attributed to what it read. The report covers validation findings; it does
   not embed previews or the hole audit.
+- **`DRW-001` (drawing creation)** — an explicit or default template, a named
+  sheet size, scale, and projection standard, with the sheet measured back so a
+  degenerate one is refused at creation rather than hanging the next call. Units
+  and title-block/property mapping are not implemented: the sheet format that
+  carries a title block comes from the template, and `NewDocument` reports
+  `swDwgTemplateNone` for the sheet it builds — so a drawing made here has no
+  border or title block unless the template supplies one, and that is returned as
+  a warning rather than passed over.
+- **`DRW-002` (drawing views)** — model views in any of the ten standard
+  orientations, and the standard three-view arrangement in either projection
+  standard, each verified by reading the created view's position, scale,
+  referenced model, and configuration back out of the sheet. Section, detail,
+  auxiliary, broken-out, crop, relative, and exploded views are not implemented:
+  each needs a sketched profile or a parent-view selection rather than a
+  position, and they are rejected by the schema rather than failing at runtime.
 - **`MATE-005` (mate probe)** — candidate mate entities are listed per component
   with the mate types each could take, and a specific pair is judged before it is
   built. Two halves of that verdict are *measured* — whether both references still
@@ -418,10 +434,11 @@ coverage file, rather than left for a user to discover:
 Export (`IO-002`, `IO-003`), import (`IO-001`), and the atomic mutate-and-validate
 workflow (`REV-006`) were pulled forward from P2 because a model that cannot leave
 SOLIDWORKS or come back into it, and a sequence that can end half-applied, both undercut
-everything else. P2 proper starts with assemblies and mates: `ASM-001` to `ASM-003`
+everything else. P2 proper starts with assemblies, mates, and drawings: `ASM-001` to `ASM-003`
 cover inserting a component, walking the tree, and setting component state, and
 `MATE-001` to `MATE-008` cover adding, listing, probing, editing, and deleting mates,
 reporting how constrained each component is, and detecting interference. Component
 transforms (`ASM-004`), the rest of the assembly domain (`ASM-005` to `ASM-007`), and
-the rest of P2 and P3 — motion, drawings, delivery, sheet metal, weldments,
-simulation — are not implemented.
+the rest of the drawing domain (`DRW-004` to `DRW-010`: annotations, tables,
+extra sheets, and sheet export), and the rest of P2 and P3 — motion, delivery,
+sheet metal, weldments, simulation — are not implemented.

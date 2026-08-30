@@ -1,5 +1,5 @@
 {
-  "call_count": 219,
+  "call_count": 235,
   "calls": [
     {
       "argument_counts": [
@@ -92,6 +92,15 @@
       "member": "AlternateName",
       "sources": [
         "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "Angle",
+      "sources": [
+        "swmcp/handlers/drawing.py"
       ]
     },
     {
@@ -267,6 +276,15 @@
       "member": "CreateDefinition",
       "sources": [
         "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        5
+      ],
+      "member": "CreateDrawViewFromModelView3",
+      "sources": [
+        "swmcp/handlers/drawing.py"
       ]
     },
     {
@@ -759,6 +777,15 @@
       "argument_counts": [
         0
       ],
+      "member": "GetCurrentSheet",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
       "member": "GetCurve",
       "sources": [
         "swmcp/refs/capture.py"
@@ -903,6 +930,15 @@
       "argument_counts": [
         0
       ],
+      "member": "GetFirstView",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
       "member": "GetID",
       "sources": [
         "swmcp/sketching.py"
@@ -977,7 +1013,17 @@
       ],
       "member": "GetName",
       "sources": [
+        "swmcp/handlers/drawing.py",
         "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetName2",
+      "sources": [
+        "swmcp/handlers/drawing.py"
       ]
     },
     {
@@ -1038,6 +1084,15 @@
     },
     {
       "argument_counts": [
+        0
+      ],
+      "member": "GetNextView",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
         1
       ],
       "member": "GetOpenDocumentByName",
@@ -1045,6 +1100,15 @@
         "swmcp/com/session.py",
         "swmcp/handlers/document.py",
         "swmcp/handlers/safety.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetOutline",
+      "sources": [
+        "swmcp/handlers/drawing.py"
       ]
     },
     {
@@ -1073,6 +1137,7 @@
       "sources": [
         "swmcp/com/session.py",
         "swmcp/handlers/assembly.py",
+        "swmcp/handlers/drawing.py",
         "swmcp/handlers/review_checks.py"
       ]
     },
@@ -1092,6 +1157,15 @@
       "member": "GetPoint",
       "sources": [
         "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "GetProperties2",
+      "sources": [
+        "swmcp/handlers/drawing.py"
       ]
     },
     {
@@ -1200,10 +1274,20 @@
       "argument_counts": [
         0
       ],
+      "member": "GetTemplateName",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
       "member": "GetTitle",
       "sources": [
         "swmcp/com/session.py",
         "swmcp/handlers/document.py",
+        "swmcp/handlers/drawing.py",
         "swmcp/handlers/exchange.py",
         "swmcp/handlers/safety.py"
       ]
@@ -1272,6 +1356,7 @@
       "member": "GetUserPreferenceStringValue",
       "sources": [
         "swmcp/handlers/document.py",
+        "swmcp/handlers/drawing.py",
         "swmcp/handlers/system.py"
       ]
     },
@@ -1700,7 +1785,8 @@
       ],
       "member": "NewDocument",
       "sources": [
-        "swmcp/handlers/document.py"
+        "swmcp/handlers/document.py",
+        "swmcp/handlers/drawing.py"
       ]
     },
     {
@@ -1710,6 +1796,15 @@
       "member": "PlaneParams",
       "sources": [
         "swmcp/refs/capture.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "Position",
+      "sources": [
+        "swmcp/handlers/drawing.py"
       ]
     },
     {
@@ -1727,7 +1822,17 @@
       ],
       "member": "ReferencedConfiguration",
       "sources": [
-        "swmcp/handlers/assembly.py"
+        "swmcp/handlers/assembly.py",
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "ReferencedDocument",
+      "sources": [
+        "swmcp/handlers/drawing.py"
       ]
     },
     {
@@ -1772,11 +1877,29 @@
     },
     {
       "argument_counts": [
+        0
+      ],
+      "member": "ScaleDecimal",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
         6
       ],
       "member": "ScaleOrCopy",
       "sources": [
         "swmcp/handlers/sketch.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "ScaleRatio",
+      "sources": [
+        "swmcp/handlers/drawing.py"
       ]
     },
     {
@@ -1860,6 +1983,24 @@
     },
     {
       "argument_counts": [
+        1
+      ],
+      "member": "SetName",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        1
+      ],
+      "member": "SetName2",
+      "sources": [
+        "swmcp/handlers/drawing.py"
+      ]
+    },
+    {
+      "argument_counts": [
         1,
         3
       ],
@@ -1922,6 +2063,15 @@
       "member": "SetWallThickness",
       "sources": [
         "swmcp/handlers/feature.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        11
+      ],
+      "member": "SetupSheet5",
+      "sources": [
+        "swmcp/handlers/drawing.py"
       ]
     },
     {
@@ -2068,6 +2218,7 @@
       ],
       "member": "Type",
       "sources": [
+        "swmcp/handlers/drawing.py",
         "swmcp/handlers/mate.py"
       ]
     },

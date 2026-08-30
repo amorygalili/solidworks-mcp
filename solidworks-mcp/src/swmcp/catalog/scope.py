@@ -44,6 +44,9 @@ IN_SCOPE_REQUIREMENTS: frozenset[str] = frozenset(
         # component is. The exotic mate types are not claimed yet.
         "MATE-001", "MATE-002", "MATE-003", "MATE-004", "MATE-005", "MATE-006",
         "MATE-007", "MATE-008",
+        # P2 — drawings. Create a sheet, place model and standard-three views, and
+        # inspect what is there. Annotations, tables, and export are not claimed.
+        "DRW-001", "DRW-002", "DRW-003",
         # P1 vertical — appearance and view
         "VIEW-001", "VIEW-002", "VIEW-003", "VIEW-004",
         # P1 vertical — core features, bodies, measurement
@@ -170,6 +173,24 @@ DECLARED_PARTIAL: dict[str, str] = {
         "Faces, edges, vertices, planes, and axes are addressed through the same "
         "structured references as everywhere else. Component coordinate systems as mate "
         "references are untested and are not claimed."
+    ),
+    "DRW-001": (
+        "A drawing is created from an explicit or default template with a named sheet "
+        "size, scale, and projection standard, and the sheet is measured back so a "
+        "degenerate one is refused at creation. Units and title-block/property mapping "
+        "are not implemented: the sheet format that carries a title block comes from the "
+        "template, and NewDocument reports swDwgTemplateNone for the sheet it builds, so "
+        "a drawing made here has no border or title block unless the template supplies "
+        "one. That is reported as a warning rather than silently accepted."
+    ),
+    "DRW-002": (
+        "Model views in any of the ten standard orientations, and the standard "
+        "three-view arrangement in either projection standard, each verified by reading "
+        "the created view's position, scale, referenced model, and configuration back. "
+        "Section, detail, auxiliary, broken-out, crop, relative, and exploded views are "
+        "not implemented: each needs a sketched profile or a parent view selection "
+        "rather than a position, and they are rejected by the schema rather than failing "
+        "at runtime."
     ),
     "MATE-005": (
         "Candidate mate entities are listed per component with the mate types each could "

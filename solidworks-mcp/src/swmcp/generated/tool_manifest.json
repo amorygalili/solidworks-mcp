@@ -1,6 +1,6 @@
 {
   "generated_from": "swmcp.catalog.registry.OPS",
-  "tool_count": 102,
+  "tool_count": 105,
   "tools": [
     {
       "domains": [
@@ -11823,6 +11823,933 @@
       ],
       "tier": "extended",
       "timeout_s": 180.0
+    },
+    {
+      "domains": [
+        "drawing"
+      ],
+      "fresh_checkpoint": false,
+      "handler_ref": "swmcp.handlers.drawing:drawing_list",
+      "idempotent": true,
+      "input_schema": {
+        "$defs": {
+          "DocTarget": {
+            "additionalProperties": false,
+            "description": "Which document an operation acts on.\n\nWith neither field set the active document is used. Naming both is refused rather\nthan silently preferring one.",
+            "properties": {
+              "path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Full path of an already-open document. Takes precedence over title.",
+                "title": "Path"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Window title of an open document. Refused if more than one matches.",
+                "title": "Title"
+              }
+            },
+            "title": "DocTarget",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DRW-003.",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocTarget",
+            "description": "Which document to act on. Defaults to the active document."
+          },
+          "sheet": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Only report this sheet. Omitted reports every sheet.",
+            "title": "Sheet"
+          }
+        },
+        "title": "DrawingListArgs",
+        "type": "object"
+      },
+      "name": "sw_drawing_list",
+      "partially_satisfies": [],
+      "precondition": "drawing",
+      "projection": {
+        "audited": false,
+        "auto_checkpoint": false,
+        "confirm_required": false,
+        "destructive": false,
+        "read_only": true
+      },
+      "result_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "active_sheet": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Active Sheet"
+          },
+          "sheet_count": {
+            "title": "Sheet Count",
+            "type": "integer"
+          },
+          "sheets": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Sheets",
+            "type": "array"
+          },
+          "view_count": {
+            "default": 0,
+            "title": "View Count",
+            "type": "integer"
+          },
+          "warnings": {
+            "description": "Non-fatal problems the caller should see (degraded evidence, fallbacks used).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "sheet_count"
+        ],
+        "title": "DrawingListResult",
+        "type": "object"
+      },
+      "safety": {
+        "kind": "read"
+      },
+      "satisfies": [
+        "DRW-003"
+      ],
+      "summary": "List a drawing's sheets and views with size, scale, projection, and each view's type, position, outline, referenced model, and configuration.",
+      "tags": [
+        "drawing",
+        "sheet",
+        "view",
+        "inspect"
+      ],
+      "tier": "core",
+      "timeout_s": 180.0
+    },
+    {
+      "domains": [
+        "drawing",
+        "document"
+      ],
+      "fresh_checkpoint": false,
+      "handler_ref": "swmcp.handlers.drawing:drawing_new",
+      "idempotent": false,
+      "input_schema": {
+        "$defs": {
+          "DocTarget": {
+            "additionalProperties": false,
+            "description": "Which document an operation acts on.\n\nWith neither field set the active document is used. Naming both is refused rather\nthan silently preferring one.",
+            "properties": {
+              "path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Full path of an already-open document. Takes precedence over title.",
+                "title": "Path"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Window title of an open document. Refused if more than one matches.",
+                "title": "Title"
+              }
+            },
+            "title": "DocTarget",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DRW-001.",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocTarget",
+            "description": "Which document to act on. Defaults to the active document."
+          },
+          "height": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                    "type": "string"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "unit": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "value"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Sheet height. Required for paper_size='custom'.",
+            "title": "Height"
+          },
+          "model_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Part or assembly the drawing is for. Omit to use the active document. The model is only recorded here; views are added with sw_drawing_view_add.",
+            "title": "Model Path"
+          },
+          "paper_size": {
+            "default": "a",
+            "description": "Sheet size.",
+            "enum": [
+              "a",
+              "a_vertical",
+              "b",
+              "c",
+              "d",
+              "e",
+              "a4",
+              "a4_vertical",
+              "a3",
+              "a2",
+              "a1",
+              "a0",
+              "custom"
+            ],
+            "title": "Paper Size",
+            "type": "string"
+          },
+          "projection": {
+            "default": "third_angle",
+            "description": "Projection standard for projected views.",
+            "enum": [
+              "first_angle",
+              "third_angle"
+            ],
+            "title": "Projection",
+            "type": "string"
+          },
+          "scale": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "maxItems": 2,
+                "minItems": 2,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Sheet scale as [numerator, denominator], e.g. [1, 2] for 1:2.",
+            "title": "Scale"
+          },
+          "sheet_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Rename the first sheet.",
+            "title": "Sheet Name"
+          },
+          "template_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Explicit drawing template. Omitted means the SOLIDWORKS default.",
+            "title": "Template Path"
+          },
+          "width": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                    "type": "string"
+                  },
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "unit": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "value"
+                    ],
+                    "type": "object"
+                  }
+                ],
+                "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Sheet width. Required for paper_size='custom'.",
+            "title": "Width"
+          }
+        },
+        "title": "DrawingNewArgs",
+        "type": "object"
+      },
+      "name": "sw_drawing_new",
+      "partially_satisfies": [
+        "DRW-001"
+      ],
+      "precondition": "none",
+      "projection": {
+        "audited": true,
+        "auto_checkpoint": false,
+        "confirm_required": false,
+        "destructive": false,
+        "read_only": false
+      },
+      "result_schema": {
+        "$defs": {
+          "ArtifactEvidence": {
+            "additionalProperties": false,
+            "description": "Proof that a file the operation claims to have written actually exists.",
+            "properties": {
+              "exists": {
+                "title": "Exists",
+                "type": "boolean"
+              },
+              "modified_utc": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Modified Utc"
+              },
+              "path": {
+                "title": "Path",
+                "type": "string"
+              },
+              "sha256": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Sha256"
+              },
+              "size_bytes": {
+                "title": "Size Bytes",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "path",
+              "exists",
+              "size_bytes"
+            ],
+            "title": "ArtifactEvidence",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "artifacts": {
+            "items": {
+              "$ref": "#/$defs/ArtifactEvidence"
+            },
+            "title": "Artifacts",
+            "type": "array"
+          },
+          "document": {
+            "additionalProperties": true,
+            "title": "Document",
+            "type": "object"
+          },
+          "height_mm": {
+            "title": "Height Mm",
+            "type": "number"
+          },
+          "paper_size": {
+            "title": "Paper Size",
+            "type": "string"
+          },
+          "projection": {
+            "title": "Projection",
+            "type": "string"
+          },
+          "scale": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Scale",
+            "type": "array"
+          },
+          "sheet_format": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The sheet format in use, or null when there is none.",
+            "title": "Sheet Format"
+          },
+          "sheet_name": {
+            "title": "Sheet Name",
+            "type": "string"
+          },
+          "template_source": {
+            "enum": [
+              "explicit",
+              "default_preference"
+            ],
+            "title": "Template Source",
+            "type": "string"
+          },
+          "template_used": {
+            "title": "Template Used",
+            "type": "string"
+          },
+          "warnings": {
+            "description": "Non-fatal problems the caller should see (degraded evidence, fallbacks used).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          },
+          "width_mm": {
+            "title": "Width Mm",
+            "type": "number"
+          }
+        },
+        "required": [
+          "document",
+          "sheet_name",
+          "paper_size",
+          "width_mm",
+          "height_mm",
+          "scale",
+          "projection",
+          "template_used",
+          "template_source"
+        ],
+        "title": "DrawingNewResult",
+        "type": "object"
+      },
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "Creates a drawing document in the SOLIDWORKS session and changes what is on screen. Nothing reaches disk until it is saved."
+      },
+      "satisfies": [],
+      "summary": "Create a drawing with an explicit template, sheet size, scale, and projection standard, reading the sheet back so a degenerate one is caught at creation.",
+      "tags": [
+        "drawing",
+        "sheet",
+        "create",
+        "template"
+      ],
+      "tier": "core",
+      "timeout_s": 300.0
+    },
+    {
+      "domains": [
+        "drawing"
+      ],
+      "fresh_checkpoint": false,
+      "handler_ref": "swmcp.handlers.drawing:drawing_view_add",
+      "idempotent": false,
+      "input_schema": {
+        "$defs": {
+          "DocTarget": {
+            "additionalProperties": false,
+            "description": "Which document an operation acts on.\n\nWith neither field set the active document is used. Naming both is refused rather\nthan silently preferring one.",
+            "properties": {
+              "path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Full path of an already-open document. Takes precedence over title.",
+                "title": "Path"
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Window title of an open document. Refused if more than one matches.",
+                "title": "Title"
+              }
+            },
+            "title": "DocTarget",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "description": "DRW-002.",
+        "properties": {
+          "at": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                      "type": "string"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "unit": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "value"
+                      ],
+                      "type": "object"
+                    }
+                  ],
+                  "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+                },
+                "maxItems": 2,
+                "minItems": 2,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Where to put the view's centre, [x, y] from the sheet's lower-left corner. Omitted centres it on the sheet.",
+            "title": "At"
+          },
+          "document": {
+            "$ref": "#/$defs/DocTarget",
+            "description": "Which document to act on. Defaults to the active document."
+          },
+          "model_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Part or assembly to draw. Omit to reuse the model an existing view on this sheet already references.",
+            "title": "Model Path"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Rename the created view.",
+            "title": "Name"
+          },
+          "orientation": {
+            "default": "front",
+            "description": "Which model view to place. Ignored for 'standard_3'.",
+            "enum": [
+              "front",
+              "back",
+              "left",
+              "right",
+              "top",
+              "bottom",
+              "isometric",
+              "trimetric",
+              "dimetric",
+              "current"
+            ],
+            "title": "Orientation",
+            "type": "string"
+          },
+          "view_type": {
+            "default": "model",
+            "description": "'model' places one named view of the model; 'standard_3' places front, top and side together using the sheet's projection standard.",
+            "enum": [
+              "model",
+              "standard_3"
+            ],
+            "title": "View Type",
+            "type": "string"
+          }
+        },
+        "title": "DrawingViewAddArgs",
+        "type": "object"
+      },
+      "name": "sw_drawing_view_add",
+      "partially_satisfies": [
+        "DRW-002"
+      ],
+      "precondition": "drawing",
+      "projection": {
+        "audited": true,
+        "auto_checkpoint": true,
+        "confirm_required": false,
+        "destructive": false,
+        "read_only": false
+      },
+      "result_schema": {
+        "$defs": {
+          "Check": {
+            "additionalProperties": false,
+            "description": "One named invariant asserted after a mutation.",
+            "properties": {
+              "detail": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Detail"
+              },
+              "name": {
+                "title": "Name",
+                "type": "string"
+              },
+              "passed": {
+                "title": "Passed",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "name",
+              "passed"
+            ],
+            "title": "Check",
+            "type": "object"
+          },
+          "CheckpointRecord": {
+            "additionalProperties": false,
+            "description": "What the auto-checkpoint layer did before a mutation ran.",
+            "properties": {
+              "checkpoint_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Checkpoint Path"
+              },
+              "created_utc": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Created Utc"
+              },
+              "method": {
+                "description": "Never optional: the caller must be able to tell a real snapshot from a skipped one. 'file_copy' does not capture unsaved session state.",
+                "enum": [
+                  "save_as_copy",
+                  "file_copy",
+                  "skipped",
+                  "reused"
+                ],
+                "title": "Method",
+                "type": "string"
+              },
+              "reason": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Why the checkpoint was skipped or reused.",
+                "title": "Reason"
+              },
+              "size_bytes": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Size Bytes"
+              },
+              "source_path": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Source Path"
+              }
+            },
+            "required": [
+              "method"
+            ],
+            "title": "CheckpointRecord",
+            "type": "object"
+          },
+          "Verification": {
+            "additionalProperties": false,
+            "description": "Evidence that a mutation actually happened, read back out of the model.",
+            "properties": {
+              "after": {
+                "additionalProperties": true,
+                "title": "After",
+                "type": "object"
+              },
+              "before": {
+                "additionalProperties": true,
+                "title": "Before",
+                "type": "object"
+              },
+              "checks": {
+                "description": "At least one invariant must be asserted.",
+                "items": {
+                  "$ref": "#/$defs/Check"
+                },
+                "minItems": 1,
+                "title": "Checks",
+                "type": "array"
+              },
+              "read_back": {
+                "description": "True only when the post-state was re-read from SOLIDWORKS, not assumed.",
+                "title": "Read Back",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "read_back",
+              "checks"
+            ],
+            "title": "Verification",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "checkpoint": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/CheckpointRecord"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Populated by the dispatch pipeline, not by handlers."
+          },
+          "model_path": {
+            "title": "Model Path",
+            "type": "string"
+          },
+          "rebuild_errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rebuild Errors",
+            "type": "array"
+          },
+          "verification": {
+            "$ref": "#/$defs/Verification"
+          },
+          "view_type": {
+            "title": "View Type",
+            "type": "string"
+          },
+          "views_after": {
+            "title": "Views After",
+            "type": "integer"
+          },
+          "views_before": {
+            "title": "Views Before",
+            "type": "integer"
+          },
+          "views_created": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Views Created",
+            "type": "array"
+          },
+          "warnings": {
+            "description": "Non-fatal problems the caller should see (degraded evidence, fallbacks used).",
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "verification",
+          "view_type",
+          "views_before",
+          "views_after",
+          "model_path"
+        ],
+        "title": "DrawingViewAddResult",
+        "type": "object"
+      },
+      "safety": {
+        "destructive": false,
+        "kind": "model_mutation"
+      },
+      "satisfies": [],
+      "summary": "Place a model view or a standard three-view arrangement on the active sheet, verified by reading each created view's position, scale, and referenced model.",
+      "tags": [
+        "drawing",
+        "view",
+        "projected",
+        "model"
+      ],
+      "tier": "core",
+      "timeout_s": 300.0
     },
     {
       "domains": [
