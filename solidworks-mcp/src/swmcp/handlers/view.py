@@ -224,9 +224,18 @@ def view_capture(ctx: OpContext, args: ViewCaptureArgs) -> ViewCaptureResult:
             "existing file."
         )
     if actual is not None and actual != [args.width, args.height]:
+        # Naming the fix matters more than naming the limit. Only SaveBMP takes a pixel
+        # size; Extension.SaveAs writes whatever the viewport is, so a caller who needs
+        # an exact size needs a different extension, not a different number.
+        remedy = (
+            " Ask for a .bmp output_path to get the size requested: SaveBMP takes pixel "
+            "dimensions, while the PNG path writes whatever the viewport is."
+            if _FORMATS[suffix] == "png"
+            else ""
+        )
         result_warnings.append(
             f"SOLIDWORKS produced {actual[0]}x{actual[1]} rather than the requested "
-            f"{args.width}x{args.height}; a capture is limited by the viewport."
+            f"{args.width}x{args.height}; a capture is limited by the viewport.{remedy}"
         )
     if actual is None:
         result_warnings.append(

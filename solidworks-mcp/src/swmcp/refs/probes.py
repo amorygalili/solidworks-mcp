@@ -29,6 +29,11 @@ class ProbeFilters:
     radius_max_m: float | None = None
     area_min_m2: float | None = None
     area_max_m2: float | None = None
+    #: Length is to an edge what area is to a face, and it is the bound that decides
+    #: which edges are worth rounding: the short ones a fillet would swallow are also
+    #: the ones that make it fail.
+    length_min_m: float | None = None
+    length_max_m: float | None = None
     normal: tuple[float, float, float] | None = None
     normal_within_deg: float = 5.0
     contains_point_m: tuple[float, float, float] | None = None
@@ -67,6 +72,14 @@ def _matches(ref: EntityRef, filters: ProbeFilters) -> bool:
         if filters.area_min_m2 is not None and measurements.area_m2 < filters.area_min_m2:
             return False
         if filters.area_max_m2 is not None and measurements.area_m2 > filters.area_max_m2:
+            return False
+
+    if filters.length_min_m is not None or filters.length_max_m is not None:
+        if measurements.length_m is None:
+            return False
+        if filters.length_min_m is not None and measurements.length_m < filters.length_min_m:
+            return False
+        if filters.length_max_m is not None and measurements.length_m > filters.length_max_m:
             return False
 
     if filters.normal is not None:

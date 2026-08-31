@@ -165,6 +165,32 @@ Probing has already caught, in code that looked correct:
   `tests/live/test_live_sketch_fidelity.py` pins all three as passing, so a build that
   starts refusing one announces itself.
 
+- **`swDelete_Children` and `swDelete_Absorbed` are independent bits (1 and 2), not two
+  modes.** `sw_feature_delete` sent Children alone for `delete_children=true`, which
+  removed the dependent features but *kept* the profile sketch the feature had absorbed
+  — leaving an orphan that drew itself over the model and looked like a rendering bug.
+  Deleting a feature should take the sketch it consumed, so `delete_children` now sends
+  `Absorbed | Children`. The result reports `also_removed`, because a delete that takes
+  more than it was asked for should name what.
+- **`InsertAxis2` on two standard planes gives a patternable axis.** SOLIDWORKS will not
+  pattern about a bare direction: `FeatureCircularPattern5` needs a real selectable
+  axis, and the model's own X/Y/Z are not entities. The two standard planes that meet on
+  that axis *are* selectable (Front is XY, Top is XZ, Right is YZ), and `InsertAxis2`
+  turns any pair into a `RefAxis` that patterns accept — verified in
+  `tests/live/test_live_ergonomics.py`. That is what `standard_axis` on
+  `sw_feature_pattern` does, and it costs a feature in the tree, so the axis is named
+  `swmcp_axis_<x|y|z>` and reused rather than created per call.
+- **`probe_entities` walks edges as readily as faces**, and `RefMeasurements.length_m`
+  comes back populated for them — which is what makes `edges={"min_length": …}` on
+  `sw_feature_fillet` and `sw_feature_chamfer` possible without any new COM. Prefer
+  extending `ProbeFilters` to writing another traversal: the predicate then selects
+  exactly what probing for the same thing reports.
+- **Only `SaveBMP` honours a requested pixel size.** `sw_view_capture` writing a `.png`
+  goes through `Extension.SaveAs`, which ignores width and height entirely and produces
+  whatever the viewport is — every request came back 1204x771 on this machine. Ask for
+  a `.bmp` output_path when the size matters; the schema and the size warning both say
+  so now.
+
 If you call an interface that `src/swmcp/generated/swapi.json` does not cover, add it to
 `INTERFACES` in `scripts/gen_swapi.py` and re-run that script plus
 `scripts/fetch_api_docs.py`, so the new surface is arity-checked and documented like the

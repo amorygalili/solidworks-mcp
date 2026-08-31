@@ -608,6 +608,24 @@ Repeat features in a linear or circular pattern. Other pattern families are reje
       "description": "Spacing for a linear pattern.",
       "title": "Spacing"
     },
+    "standard_axis": {
+      "anyOf": [
+        {
+          "enum": [
+            "x",
+            "y",
+            "z"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Shorthand for the model's own X, Y or Z axis, so patterning about the part's centreline does not need an EntityRef captured from geometry that may not exist yet. Resolved as the intersection of two standard planes; SOLIDWORKS can only pattern about a real axis, so a reference axis named 'swmcp_axis_<x|y|z>' is added to the tree the first time and reused after that. Give this or direction_ref, not both.",
+      "title": "Standard Axis"
+    },
     "type": {
       "description": "Only linear and circular are supported. Curve-driven, sketch-driven, table-driven, fill, and variable patterns are rejected here rather than failing at runtime.",
       "enum": [
@@ -787,6 +805,25 @@ Repeat features in a linear or circular pattern. Other pattern families are reje
   },
   "additionalProperties": false,
   "properties": {
+    "axis_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "The reference axis the pattern turned about, when standard_axis resolved one. Named so a later call reuses it instead of adding another.",
+      "title": "Axis Name"
+    },
+    "axis_was_created": {
+      "default": false,
+      "description": "True when this call added that axis to the feature tree. A shorthand that changes the tree should say so rather than let the caller find it later.",
+      "title": "Axis Was Created",
+      "type": "boolean"
+    },
     "body_count_after": {
       "title": "Body Count After",
       "type": "integer"

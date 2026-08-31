@@ -98,6 +98,135 @@ Round edges or faces with a constant-radius fillet, addressing them through stab
       "title": "DocumentRef",
       "type": "object"
     },
+    "EdgeQuery": {
+      "additionalProperties": false,
+      "description": "Choose edges by what they are, instead of capturing every one of them first.\n\nRounding the edges of a shape means naming them, and naming them one at a time is\nthe slow, brittle half of the job: a knight's head has dozens, each needing a probe\nand a captured reference, and any of them can go stale. The predicate says the thing\nthe caller actually means - \"every edge on this body longer than 2mm\" - and is\nresolved through the same probe that backs sw_probe_faces, so it matches whatever\nthat already reports.",
+      "properties": {
+        "body_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Restrict to one body. Omit to search them all.",
+          "title": "Body Name"
+        },
+        "feature_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Restrict to the edges a named feature created. Takes precedence over body_name, matching sw_probe_faces.",
+          "title": "Feature Name"
+        },
+        "geometry_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Edge geometry, e.g. 'line' or 'circle'.",
+          "title": "Geometry Type"
+        },
+        "limit": {
+          "default": 200,
+          "description": "Most edges to take, longest first. Capped at what the feature itself accepts, so a selection can never be silently truncated later.",
+          "maximum": 200,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        },
+        "max_length": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                  "type": "string"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "unit": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "value"
+                  ],
+                  "type": "object"
+                }
+              ],
+              "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Skip edges longer than this.",
+          "title": "Max Length"
+        },
+        "min_length": {
+          "anyOf": [
+            {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+                  "type": "string"
+                },
+                {
+                  "additionalProperties": false,
+                  "properties": {
+                    "unit": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "value"
+                  ],
+                  "type": "object"
+                }
+              ],
+              "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Skip edges shorter than this. The usual guard: a fillet larger than the edge it is applied to is how the feature fails.",
+          "title": "Min Length"
+        }
+      },
+      "title": "EdgeQuery",
+      "type": "object"
+    },
     "EntityRef": {
       "additionalProperties": false,
       "description": "A reference to one SOLIDWORKS entity, in every addressing mode at once.",
@@ -451,6 +580,18 @@ Round edges or faces with a constant-radius fillet, addressing them through stab
       "$ref": "#/$defs/DocTarget",
       "description": "Which document to act on. Defaults to the active document."
     },
+    "edges": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EdgeQuery"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Select the edges by predicate instead of naming them. Give this or refs, not both."
+    },
     "kind": {
       "default": "constant",
       "enum": [
@@ -512,13 +653,11 @@ Round edges or faces with a constant-radius fillet, addressing them through stab
         "$ref": "#/$defs/EntityRef"
       },
       "maxItems": 200,
-      "minItems": 1,
       "title": "Refs",
       "type": "array"
     }
   },
   "required": [
-    "refs",
     "radius"
   ],
   "title": "FilletArgs",
@@ -696,6 +835,32 @@ Round edges or faces with a constant-radius fillet, addressing them through stab
       ],
       "default": null,
       "description": "Populated by the dispatch pipeline, not by handlers."
+    },
+    "edges_examined": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "How many edges the predicate looked at, when one was used. The ratio of matched to examined is what says whether the predicate meant what you thought - 4 of 400 is a typo, not a selection.",
+      "title": "Edges Examined"
+    },
+    "edges_matched": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "How many the predicate chose, before the feature was attempted.",
+      "title": "Edges Matched"
     },
     "edges_selected": {
       "title": "Edges Selected",

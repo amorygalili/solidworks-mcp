@@ -220,6 +220,7 @@
       "sw_explain_error"
     ],
     "SK-001": [
+      "sw_sketch_create",
       "sw_sketch_exit",
       "sw_sketch_start"
     ],
@@ -227,10 +228,12 @@
       "sw_sketch_list"
     ],
     "SK-003": [
-      "sw_sketch_add_geometry"
+      "sw_sketch_add_geometry",
+      "sw_sketch_create"
     ],
     "SK-004": [
       "sw_sketch_add_geometry",
+      "sw_sketch_create",
       "sw_sketch_set_construction"
     ],
     "SK-005": [
@@ -478,7 +481,7 @@
     "in_scope": 114,
     "partially_covered": 34,
     "requirements_in_backlog": 152,
-    "tools": 113,
+    "tools": 114,
     "uncovered_in_scope": 0
   },
   "uncovered_in_scope": []

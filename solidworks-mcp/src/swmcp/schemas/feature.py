@@ -481,23 +481,89 @@ class LoftResult(MutationResult):
     reference: dict[str, Any] | None = None
 
 
+class EdgeQuery(StrictModel):
+    """Choose edges by what they are, instead of capturing every one of them first.
+
+    Rounding the edges of a shape means naming them, and naming them one at a time is
+    the slow, brittle half of the job: a knight's head has dozens, each needing a probe
+    and a captured reference, and any of them can go stale. The predicate says the thing
+    the caller actually means - "every edge on this body longer than 2mm" - and is
+    resolved through the same probe that backs sw_probe_faces, so it matches whatever
+    that already reports.
+    """
+
+    body_name: str | None = Field(
+        default=None, description="Restrict to one body. Omit to search them all."
+    )
+    feature_name: str | None = Field(
+        default=None,
+        description="Restrict to the edges a named feature created. Takes precedence "
+        "over body_name, matching sw_probe_faces.",
+    )
+    geometry_type: str | None = Field(
+        default=None, description="Edge geometry, e.g. 'line' or 'circle'."
+    )
+    min_length: Length | None = Field(
+        default=None,
+        description="Skip edges shorter than this. The usual guard: a fillet larger "
+        "than the edge it is applied to is how the feature fails.",
+    )
+    max_length: Length | None = Field(default=None, description="Skip edges longer than this.")
+    limit: int = Field(
+        default=200,
+        ge=1,
+        le=200,
+        description="Most edges to take, longest first. Capped at what the feature "
+        "itself accepts, so a selection can never be silently truncated later.",
+    )
+
+
+def _one_way_of_naming_edges(model: Any, kind: str) -> None:
+    """Refuse both or neither, rather than quietly preferring one."""
+    if bool(model.refs) == (model.edges is not None):
+        raise ValueError(
+            f"A {kind} needs exactly one of refs or edges: refs names the entities "
+            "explicitly, edges describes them and lets the server find them."
+        )
+
+
 class FilletArgs(BaseArgs):
     refs: list[EntityRef] = Field(
-        min_length=1, max_length=200, description="Edges or faces to round."
+        default_factory=list, max_length=200, description="Edges or faces to round."
+    )
+    edges: EdgeQuery | None = Field(
+        default=None,
+        description="Select the edges by predicate instead of naming them. Give this "
+        "or refs, not both.",
     )
     radius: Length = Field(gt=0)
     kind: Literal["constant", "variable_ends"] = "constant"
     propagate: bool = Field(default=True, description="Continue across tangent edges.")
     name: str | None = None
 
+    @model_validator(mode="after")
+    def _edges_named_once(self) -> FilletArgs:
+        _one_way_of_naming_edges(self, "fillet")
+        return self
+
 
 class ChamferArgs(BaseArgs):
-    refs: list[EntityRef] = Field(min_length=1, max_length=200)
+    refs: list[EntityRef] = Field(default_factory=list, max_length=200)
+    edges: EdgeQuery | None = Field(
+        default=None,
+        description="Select the edges by predicate instead of naming them. Give this "
+        "or refs, not both.",
+    )
     distance: Length = Field(gt=0)
     angle: Angle = Field(default=45.0, description="Used by the angle-distance chamfer.")
     kind: Literal["angle_distance", "equal_distance"] = "equal_distance"
     propagate: bool = True
     name: str | None = None
+
+    @model_validator(mode="after")
+    def _edges_named_once(self) -> ChamferArgs:
+        _one_way_of_naming_edges(self, "chamfer")
+        return self
 
 
 class EdgeFeatureResult(MutationResult):
@@ -506,6 +572,18 @@ class EdgeFeatureResult(MutationResult):
     edges_selected: int
     volume_mm3_before: float | None = None
     volume_mm3_after: float | None = None
+    edges_examined: int | None = Field(
+        default=None,
+        description=(
+            "How many edges the predicate looked at, when one was used. The ratio of "
+            "matched to examined is what says whether the predicate meant what you "
+            "thought - 4 of 400 is a typo, not a selection."
+        ),
+    )
+    edges_matched: int | None = Field(
+        default=None,
+        description="How many the predicate chose, before the feature was attempted.",
+    )
 
 
 class PatternArgs(BaseArgs):
@@ -522,6 +600,17 @@ class PatternArgs(BaseArgs):
     direction_ref: EntityRef | None = Field(
         default=None, description="Edge, axis, or planar face giving the first direction."
     )
+    standard_axis: Literal["x", "y", "z"] | None = Field(
+        default=None,
+        description=(
+            "Shorthand for the model's own X, Y or Z axis, so patterning about the "
+            "part's centreline does not need an EntityRef captured from geometry that "
+            "may not exist yet. Resolved as the intersection of two standard planes; "
+            "SOLIDWORKS can only pattern about a real axis, so a reference axis named "
+            "'swmcp_axis_<x|y|z>' is added to the tree the first time and reused after "
+            "that. Give this or direction_ref, not both."
+        ),
+    )
     count: int = Field(ge=2, le=1000, description="Total instances including the original.")
     spacing: Length = Field(default=10.0, description="Spacing for a linear pattern.")
     angle: Angle = Field(default=90.0, description="Total or per-instance angle for circular.")
@@ -532,6 +621,15 @@ class PatternArgs(BaseArgs):
     reverse: bool = False
     name: str | None = None
 
+    @model_validator(mode="after")
+    def _one_direction_only(self) -> PatternArgs:
+        if self.direction_ref is not None and self.standard_axis is not None:
+            raise ValueError(
+                "Give direction_ref or standard_axis, not both: naming two directions "
+                "would leave the handler quietly preferring one of them."
+            )
+        return self
+
 
 class PatternResult(MutationResult):
     feature_name: str
@@ -541,6 +639,20 @@ class PatternResult(MutationResult):
     body_count_after: int
     volume_mm3_before: float | None = None
     volume_mm3_after: float | None = None
+    axis_name: str | None = Field(
+        default=None,
+        description=(
+            "The reference axis the pattern turned about, when standard_axis resolved "
+            "one. Named so a later call reuses it instead of adding another."
+        ),
+    )
+    axis_was_created: bool = Field(
+        default=False,
+        description=(
+            "True when this call added that axis to the feature tree. A shorthand that "
+            "changes the tree should say so rather than let the caller find it later."
+        ),
+    )
 
 
 HoleKind = Literal["simple", "counterbore", "countersink", "tapped"]
@@ -631,6 +743,13 @@ class FeatureDeleteResult(MutationResult):
     deleted: bool
     features_before: int
     features_after: int
+    also_removed: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Other features that went with it - absorbed sketches, dependent features. "
+            "A delete that quietly takes more than it was asked for should say what."
+        ),
+    )
 
 
 class BodyListArgs(BaseArgs):

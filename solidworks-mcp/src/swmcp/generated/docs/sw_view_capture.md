@@ -96,7 +96,7 @@ Save a PNG or BMP of the model at a requested size, after clearing the selection
     },
     "height": {
       "default": 960,
-      "description": "Image height in pixels.",
+      "description": "Image height in pixels. Honoured for .bmp; advisory for .png.",
       "maximum": 8192,
       "minimum": 64,
       "title": "Height",
@@ -127,7 +127,7 @@ Save a PNG or BMP of the model at a requested size, after clearing the selection
       "title": "Orientation"
     },
     "output_path": {
-      "description": "Image destination under an allowed output root. The extension picks the format: .png or .bmp.",
+      "description": "Image destination under an allowed output root. The extension picks the format, and the two do not behave alike: **.bmp honours width and height exactly**, because SaveBMP takes a pixel size, while .png comes out at whatever the SOLIDWORKS viewport happens to be and ignores both. Ask for .bmp when the size matters.",
       "title": "Output Path",
       "type": "string"
     },
@@ -144,7 +144,7 @@ Save a PNG or BMP of the model at a requested size, after clearing the selection
     },
     "width": {
       "default": 1280,
-      "description": "Image width in pixels.",
+      "description": "Image width in pixels. Honoured for .bmp; advisory for .png.",
       "maximum": 8192,
       "minimum": 64,
       "title": "Width",

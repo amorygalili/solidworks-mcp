@@ -344,6 +344,56 @@ class SketchAddGeometryResult(MutationResult):
     )
 
 
+class SketchCreateArgs(BaseArgs):
+    """Open a sketch, draw a profile, and close it - the whole cadence in one call.
+
+    Starting a sketch, adding geometry and exiting are three separate operations
+    because they are three separate things, but almost nobody wants them apart: every
+    profile in a part is that exact sequence, and on a serialized COM thread the two
+    extra round trips buy nothing. Building six chess pieces took about sixty calls,
+    most of them this pattern.
+    """
+
+    on: SketchPlaneTarget
+    entities: list[SketchEntity] = Field(
+        min_length=1,
+        max_length=500,
+        description="Sketch primitives to create, in order.",
+    )
+    auto_relations: bool = Field(
+        default=True,
+        description=(
+            "As on sw_sketch_add_geometry: false places geometry at exactly the "
+            "coordinates given, instead of letting SOLIDWORKS snap it onto neighbours."
+        ),
+    )
+    exit_sketch: bool = Field(
+        default=True,
+        description=(
+            "Close the sketch when the geometry is in. Leave it open only to keep "
+            "adding relations or dimensions before a feature consumes it."
+        ),
+    )
+    rebuild: bool = Field(default=True, description="Rebuild the model on exiting.")
+
+
+class SketchCreateResult(MutationResult):
+    sketch_name: str
+    plane: str | None = None
+    created: list[dict[str, Any]] = Field(default_factory=list)
+    failed: list[dict[str, Any]] = Field(default_factory=list)
+    sketch_state: SketchState
+    max_deviation_mm: float | None = None
+    exited: bool = False
+    contours: dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "The profile topology of what was just drawn, so whether it closes is known "
+            "before a revolve or extrude is attempted rather than after one is refused."
+        ),
+    )
+
+
 class SketchSetConstructionArgs(BaseArgs):
     segment_ids: list[str] = Field(
         min_length=1, max_length=500, description="sketch_local_id values from a create call."

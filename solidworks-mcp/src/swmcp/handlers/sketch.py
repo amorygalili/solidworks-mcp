@@ -23,6 +23,8 @@ from swmcp.schemas.sketch import (
     SketchAddGeometryResult,
     SketchConvertEntitiesArgs,
     SketchConvertEntitiesResult,
+    SketchCreateArgs,
+    SketchCreateResult,
     SketchDeleteArgs,
     SketchDeleteResult,
     SketchExitArgs,
@@ -40,11 +42,13 @@ from swmcp.schemas.sketch import (
 )
 from swmcp.sketching import (
     active_sketch,
+    analyze_contours,
     anchor_deviation,
     describe_segment,
     find_sketch,
     require_active_sketch,
     segment_endpoints,
+    segment_topology,
     segments_by_id,
     select_segments,
     sketch_segments,
@@ -659,6 +663,119 @@ def sketch_add_geometry(ctx: OpContext, args: SketchAddGeometryArgs) -> SketchAd
             [f"{len(failed)} entity(ies) could not be created."] if failed else []
         )
         + extra_warnings,
+    )
+
+
+@op(
+    name="sw_sketch_create",
+    tier="core",
+    domains=("sketch",),
+    tags=("sketch", "profile", "batch", "compose"),
+    summary=(
+        "Open a sketch on a plane, draw a profile into it, and close it - the whole "
+        "cadence in one call, reporting where every point landed and whether the "
+        "profile closes."
+    ),
+    safety=ModelMutation(destructive=False),
+    satisfies=("SK-001", "SK-003", "SK-004"),
+    precondition="part_or_assembly",
+    idempotent=False,
+    timeout_s=300.0,
+)
+def sketch_create(ctx: OpContext, args: SketchCreateArgs) -> SketchCreateResult:
+    """Compose the three sketch operations rather than reimplement them.
+
+    Each step is the same handler a caller would have reached for, so the behaviour
+    cannot drift from the individual tools: fixing a bug in sw_sketch_add_geometry
+    fixes it here too. What this adds is one checkpoint instead of three, two fewer
+    round trips on the serialized COM thread, and the contour analysis at the end -
+    the point at which "is this profile usable?" is worth asking, because it is the
+    last moment before a feature tries to consume it.
+    """
+    doc = ctx.require_doc()
+
+    started = sketch_start(ctx, SketchStartArgs(on=args.on))
+    added = sketch_add_geometry(
+        ctx,
+        SketchAddGeometryArgs(
+            entities=args.entities,
+            sketch_name=None,
+            auto_relations=args.auto_relations,
+        ),
+    )
+
+    exited = False
+    if args.exit_sketch:
+        sketch_exit(ctx, SketchExitArgs(rebuild=args.rebuild))
+        exited = True
+
+    # Re-found by name: exiting the sketch invalidates nothing, but the handle came
+    # from before the exit and asking the document again is cheaper than reasoning
+    # about whether it survived.
+    sketch = find_sketch(doc, started.sketch_name)
+    contours = analyze_contours(segment_topology(sketch)) if sketch is not None else {}
+
+    warnings = list(started.warnings) + list(added.warnings)
+    if contours.get("open_contour_count"):
+        where = contours["loose_ends_mm"] or contours["branch_points_mm"]
+        warnings.append(
+            f"{contours['open_contour_count']} contour(s) do not close. An extrude will "
+            f"refuse this profile; a revolve will too unless the gap lies on its axis. "
+            f"Loose points (mm): {where}."
+        )
+
+    return SketchCreateResult(
+        sketch_name=started.sketch_name,
+        plane=started.plane,
+        created=added.created,
+        failed=added.failed,
+        sketch_state=added.sketch_state,
+        max_deviation_mm=added.max_deviation_mm,
+        exited=exited,
+        contours=contours,
+        warnings=warnings,
+        verification=Verification(
+            read_back=True,
+            before={"segment_count": 0},
+            after={
+                "sketch": started.sketch_name,
+                "segment_count": len(added.created),
+                "closed_contour_count": contours.get("closed_contour_count"),
+            },
+            checks=[
+                Check(
+                    name="sketch_created",
+                    passed=bool(started.sketch_name),
+                    detail=started.sketch_name or "no sketch came back",
+                ),
+                Check(
+                    name="every_entity_created",
+                    passed=not added.failed,
+                    detail=f"{len(added.failed)} of {len(args.entities)} entities failed"
+                    if added.failed
+                    else "all entities created",
+                ),
+                # Carried through rather than re-derived: the sub-handler measured it
+                # against the request, and restating the number here would be a second
+                # place for it to be wrong.
+                Check(
+                    name="coordinates_as_requested",
+                    passed=(
+                        added.max_deviation_mm is None
+                        or added.max_deviation_mm
+                        <= from_meters(COORDINATE_TOLERANCE_M, "mm")
+                    ),
+                    detail="nothing measurable in this batch"
+                    if added.max_deviation_mm is None
+                    else f"worst placement gap {added.max_deviation_mm} mm",
+                ),
+                Check(
+                    name="sketch_closed_for_editing",
+                    passed=exited or not args.exit_sketch,
+                    detail="left open on request" if not args.exit_sketch else "exited",
+                ),
+            ],
+        ),
     )
 
 

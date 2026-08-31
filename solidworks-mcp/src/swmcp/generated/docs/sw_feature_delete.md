@@ -248,6 +248,14 @@ Delete a feature, optionally with its dependents, and verify it is gone from the
   },
   "additionalProperties": false,
   "properties": {
+    "also_removed": {
+      "description": "Other features that went with it - absorbed sketches, dependent features. A delete that quietly takes more than it was asked for should say what.",
+      "items": {
+        "type": "string"
+      },
+      "title": "Also Removed",
+      "type": "array"
+    },
     "checkpoint": {
       "anyOf": [
         {

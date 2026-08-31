@@ -61,7 +61,10 @@ class ViewCaptureArgs(BaseArgs):
     output_path: str = Field(
         description=(
             "Image destination under an allowed output root. The extension picks the "
-            "format: .png or .bmp."
+            "format, and the two do not behave alike: **.bmp honours width and height "
+            "exactly**, because SaveBMP takes a pixel size, while .png comes out at "
+            "whatever the SOLIDWORKS viewport happens to be and ignores both. Ask for "
+            ".bmp when the size matters."
         )
     )
     overwrite: OverwritePolicy = Field(
@@ -75,8 +78,18 @@ class ViewCaptureArgs(BaseArgs):
         default=None, description="Orient the view before capturing. Omit to keep the current one."
     )
     display_mode: DisplayMode | None = None
-    width: int = Field(default=1280, ge=64, le=8192, description="Image width in pixels.")
-    height: int = Field(default=960, ge=64, le=8192, description="Image height in pixels.")
+    width: int = Field(
+        default=1280,
+        ge=64,
+        le=8192,
+        description="Image width in pixels. Honoured for .bmp; advisory for .png.",
+    )
+    height: int = Field(
+        default=960,
+        ge=64,
+        le=8192,
+        description="Image height in pixels. Honoured for .bmp; advisory for .png.",
+    )
     fit: bool = Field(default=True, description="Zoom to fit before capturing.")
     clear_selection: bool = Field(
         default=True, description="Deselect first, so nothing is highlighted in the image."

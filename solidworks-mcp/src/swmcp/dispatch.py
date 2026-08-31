@@ -54,6 +54,11 @@ class Dispatcher:
         self.worker = worker or StaWorker(
             self.config, session_factory=lambda: SwSession(self.config)
         )
+        #: Documents already told they have nowhere to checkpoint to. Building a part
+        #: from scratch is a long run of mutations against a never-saved document, and
+        #: repeating one unchanging warning on every one of them buries the warnings
+        #: that are actually about the operation the caller just ran.
+        self._unsaved_warned: set[str] = set()
         load_all_ops()
 
     # -- gates that run before COM ----------------------------------------
@@ -224,6 +229,21 @@ class Dispatcher:
                     ],
                 )
             )
+
+        # "This document has never been saved" is a fact about the document, not news
+        # about this operation, and it stays true for every call until someone saves.
+        # Said once per document; every other reason is unusual enough to repeat.
+        if reason == "no_document_path":
+            identity = (info.title if info else None) or "<unknown>"
+            if identity in self._unsaved_warned:
+                return
+            self._unsaved_warned.add(identity)
+            ctx.warn(
+                "This document has never been saved, so nothing here can be rolled back "
+                "by restoring a snapshot. Save it to get that safety net. (Said once "
+                "per document.)"
+            )
+            return
 
         ctx.warn(
             f"No checkpoint was taken ({reason}), so this change cannot be rolled back "

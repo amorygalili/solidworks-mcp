@@ -31,6 +31,7 @@ from swmcp.modeling import (
     volume_to_display,
 )
 from swmcp.refs.capture import capture
+from swmcp.refs.probes import ProbeFilters, probe_entities
 from swmcp.refs.resolve import resolve
 from swmcp.schemas.feature import (
     BodyListArgs,
@@ -1566,6 +1567,56 @@ def feature_loft(ctx: OpContext, args: LoftArgs) -> LoftResult:
 # --- edge features ------------------------------------------------------------
 
 
+def _edges_for(ctx: OpContext, doc: Any, args: Any, kind: str) -> tuple[list[Any], dict[str, Any]]:
+    """Resolve the edges a fillet or chamfer will act on, however they were named.
+
+    Both routes end in the same list of references. The predicate goes through
+    :func:`probe_entities` - the machinery behind sw_probe_faces - rather than walking
+    edges again here, so "every edge over 2mm" selects exactly what probing for the
+    same thing would have reported.
+    """
+    if args.edges is None:
+        return list(args.refs), {}
+
+    query = args.edges
+    found, examined = probe_entities(
+        ctx.session,
+        doc,
+        entity_class="edge",
+        feature_name=query.feature_name,
+        body_name=query.body_name,
+        filters=ProbeFilters(
+            geometry_type=query.geometry_type,
+            length_min_m=query.min_length,
+            length_max_m=query.max_length,
+        ),
+        limit=query.limit,
+    )
+    if not found:
+        raise SwMcpError(
+            make_error(
+                "NO_EDGES_MATCHED",
+                "reference",
+                f"No edge matched the {kind} predicate, out of {examined} examined.",
+                context={
+                    "examined": examined,
+                    "body_name": query.body_name,
+                    "feature_name": query.feature_name,
+                    "geometry_type": query.geometry_type,
+                    "min_length_m": query.min_length,
+                    "max_length_m": query.max_length,
+                },
+                remediation=[
+                    "Run sw_probe_faces with entity_class='edge' and the same bounds to "
+                    "see what is actually there.",
+                    "A body_name or feature_name that names nothing matches nothing; "
+                    "check it against sw_body_list or sw_feature_list.",
+                ],
+            )
+        )
+    return found, {"edges_examined": examined, "edges_matched": len(found)}
+
+
 @op(
     name="sw_feature_fillet",
     tier="core",
@@ -1585,14 +1636,16 @@ def feature_fillet(ctx: OpContext, args: FilletArgs) -> EdgeFeatureResult:
     doc = ctx.require_doc()
     before = model_snapshot(doc)
 
+    refs, tallies = _edges_for(ctx, doc, args, "fillet")
     try_com_member(doc, "ClearSelection2", True, default=None)
-    selected = _select_refs(ctx, doc, args.refs)
+    selected = _select_refs(ctx, doc, refs)
     if not selected:
         raise SwMcpError(
             make_error(
                 "NO_EDGES_SELECTED",
                 "reference",
                 "None of the supplied references could be selected for a fillet.",
+                context=tallies,
                 remediation=["Probe for the edges first and pass their tool_args."],
             )
         )
@@ -1604,7 +1657,8 @@ def feature_fillet(ctx: OpContext, args: FilletArgs) -> EdgeFeatureResult:
         None, None, None, None, None, None, None,
     )
     return _edge_feature_result(
-        ctx, doc, feature, before, selected=selected, kind="fillet", name=args.name
+        ctx, doc, feature, before, selected=selected, kind="fillet", name=args.name,
+        tallies=tallies,
     )
 
 
@@ -1627,8 +1681,9 @@ def feature_chamfer(ctx: OpContext, args: ChamferArgs) -> EdgeFeatureResult:
     doc = ctx.require_doc()
     before = model_snapshot(doc)
 
+    refs, tallies = _edges_for(ctx, doc, args, "chamfer")
     try_com_member(doc, "ClearSelection2", True, default=None)
-    selected = _select_refs(ctx, doc, args.refs)
+    selected = _select_refs(ctx, doc, refs)
     if not selected:
         raise SwMcpError(
             make_error(
@@ -1659,7 +1714,8 @@ def feature_chamfer(ctx: OpContext, args: ChamferArgs) -> EdgeFeatureResult:
         0, 0, 0,
     )
     return _edge_feature_result(
-        ctx, doc, feature, before, selected=selected, kind="chamfer", name=args.name
+        ctx, doc, feature, before, selected=selected, kind="chamfer", name=args.name,
+        tallies=tallies,
     )
 
 
@@ -1672,6 +1728,7 @@ def _edge_feature_result(
     selected: int,
     kind: str,
     name: str | None,
+    tallies: dict[str, Any] | None = None,
 ) -> EdgeFeatureResult:
     if feature is None:
         raise SwMcpError(
@@ -1697,6 +1754,7 @@ def _edge_feature_result(
         edges_selected=selected,
         volume_mm3_before=before["volume_mm3"],
         volume_mm3_after=after["volume_mm3"],
+        **(tallies or {}),
         verification=Verification(
             read_back=True,
             before=before,
@@ -1729,6 +1787,90 @@ def _edge_feature_result(
 # --- patterns -----------------------------------------------------------------
 
 
+#: Each model axis is where two standard planes meet. Front is XY, Top is XZ, and
+#: Right is YZ, so every pair intersects on exactly one of them.
+_STANDARD_AXIS_PLANES = {
+    "x": ("front", "top"),
+    "y": ("front", "right"),
+    "z": ("top", "right"),
+}
+
+#: Reference axes this server creates on the caller's behalf are named so they can be
+#: found again. Without that, every pattern about Y would add another axis to the tree.
+STANDARD_AXIS_PREFIX = "swmcp_axis_"
+
+
+def _standard_axis_feature(ctx: OpContext, doc: Any, which: str) -> tuple[str, bool]:
+    """Find or build the reference axis for a model axis; report which it was.
+
+    SOLIDWORKS will not pattern about a bare direction: a circular pattern needs a real
+    axis it can select, and the model's own X/Y/Z are not selectable entities. The two
+    standard planes that meet on that axis *are* selectable, and ``InsertAxis2`` turns
+    them into one - so the shorthand costs a feature in the tree.
+
+    That is a visible change the caller did not ask for, which is why the axis is named
+    and reused rather than created per call, and why the result says whether this one
+    made it.
+    """
+    name = f"{STANDARD_AXIS_PREFIX}{which}"
+    existing = find_feature(doc, name)
+    if existing is not None:
+        return name, False
+
+    first, second = _STANDARD_AXIS_PLANES[which]
+    before = _feature_names(doc)
+    try_com_member(doc, "ClearSelection2", True, default=None)
+    ctx.session.find_standard_plane(doc, first).Select2(True, 0)
+    ctx.session.find_standard_plane(doc, second).Select2(True, 0)
+
+    # InsertAxis2 answers with a bare bool and puts nothing in the tree when the
+    # selection does not describe an axis, so the bool alone is not evidence.
+    created = bool(try_com_member(doc, "InsertAxis2", True, default=False))
+    feature = _new_feature(doc, before)
+    type_name = str(try_com_member(feature, "GetTypeName2", default="") or "") if feature else ""
+    if not created or feature is None or type_name != "RefAxis":
+        raise SwMcpError(
+            make_error(
+                "STANDARD_AXIS_UNAVAILABLE",
+                "solidworks",
+                f"Could not build a reference axis for the {which} axis.",
+                context={
+                    "planes": [first, second],
+                    "insert_axis_returned": created,
+                    "created_type": type_name or None,
+                },
+                remediation=[
+                    "This needs the two standard planes to exist and be unsuppressed.",
+                    "Pass direction_ref with an edge or axis of your own instead.",
+                ],
+            )
+        )
+    feature.Name = name
+    return name, True
+
+
+def _select_pattern_direction(
+    ctx: OpContext, doc: Any, args: PatternArgs, axis_name: str | None
+) -> None:
+    """Put the pattern's first direction on selection mark 1, however it was named."""
+    if axis_name is None:
+        _select_refs(ctx, doc, [args.direction_ref], mark=1)
+        return
+    if not doc.Extension.SelectByID2(axis_name, "AXIS", 0, 0, 0, False, 1, null_dispatch(), 0):
+        raise SwMcpError(
+            make_error(
+                "STANDARD_AXIS_UNAVAILABLE",
+                "reference",
+                f"The reference axis {axis_name!r} exists but could not be selected.",
+                context={"axis": axis_name, "standard_axis": args.standard_axis},
+                remediation=[
+                    "A feature of that name may exist without being an axis; rename or "
+                    "delete it, or pass direction_ref instead.",
+                ],
+            )
+        )
+
+
 @op(
     name="sw_feature_pattern",
     tier="core",
@@ -1747,16 +1889,30 @@ def _edge_feature_result(
 )
 def feature_pattern(ctx: OpContext, args: PatternArgs) -> PatternResult:
     doc = ctx.require_doc()
-    before = model_snapshot(doc)
 
-    if args.direction_ref is None:
+    if args.direction_ref is None and args.standard_axis is None:
         raise SwMcpError(
             validation_error(
                 "MISSING_ARGUMENT",
-                "A pattern needs direction_ref: an edge, axis, or planar face.",
-                remediation=["Probe for a straight edge or an axis and pass its tool_args."],
+                "A pattern needs a direction: pass direction_ref, or standard_axis for "
+                "the model's own X, Y or Z.",
+                remediation=[
+                    "For a pattern about the part's centreline, standard_axis='y' needs "
+                    "no probing.",
+                    "Otherwise probe for a straight edge or an axis and pass its "
+                    "tool_args as direction_ref.",
+                ],
             )
         )
+
+    # Resolved before the snapshot: building the axis adds a feature, and a "before"
+    # taken after it would hide that from the evidence the caller reads back.
+    axis_name: str | None = None
+    axis_was_created = False
+    if args.standard_axis is not None:
+        axis_name, axis_was_created = _standard_axis_feature(ctx, doc, args.standard_axis)
+
+    before = model_snapshot(doc)
 
     if args.second_count > 1 and args.second_direction_ref is None:
         raise SwMcpError(
@@ -1769,7 +1925,7 @@ def feature_pattern(ctx: OpContext, args: PatternArgs) -> PatternResult:
         )
 
     try_com_member(doc, "ClearSelection2", True, default=None)
-    _select_refs(ctx, doc, [args.direction_ref], mark=1)
+    _select_pattern_direction(ctx, doc, args, axis_name)
     if args.second_direction_ref is not None:
         _select_refs(ctx, doc, [args.second_direction_ref], mark=2)
 
@@ -1839,6 +1995,16 @@ def feature_pattern(ctx: OpContext, args: PatternArgs) -> PatternResult:
         body_count_after=after["body_count"],
         volume_mm3_before=before["volume_mm3"],
         volume_mm3_after=after["volume_mm3"],
+        axis_name=axis_name,
+        axis_was_created=axis_was_created,
+        warnings=(
+            [
+                f"Added the reference axis {axis_name!r} to the feature tree to pattern "
+                f"about {args.standard_axis}. Later patterns about the same axis reuse it."
+            ]
+            if axis_was_created
+            else []
+        ),
         verification=Verification(
             read_back=True,
             before=before,
@@ -2201,23 +2367,31 @@ def feature_delete(ctx: OpContext, args: FeatureDeleteArgs) -> FeatureDeleteResu
             )
         )
 
-    before = feature_count(doc)
+    before_names = _feature_names(doc)
+    before = len(before_names)
     try_com_member(doc, "ClearSelection2", True, default=None)
     try_com_member(feature, "Select2", False, 0, default=False)
-    doc.Extension.DeleteSelection2(
-        swconst.value("swDeleteSelectionOptions_e", "swDelete_Children")
-        if args.delete_children
-        else swconst.value("swDeleteSelectionOptions_e", "swDelete_Absorbed")
-    )
 
-    after = feature_count(doc)
+    # swDelete_Children (1) and swDelete_Absorbed (2) are independent bits, not a
+    # choice between two modes. Sending Children alone deleted the dependent features
+    # but *kept* the profile sketch the feature had absorbed, which then sat in the
+    # tree as an orphan and drew itself over the model. Deleting a feature should take
+    # the sketch it consumed with it, so delete_children means both bits.
+    absorbed = swconst.value("swDeleteSelectionOptions_e", "swDelete_Absorbed")
+    children = swconst.value("swDeleteSelectionOptions_e", "swDelete_Children")
+    doc.Extension.DeleteSelection2(absorbed | children if args.delete_children else absorbed)
+
+    after_names = _feature_names(doc)
+    after = len(after_names)
     still_there = find_feature(doc, args.feature_name) is not None
+    also_removed = sorted(set(before_names) - set(after_names) - {args.feature_name})
 
     return FeatureDeleteResult(
         feature_name=args.feature_name,
         deleted=not still_there,
         features_before=before,
         features_after=after,
+        also_removed=also_removed,
         verification=Verification(
             read_back=True,
             before={"feature_count": before},
@@ -2234,6 +2408,13 @@ def feature_delete(ctx: OpContext, args: FeatureDeleteArgs) -> FeatureDeleteResu
                     name="tree_shrank",
                     passed=after < before,
                     detail=f"{before} -> {after} features",
+                ),
+                # Naming what else went is the difference between a delete the caller
+                # can reason about and one they have to go and look at.
+                Check(
+                    name="collateral_named",
+                    passed=True,
+                    detail=f"also removed: {also_removed}" if also_removed else "nothing else",
                 ),
             ],
         ),
