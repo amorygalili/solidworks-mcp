@@ -1,6 +1,6 @@
 # sw_sketch_diagnose
 
-Report a sketch's solver state: fully or under defined, over-defining relations, dangling relations, and how many segments are still free.
+Report a sketch's solver state and its profile topology: fully or under defined, over-defining relations, dangling relations, how many segments are still free, and how many closed contours the sketch actually holds — with the coordinates of any gap that stops one closing.
 
 | | |
 |---|---|
@@ -140,6 +140,12 @@ Report a sketch's solver state: fully or under defined, over-defining relations,
   },
   "additionalProperties": false,
   "properties": {
+    "contours": {
+      "additionalProperties": true,
+      "description": "Profile topology: how many closed contours the sketch holds, and where the ones that do not close come apart. Revolve and extrude need a closed contour, which the solver status does not report - a fully defined sketch can still have a gap, and an under-defined one can close perfectly.",
+      "title": "Contours",
+      "type": "object"
+    },
     "segment_count": {
       "title": "Segment Count",
       "type": "integer"

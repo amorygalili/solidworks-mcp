@@ -133,6 +133,18 @@ def from_radians(radians: float, unit: str = DEFAULT_ANGLE_UNIT) -> float:
     return radians / _lookup(unit, ANGLE_TO_RADIANS, "angle")
 
 
+#: Two coordinates closer together than this are the same point.
+#:
+#: One micron. A double survives the round trip through the SOLIDWORKS sketch database
+#: to a few parts in 1e-12, so this sits far above the noise floor; it also sits far
+#: below any dimension a caller meant to draw. That gap is what lets "did SOLIDWORKS
+#: move the point I asked for?" have a clean yes or no.
+#:
+#: It lives here because it is a length, and SYS-006 puts every length through one
+#: normalization boundary — including the ones that are constants.
+COORDINATE_TOLERANCE_M = to_meters("0.001mm")
+
+
 _QUANTITY_JSON_SCHEMA = {
     "anyOf": [
         {"type": "number"},

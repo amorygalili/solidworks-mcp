@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 from swmcp.catalog.registry import op
@@ -39,14 +40,17 @@ from swmcp.schemas.sketch import (
 )
 from swmcp.sketching import (
     active_sketch,
+    anchor_deviation,
     describe_segment,
     find_sketch,
     require_active_sketch,
+    segment_endpoints,
     segments_by_id,
     select_segments,
     sketch_segments,
     sketch_state,
 )
+from swmcp.units import COORDINATE_TOLERANCE_M, from_meters
 
 
 def _resolve_sketch(ctx: OpContext, doc: Any, name: str | None) -> Any:
@@ -124,6 +128,79 @@ def _create_slot(manager: Any, entity: Any, kind: str) -> list[Any]:
     # If the diff finds nothing but the call returned something, report the wrapper
     # rather than claiming the slot failed.
     return fresh or normalize_sequence(made)
+
+
+#: Which of an entity's declared points must come back as an actual segment endpoint.
+#:
+#: Only forms whose coordinates *are* ends can be checked this way. A circle's centre,
+#: a polygon's centre and a spline's interior points sit on no endpoint, so those forms
+#: are left unmeasured rather than measured against the wrong thing — an unchecked
+#: entity reports no deviation instead of a misleading zero.
+_ENTITY_ANCHORS: dict[str, tuple[str, ...]] = {
+    "line": ("start", "end"),
+    "centerline": ("start", "end"),
+    "arc_center": ("start", "end"),
+    "arc_3pt": ("start", "end"),
+    "rect_corner": ("corner", "opposite"),
+    "rect_center": ("corner",),
+}
+
+
+def _requested_anchors(entity: Any) -> list[tuple[float, float]]:
+    """The points this entity promised would end up as segment ends, in metres."""
+    points: list[tuple[float, float]] = []
+    for field in _ENTITY_ANCHORS.get(entity.type, ()):
+        value = getattr(entity, field, None)
+        if value is not None and len(value) >= 2:
+            points.append((float(value[0]), float(value[1])))
+    return points
+
+
+class _InferenceOff:
+    """Suspend SOLIDWORKS' sketch inference for the duration of a batch.
+
+    ``ISketchManager::AddToDB`` puts geometry straight into the sketch database
+    without the snapping and auto-relations that a human sketcher wants — so the
+    caller's flag reads ``auto_relations=False`` and the property goes *True*. The
+    inversion is worth the confusion at this one site: the caller should not have to
+    know the API's name for "stop helping".
+
+    Restoring the previous value matters more than setting it. SOLIDWORKS is the
+    user's live application; leaving inference off would quietly change how their next
+    hand-drawn sketch behaves, with nothing on screen to say why.
+    """
+
+    def __init__(self, manager: Any, *, enabled: bool) -> None:
+        self._manager = manager
+        self._enabled = enabled
+        self._previous: Any = None
+        self._applied = False
+
+    def __enter__(self) -> _InferenceOff:
+        if self._enabled:
+            self._previous = try_com_member(self._manager, "AddToDB", default=None)
+            try:
+                self._manager.AddToDB = True
+                self._applied = True
+            except Exception:
+                # A build that will not accept the property falls back to inference-on,
+                # which is the safe direction: the caller still gets measured deviations
+                # and a warning, rather than a batch that silently did not run.
+                self._applied = False
+        return self
+
+    def __exit__(self, *_exc: Any) -> None:
+        # Keyed to whether the write actually happened, not to whether the read did.
+        # Reading the old value can fail on its own; if it does and the write then
+        # succeeds, this is the only thing standing between the user and a SOLIDWORKS
+        # left with inference off for every sketch they draw afterwards.
+        if self._applied:
+            with contextlib.suppress(Exception):
+                self._manager.AddToDB = bool(self._previous)
+
+    @property
+    def engaged(self) -> bool:
+        return self._applied
 
 
 def _create_entity(manager: Any, entity: Any) -> list[Any]:
@@ -460,39 +537,85 @@ def sketch_add_geometry(ctx: OpContext, args: SketchAddGeometryArgs) -> SketchAd
 
     created: list[dict[str, Any]] = []
     failed: list[dict[str, Any]] = []
+    deviations: list[tuple[int, str, float]] = []
 
-    for index, entity in enumerate(args.entities, start=1):
-        try:
-            segments = [s for s in _create_entity(manager, entity) if s is not None]
-        except SwMcpError as exc:
-            failed.append({"index": index, "type": entity.type, "reason": exc.envelope.message})
-            continue
-        except Exception as exc:  # one bad primitive must not lose the whole batch
-            failed.append({"index": index, "type": entity.type, "reason": str(exc)})
-            continue
+    with _InferenceOff(manager, enabled=not args.auto_relations) as inference:
+        for index, entity in enumerate(args.entities, start=1):
+            try:
+                segments = [s for s in _create_entity(manager, entity) if s is not None]
+            except SwMcpError as exc:
+                failed.append(
+                    {"index": index, "type": entity.type, "reason": exc.envelope.message}
+                )
+                continue
+            except Exception as exc:  # one bad primitive must not lose the whole batch
+                failed.append({"index": index, "type": entity.type, "reason": str(exc)})
+                continue
 
-        if not segments:
-            failed.append(
-                {"index": index, "type": entity.type, "reason": "SOLIDWORKS created no geometry"}
-            )
-            continue
+            if not segments:
+                failed.append(
+                    {
+                        "index": index,
+                        "type": entity.type,
+                        "reason": "SOLIDWORKS created no geometry",
+                    }
+                )
+                continue
 
-        wants_construction = entity.construction or entity.type == "centerline"
-        for segment in segments:
-            if wants_construction:
-                try_com_member(segment, "ConstructionGeometry", default=None)
-                segment.ConstructionGeometry = True
-            # Keep both: the primitive the caller asked for, and what SOLIDWORKS
-            # actually produced. A rectangle becomes four lines, so without
-            # requested_type there is no way to tell which segments came from which
-            # entry in the batch.
-            created.append(
-                {
+            # Measure before anything else touches the segments: what matters is where
+            # SOLIDWORKS put them, and the answer is only trustworthy while it is the
+            # most recent thing that happened to this geometry.
+            actual_ends: list[tuple[float, float]] = []
+            for segment in segments:
+                actual_ends.extend(segment_endpoints(segment))
+            gap = anchor_deviation(_requested_anchors(entity), actual_ends)
+            if gap is not None:
+                deviations.append((index, entity.type, gap))
+
+            wants_construction = entity.construction or entity.type == "centerline"
+            for segment in segments:
+                if wants_construction:
+                    try_com_member(segment, "ConstructionGeometry", default=None)
+                    segment.ConstructionGeometry = True
+                # Keep both: the primitive the caller asked for, and what SOLIDWORKS
+                # actually produced. A rectangle becomes four lines, so without
+                # requested_type there is no way to tell which segments came from which
+                # entry in the batch.
+                entry = {
                     "index": index,
                     "requested_type": entity.type,
                     **describe_segment(segment),
                 }
-            )
+                if gap is not None:
+                    entry["deviation_mm"] = round(from_meters(gap, "mm"), 6)
+                created.append(entry)
+
+        inference_engaged = inference.engaged
+
+    worst = max((gap for _, _, gap in deviations), default=None)
+    moved = [
+        (index, kind, gap)
+        for index, kind, gap in deviations
+        if gap > COORDINATE_TOLERANCE_M
+    ]
+
+    extra_warnings: list[str] = []
+    if moved:
+        worst_index, worst_type, worst_gap = max(moved, key=lambda item: item[2])
+        extra_warnings.append(
+            f"{len(moved)} of {len(deviations)} measured entity(ies) were placed away "
+            f"from the coordinates given, by up to "
+            f"{from_meters(worst_gap, 'mm'):.4f} mm "
+            f"(entity {worst_index}, {worst_type}). SOLIDWORKS' sketch inference snaps "
+            f"new geometry onto nearby entities; pass auto_relations=false to place it "
+            f"exactly as written."
+        )
+    if not args.auto_relations and not inference_engaged:
+        extra_warnings.append(
+            "auto_relations=false was requested but this build would not accept "
+            "ISketchManager::AddToDB, so inference stayed on and geometry may have "
+            "snapped. The reported deviations still say whether it did."
+        )
 
     after = segments_by_id(sketch)
     return SketchAddGeometryResult(
@@ -500,6 +623,7 @@ def sketch_add_geometry(ctx: OpContext, args: SketchAddGeometryArgs) -> SketchAd
         created=created,
         failed=failed,
         sketch_state=sketch_state(sketch),
+        max_deviation_mm=None if worst is None else round(from_meters(worst, "mm"), 6),
         verification=Verification(
             read_back=True,
             before={"segment_count": len(before_ids)},
@@ -517,9 +641,24 @@ def sketch_add_geometry(ctx: OpContext, args: SketchAddGeometryArgs) -> SketchAd
                     if failed
                     else "all entities created",
                 ),
+                # "It was created" and "it was created where I asked" are different
+                # claims, and only the first one used to be made. A batch that snapped
+                # onto neighbouring geometry passed every check while quietly modelling
+                # something else.
+                Check(
+                    name="coordinates_as_requested",
+                    passed=not moved,
+                    detail="nothing measurable in this batch"
+                    if worst is None
+                    else f"worst placement gap {from_meters(worst, 'mm'):.4f} mm across "
+                    f"{len(deviations)} measured entity(ies)",
+                ),
             ],
         ),
-        warnings=[f"{len(failed)} entity(ies) could not be created."] if failed else [],
+        warnings=(
+            [f"{len(failed)} entity(ies) could not be created."] if failed else []
+        )
+        + extra_warnings,
     )
 
 

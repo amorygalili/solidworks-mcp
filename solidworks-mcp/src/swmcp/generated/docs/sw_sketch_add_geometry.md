@@ -1702,6 +1702,12 @@ Create sketch primitives in one batch — lines, centerlines, points, rectangles
   },
   "additionalProperties": false,
   "properties": {
+    "auto_relations": {
+      "default": true,
+      "description": "Let SOLIDWORKS infer relations as each primitive is drawn. Inference snaps new geometry onto whatever is already nearby, which silently moves endpoints off the coordinates you gave - convenient when sketching by hand, wrong when the coordinates are the specification. Pass false to place geometry exactly as written; the trade is that no coincident relations are added, so segments meet by position rather than by constraint. Either way the result reports how far each point actually landed from the one asked for.",
+      "title": "Auto Relations",
+      "type": "boolean"
+    },
     "document": {
       "$ref": "#/$defs/DocTarget",
       "description": "Which document to act on. Defaults to the active document."
@@ -2048,6 +2054,19 @@ Create sketch primitives in one batch — lines, centerlines, points, rectangles
       },
       "title": "Failed",
       "type": "array"
+    },
+    "max_deviation_mm": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Worst gap between a requested coordinate and where the geometry actually landed. None when no entity in the batch had checkable anchor points.",
+      "title": "Max Deviation Mm"
     },
     "rebuild_errors": {
       "items": {

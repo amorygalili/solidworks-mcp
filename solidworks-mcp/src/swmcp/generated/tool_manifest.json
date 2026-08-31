@@ -37656,6 +37656,12 @@
         },
         "additionalProperties": false,
         "properties": {
+          "auto_relations": {
+            "default": true,
+            "description": "Let SOLIDWORKS infer relations as each primitive is drawn. Inference snaps new geometry onto whatever is already nearby, which silently moves endpoints off the coordinates you gave - convenient when sketching by hand, wrong when the coordinates are the specification. Pass false to place geometry exactly as written; the trade is that no coincident relations are added, so segments meet by position rather than by constraint. Either way the result reports how far each point actually landed from the one asked for.",
+            "title": "Auto Relations",
+            "type": "boolean"
+          },
           "document": {
             "$ref": "#/$defs/DocTarget",
             "description": "Which document to act on. Defaults to the active document."
@@ -38009,6 +38015,19 @@
             },
             "title": "Failed",
             "type": "array"
+          },
+          "max_deviation_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Worst gap between a requested coordinate and where the geometry actually landed. None when no entity in the batch had checkable anchor points.",
+            "title": "Max Deviation Mm"
           },
           "rebuild_errors": {
             "items": {
@@ -40064,6 +40083,12 @@
         },
         "additionalProperties": false,
         "properties": {
+          "contours": {
+            "additionalProperties": true,
+            "description": "Profile topology: how many closed contours the sketch holds, and where the ones that do not close come apart. Revolve and extrude need a closed contour, which the solver status does not report - a fully defined sketch can still have a gap, and an under-defined one can close perfectly.",
+            "title": "Contours",
+            "type": "object"
+          },
           "segment_count": {
             "title": "Segment Count",
             "type": "integer"
@@ -40098,7 +40123,7 @@
       "satisfies": [
         "CON-005"
       ],
-      "summary": "Report a sketch's solver state: fully or under defined, over-defining relations, dangling relations, and how many segments are still free.",
+      "summary": "Report a sketch's solver state and its profile topology: fully or under defined, over-defining relations, dangling relations, how many segments are still free, and how many closed contours the sketch actually holds — with the coordinates of any gap that stops one closing.",
       "tags": [
         "diagnose",
         "constraint",

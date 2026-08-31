@@ -72,6 +72,14 @@ from swmcp.schemas.feature import (
     SweepArgs,
     SweepResult,
 )
+from swmcp.sketching import (
+    analyze_contours,
+    coincident_axis_segments,
+    find_sketch,
+    segment_topology,
+    straddling_axes,
+    unsupported_loose_ends,
+)
 from swmcp.units import from_meters
 
 _DATUM_TYPES = {
@@ -897,6 +905,124 @@ def feature_extrude_cut(ctx: OpContext, args: ExtrudeArgs) -> ExtrudeResult:
     return _extrude(ctx, args, cut=True)
 
 
+#: What the old error said, every time, whatever the sketch looked like.
+_GENERIC_REVOLVE_ADVICE = [
+    "A revolve needs an axis: add a centerline to the sketch, or pass axis_ref.",
+    "The profile must not cross the axis.",
+]
+
+
+def revolve_findings(
+    segments: list[dict[str, Any]], sketch_name: str, *, axis_given: bool
+) -> dict[str, Any]:
+    """Turn a sketch's topology into a diagnosis, with no COM in sight.
+
+    Split out from :func:`_revolve_diagnosis` so the reasoning can be tested directly.
+    The alternative was to test it through a live revolve failure, and this build turned
+    out to be far harder to refuse than expected - it revolves a profile whose axis
+    lies on its closing edge, one with a gap between two points on the axis, and one
+    with a collinear gap in its outer wall. Three attempts at a failing fixture is
+    enough of a hint that the diagnosis should not be reachable only through failure.
+    """
+    contours = analyze_contours(segments)
+    centerlines = [s for s in segments if s.get("construction")]
+    overlaps = coincident_axis_segments(segments)
+    crossed = straddling_axes(segments)
+    # An open contour is only a fault where the axis cannot close it. A profile
+    # left open along its own centerline is the ordinary way to draw a revolve,
+    # and blaming that gap would send the caller after a problem they do not have.
+    stranded = unsupported_loose_ends(contours["loose_ends_mm"], segments)
+
+    context: dict[str, Any] = {
+        "sketch": sketch_name,
+        "axis_ref_given": axis_given,
+        "centerline_count": len(centerlines),
+        "closed_contour_count": contours["closed_contour_count"],
+        "open_contour_count": contours["open_contour_count"],
+        "loose_ends_mm": contours["loose_ends_mm"],
+        "loose_ends_the_axis_cannot_close_mm": stranded,
+        "branch_points_mm": contours["branch_points_mm"],
+        "centerlines_on_a_profile_edge": overlaps,
+        "centerlines_the_profile_crosses": crossed,
+    }
+
+    remediation: list[str] = []
+    if not centerlines and not axis_given:
+        remediation.append(
+            "The sketch holds no centerline and no axis_ref was passed, so there is "
+            "nothing to revolve about. Add a centerline or name an axis."
+        )
+    if stranded or contours["branch_points_mm"]:
+        where = stranded or contours["branch_points_mm"]
+        remediation.append(
+            f"The profile does not close, and the gap is not on the axis, so the "
+            f"revolve cannot close it for you. The ends that do not meet are at "
+            f"(mm): {where}."
+        )
+    elif contours["open_contour_count"]:
+        remediation.append(
+            "The profile is open, but every loose end lies on the axis, which a "
+            "revolve closes by itself - so this is probably not the cause. "
+            f"Loose ends (mm): {contours['loose_ends_mm']}."
+        )
+    if crossed:
+        remediation.append(
+            "The profile has material on both sides of the axis, which would sweep "
+            "through itself. Keep it entirely on one side; touching the axis is "
+            "fine, straddling it is not."
+        )
+    if overlaps:
+        # Reported last and hedged on purpose: a revolve did once fail on exactly
+        # this arrangement and succeed once the centerline was extended, but the
+        # reproduction in tests/live/test_live_sketch_fidelity.py revolves it
+        # happily. So it is worth a reader's attention and not worth their
+        # confidence.
+        remediation.append(
+            "A centerline is drawn exactly on top of a profile edge "
+            f"({overlaps}). This is not known to cause a refusal on its own - a "
+            "deliberate reproduction revolves fine - so treat it as the last thing "
+            "to try rather than the answer. Extending the centerline past both ends "
+            "of the profile costs nothing and defines the same axis."
+        )
+    if not remediation:
+        remediation.append(
+            "The sketch looks revolvable from here: it has "
+            f"{contours['closed_contour_count']} closed contour(s), "
+            f"{len(centerlines)} centerline(s), and nothing crossing the axis. The "
+            "refusal is therefore not one of the usual causes - check that the "
+            "sketch is not already consumed by another feature, and that the angle "
+            "and thin-thickness values are ones SOLIDWORKS accepts."
+        )
+    return {"context": context, "remediation": remediation}
+
+
+def _revolve_diagnosis(doc: Any, sketch_name: str, *, axis_given: bool) -> dict[str, Any]:
+    """Say why a revolve was refused, by reading the sketch it was refused on.
+
+    ``FeatureRevolve2`` reports failure by returning ``None`` and nothing else, so the
+    old error could only recite the two usual causes and leave the caller to guess
+    which applied - or whether either did.
+
+    Diagnosis must never replace the failure with a different one: any COM trouble
+    while inspecting falls back to the generic advice, because a confusing error about
+    the revolve beats a confident error about the diagnosis.
+    """
+    try:
+        sketch = find_sketch(doc, sketch_name)
+        if sketch is None:
+            return {
+                "context": {"sketch": sketch_name},
+                "remediation": _GENERIC_REVOLVE_ADVICE,
+            }
+        return revolve_findings(
+            segment_topology(sketch), sketch_name, axis_given=axis_given
+        )
+    except Exception as exc:  # diagnosis is a courtesy; the revolve failure is the news
+        return {
+            "context": {"sketch": sketch_name, "diagnosis_failed": str(exc)},
+            "remediation": _GENERIC_REVOLVE_ADVICE,
+        }
+
 @op(
     name="sw_feature_revolve",
     tier="core",
@@ -940,16 +1066,14 @@ def feature_revolve(ctx: OpContext, args: RevolveArgs) -> RevolveResult:
         args.merge_result,
     )
     if feature is None:
+        findings = _revolve_diagnosis(doc, sketch, axis_given=args.axis_ref is not None)
         raise SwMcpError(
             make_error(
                 "REVOLVE_FAILED",
                 "solidworks",
                 f"SOLIDWORKS could not revolve {sketch!r}.",
-                remediation=[
-                    "A revolve needs an axis: add a centerline to the sketch, "
-                    "or pass axis_ref.",
-                    "The profile must not cross the axis.",
-                ],
+                context=findings["context"],
+                remediation=findings["remediation"],
             )
         )
 

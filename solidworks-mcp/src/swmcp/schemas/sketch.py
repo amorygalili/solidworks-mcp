@@ -315,6 +315,19 @@ class SketchAddGeometryArgs(BaseArgs, PreflightMixin):
         default=None,
         description="Sketch to edit. Defaults to the sketch currently open for editing.",
     )
+    auto_relations: bool = Field(
+        default=True,
+        description=(
+            "Let SOLIDWORKS infer relations as each primitive is drawn. Inference snaps "
+            "new geometry onto whatever is already nearby, which silently moves "
+            "endpoints off the coordinates you gave - convenient when sketching by "
+            "hand, wrong when the coordinates are the specification. Pass false to "
+            "place geometry exactly as written; the trade is that no coincident "
+            "relations are added, so segments meet by position rather than by "
+            "constraint. Either way the result reports how far each point actually "
+            "landed from the one asked for."
+        ),
+    )
 
 
 class SketchAddGeometryResult(MutationResult):
@@ -322,6 +335,13 @@ class SketchAddGeometryResult(MutationResult):
     created: list[dict[str, Any]] = Field(default_factory=list)
     failed: list[dict[str, Any]] = Field(default_factory=list)
     sketch_state: SketchState
+    max_deviation_mm: float | None = Field(
+        default=None,
+        description=(
+            "Worst gap between a requested coordinate and where the geometry actually "
+            "landed. None when no entity in the batch had checkable anchor points."
+        ),
+    )
 
 
 class SketchSetConstructionArgs(BaseArgs):
@@ -427,6 +447,15 @@ class SketchDiagnoseResult(ReadResult):
     sketch_name: str
     sketch_state: SketchState
     segment_count: int
+    contours: dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Profile topology: how many closed contours the sketch holds, and where "
+            "the ones that do not close come apart. Revolve and extrude need a closed "
+            "contour, which the solver status does not report - a fully defined sketch "
+            "can still have a gap, and an under-defined one can close perfectly."
+        ),
+    )
 
 
 class DimensionListArgs(BaseArgs):

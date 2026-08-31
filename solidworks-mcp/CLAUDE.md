@@ -141,6 +141,29 @@ Probing has already caught, in code that looked correct:
 - `ISldWorks::GetImportFileData` is a dead end on this build: `None` for Parasolid, ACIS,
   and STL, and for STEP an object whose only reachable property is `MapConfigurationData`.
   Import options go through **user preferences**, like the export ones.
+- **Sketch inference moves the coordinates you gave it, and says nothing.** Geometry
+  created through `ISketchManager` is snapped onto whatever is already nearby, so a
+  batch of exact coordinates comes back subtly relocated: a chess set built through
+  `sw_sketch_add_geometry` had a rook bore shift from R7 to R8 — thinning its crown wall
+  from 3mm to 2mm — while every check the server made passed. `ISketchManager::AddToDB
+  = True` places geometry in the database with no inferencing, which is what
+  `auto_relations=false` sets. **Restore it in a `finally`, keyed to whether the write
+  succeeded rather than whether the read did**: leaving it set changes how every sketch
+  the user later draws by hand behaves, with nothing on screen to explain it. Never
+  trust "the segment was created" as evidence of *where*; `sw_sketch_add_geometry`
+  now reports a per-entity `deviation_mm` measured against the request.
+- **`FeatureRevolve2` closes far more than "a revolve needs a closed profile" implies.**
+  Three profiles written as deliberate failure fixtures all revolved on 2026 (34.3.0):
+  a centerline lying exactly on the profile's closing edge; a 2mm gap between two points
+  that both sit **on the axis** (a revolve closes its profile against the centerline —
+  this is the ordinary way to draw one); and a 5mm *collinear* gap in the outer wall.
+  So an open contour is only a fault where the axis cannot reach it, which is what
+  `unsupported_loose_ends` decides. A real revolve *did* once fail on the first of those
+  arrangements and succeed once the centerline was extended — that failure is still
+  unexplained, and the likelier cause is an inference-induced gap in the same sketch
+  rather than the overlap itself. The finding is reported last and hedged accordingly.
+  `tests/live/test_live_sketch_fidelity.py` pins all three as passing, so a build that
+  starts refusing one announces itself.
 
 If you call an interface that `src/swmcp/generated/swapi.json` does not cover, add it to
 `INTERFACES` in `scripts/gen_swapi.py` and re-run that script plus

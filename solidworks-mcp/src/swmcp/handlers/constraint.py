@@ -35,8 +35,10 @@ from swmcp.schemas.sketch import (
 from swmcp.sketching import (
     RELATION_ARITY,
     RELATION_TOKENS,
+    analyze_contours,
     find_sketch,
     require_active_sketch,
+    segment_topology,
     segments_by_id,
     select_segments,
     sketch_segments,
@@ -369,8 +371,10 @@ def _add_one_dimension(doc: Any, spec: Any, segments: list[Any]) -> dict[str, An
     domains=("constraint", "sketch"),
     tags=("diagnose", "constraint", "solver", "defined"),
     summary=(
-        "Report a sketch's solver state: fully or under defined, over-defining relations, "
-        "dangling relations, and how many segments are still free."
+        "Report a sketch's solver state and its profile topology: fully or under "
+        "defined, over-defining relations, dangling relations, how many segments are "
+        "still free, and how many closed contours the sketch actually holds — with the "
+        "coordinates of any gap that stops one closing."
     ),
     safety=ReadSafety(),
     satisfies=("CON-005",),
@@ -383,17 +387,31 @@ def sketch_diagnose(ctx: OpContext, args: SketchDiagnoseArgs) -> SketchDiagnoseR
     sketch = _resolve_sketch(doc, args.sketch_name)
     name = str(try_com_member(sketch, "Name", default="") or "")
     state = sketch_state(sketch)
+    contours = analyze_contours(segment_topology(sketch))
 
     warnings = []
     if state["over_defined"]:
         warnings.append("The sketch is over-defined and will not solve as drawn.")
     if state["dangling_relations"]:
         warnings.append(f"{len(state['dangling_relations'])} relation(s) are dangling.")
+    # The solver is content with a profile that has a gap in it, so this is the only
+    # place a caller finds out before a feature refuses the sketch. Stated as what was
+    # measured rather than as a prediction: an extrude does need this closed, but a
+    # revolve closes a profile against its own axis, so an open contour whose ends sit
+    # on the centerline revolves perfectly well.
+    if contours["open_contour_count"]:
+        where = contours["loose_ends_mm"] or contours["branch_points_mm"]
+        warnings.append(
+            f"{contours['open_contour_count']} contour(s) do not close. An extrude will "
+            f"refuse this profile; a revolve will too unless the gap lies on its axis, "
+            f"which it closes by itself. Loose points (mm): {where}."
+        )
 
     return SketchDiagnoseResult(
         sketch_name=name,
         sketch_state=state,
         segment_count=len(sketch_segments(sketch)),
+        contours=contours,
         warnings=warnings,
     )
 
