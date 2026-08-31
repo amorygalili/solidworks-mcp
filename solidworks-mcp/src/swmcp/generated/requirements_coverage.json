@@ -379,6 +379,12 @@
         "sw_batch_export"
       ]
     },
+    "IO-007": {
+      "limitation": "A component and property bill of materials with a traceability matrix naming every instance behind each quantity, and - for every property column - whether the value came from the configuration-specific property set or the file-level one. Three roll-up shapes: parts_only, top_level_only, and indented. swBomType_Flattened is not offered, because its exact rule cannot be verified without a native BOM to compare against. Quantity comes from counting instances: a quantity custom property, unit-of-measure quantities, weldment cut lists, and child-component display rules are not implemented, and a derived configuration's inherited part number falls back to the document name and says so. Every result is labelled a precursor and carries an unconditional warning to reconcile it against a native BOM.",
+      "tools": [
+        "sw_bom_export"
+      ]
+    },
     "MATE-001": {
       "limitation": "Coincident, concentric, perpendicular, parallel, tangent, distance, angle, and lock mates — the types AddMate5 builds from exactly two selected entities. Width, symmetric, gear, rack-and-pinion, screw, universal joint, slot, cam, hinge, linear coupler, path, and coordinate-system mates need three or more selections or extra arguments and are rejected by the schema rather than failing at runtime.",
       "tools": [
@@ -469,10 +475,10 @@
   "totals": {
     "covered_by_platform": 11,
     "fully_covered_by_a_tool": 72,
-    "in_scope": 113,
-    "partially_covered": 33,
+    "in_scope": 114,
+    "partially_covered": 34,
     "requirements_in_backlog": 152,
-    "tools": 112,
+    "tools": 113,
     "uncovered_in_scope": 0
   },
   "uncovered_in_scope": []

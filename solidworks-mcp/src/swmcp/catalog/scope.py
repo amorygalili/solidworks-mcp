@@ -35,7 +35,7 @@ IN_SCOPE_REQUIREMENTS: frozenset[str] = frozenset(
         # an atomic sequence is what the safety layer has been building toward.
         # IO-004 joins them because a single export is rarely the deliverable: what
         # ships is a set of files with a manifest saying what each one is.
-        "IO-001", "IO-002", "IO-003", "IO-004", "REV-006",
+        "IO-001", "IO-002", "IO-003", "IO-004", "IO-007", "REV-006",
         # P2 — review. Inspection, caller-owned validation policy, a B-Rep hole
         # audit, and reports in both machine and human form.
         "REV-001", "REV-002", "REV-004", "REV-005", "REV-007",
@@ -93,6 +93,19 @@ DECLARED_PARTIAL: dict[str, str] = {
         "file that imports incompletely is diagnosed from the geometry rather than from "
         "a translator message. Multi-body files import as one document; splitting them "
         "into separate parts is not implemented."
+    ),
+    "IO-007": (
+        "A component and property bill of materials with a traceability matrix naming "
+        "every instance behind each quantity, and - for every property column - whether "
+        "the value came from the configuration-specific property set or the file-level "
+        "one. Three roll-up shapes: parts_only, top_level_only, and indented. "
+        "swBomType_Flattened is not offered, because its exact rule cannot be verified "
+        "without a native BOM to compare against. Quantity comes from counting "
+        "instances: a quantity custom property, unit-of-measure quantities, weldment "
+        "cut lists, and child-component display rules are not implemented, and a "
+        "derived configuration's inherited part number falls back to the document name "
+        "and says so. Every result is labelled a precursor and carries an unconditional "
+        "warning to reconcile it against a native BOM."
     ),
     "IO-004": (
         "Documents, configurations, and formats multiply into a plan, every planned "

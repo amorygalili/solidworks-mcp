@@ -139,6 +139,18 @@
         "kind": "model_mutation"
       }
     },
+    "sw_bom_export": {
+      "audited": true,
+      "auto_checkpoint": false,
+      "confirm_required": false,
+      "destructive": false,
+      "read_only": false,
+      "safety": {
+        "destructive": false,
+        "kind": "non_model_side_effect",
+        "rationale": "Writes one or two CSV files under an allowed output root, each reported with its size, timestamp, and SHA-256. If a configuration is named it is activated to read quantities from and the previous one is restored. No model is modified."
+      }
+    },
     "sw_capabilities": {
       "audited": false,
       "auto_checkpoint": false,

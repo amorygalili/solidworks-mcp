@@ -6,7 +6,7 @@ worker thread.
 It implements the P0 foundation and a P1 modelling vertical from
 [`docs/solidworks-target-requirements.md`](../docs/solidworks-target-requirements.md),
 plus neutral-format exchange and an atomic mutate-and-validate workflow pulled forward
-from P2: **112 operations covering all 113 in-scope requirements**, with coverage
+from P2: **113 operations covering all 114 in-scope requirements**, with coverage
 reported honestly in `src/swmcp/generated/requirements_coverage.json` rather than
 asserted.
 
@@ -126,6 +126,7 @@ Angles default to degrees and accept `"45deg"`, `"1.57rad"`, or `{"value": 0.25,
 | exchange | export STEP, IGES, STL, 3MF, OBJ, PLY, Parasolid, SAT, VRML, PDF, DXF, DWG; import STEP, IGES, Parasolid, SAT, STL with diagnostics |
 | assembly | insert a component, walk the component tree, set suppression, fixed state, visibility, and configuration, add/list/edit/delete mates, probe candidate mate entities and judge a pair before building it, report how constrained each component is, check interference |
 | drawing | create a drawing and add sheets with explicit template, size, scale, and projection standard; place model and standard-three views; import model dimensions; add notes and centre marks; insert a bill of materials read back cell by cell; list sheets and views; review counts against caller-supplied minimums; export a drawing or chosen sheets to PDF, DXF, or DWG with the written file verified against its own signature |
+| exchange | export to a neutral format, import one back, batch many documents and formats with a hashed manifest, and write a component and property BOM CSV with a traceability matrix |
 | review | inspect a document, validate it against caller-supplied policy, audit holes in the B-Rep, write JSON and Markdown reports, safe execute: run a sequence under one checkpoint and roll it back if an invariant fails |
 
 Per-tool reference with full JSON schemas: `src/swmcp/generated/docs/`.
@@ -440,6 +441,17 @@ coverage file, rather than left for a user to discover:
 - **`PAR-004` (per-configuration values)** — dimension values are read and written per
   configuration. Per-configuration *feature suppression* is not; `sw_feature_edit`
   suppresses in the active configuration.
+- **`IO-007` (BOM CSV and traceability)** — a component and property bill of materials
+  rolled up three ways (`parts_only`, `top_level_only`, `indented`), beside a
+  traceability matrix naming every instance behind each quantity and, for every
+  property column, whether the value came from the configuration-specific property set
+  or the file-level one — because those are different places that routinely disagree.
+  `swBomType_Flattened` is **not** offered: its exact rule cannot be verified without a
+  native BOM to compare against. Quantity is an instance count, so quantity properties,
+  units of measure, weldment cut lists, and child-component display rules are not
+  applied, and a derived configuration's inherited part number falls back to the
+  document name and says so in its own column. Every result is labelled a **precursor**
+  and carries a warning no argument can clear.
 - **`IO-004` (batch export)** — documents, configurations, and formats multiply into a
   plan, every planned output is reported as written, failed, or skipped, and a JSON
   manifest records each file with its size, timestamp, and SHA-256. The batch drives
@@ -474,8 +486,9 @@ coverage file, rather than left for a user to discover:
   snapshotted. Non-destructive edits proceed with a warning; destructive ones are
   refused unless `SWMCP_ALLOW_UNCHECKPOINTED=1`.
 
-Export (`IO-002`, `IO-003`), batch export (`IO-004`), import (`IO-001`), and the atomic
-mutate-and-validate workflow (`REV-006`) were pulled forward from P2 because a model that cannot leave
+Export (`IO-002`, `IO-003`), batch export (`IO-004`), the BOM precursor (`IO-007`),
+import (`IO-001`), and the atomic mutate-and-validate workflow (`REV-006`) were pulled
+forward from P2 because a model that cannot leave
 SOLIDWORKS or come back into it, and a sequence that can end half-applied, both undercut
 everything else. P2 proper starts with assemblies, mates, and drawings: `ASM-001` to `ASM-003`
 cover inserting a component, walking the tree, and setting component state, and

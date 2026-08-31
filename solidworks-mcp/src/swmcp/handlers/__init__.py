@@ -10,6 +10,7 @@ from __future__ import annotations
 from swmcp.handlers import (
     assembly,
     batch,
+    bom,
     constraint,
     discovery,
     document,
@@ -33,6 +34,7 @@ from swmcp.handlers import (
 __all__ = [
     "assembly",
     "batch",
+    "bom",
     "constraint",
     "discovery",
     "document",

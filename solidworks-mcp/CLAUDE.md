@@ -124,6 +124,20 @@ Probing has already caught, in code that looked correct:
   — it is invisible until the directory is listed, or until a manifest naming the file
   is read somewhere that is not Windows. `sw_batch_export` records the name on disk and
   warns when it differs from the one asked for.
+- **`IAssemblyDoc::GetComponents(False)` returns the tree flat, but not in tree order,
+  and not stably.** Each component's `Name2` encodes its path (`sub-1/widget-2`) and
+  `GetParent` gives the parent component with `None` at the top, so the structure is
+  recoverable — but two assemblies built by the same sequence of inserts returned their
+  top-level components in *different* orders. Anything numbering rows from that order
+  produces a different answer per run. `sw_bom_export` sorts before numbering.
+- **A component's configuration property set and its file-level set are different
+  places, both routinely populated, and they disagree.** One part reported
+  `Description = "FILE LEVEL"` at file level and `"CONFIG LEVEL"` in its configuration,
+  and a property written with no configuration lands at file level *only* — so reading
+  the configuration set alone (which is what a BOM table does) reports blanks. Resolve
+  configuration-first, file-second, and report which set each value came from.
+  `IConfiguration::Description` is *not* a part description: it defaults to the
+  configuration's own name, so using it as a BOM column prints "Default" on every row.
 - `ISldWorks::GetImportFileData` is a dead end on this build: `None` for Parasolid, ACIS,
   and STL, and for STEP an object whose only reachable property is `MapConfigurationData`.
   Import options go through **user preferences**, like the export ones.
