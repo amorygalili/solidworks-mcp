@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "solidworks": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "C:/projects/cad-mcp-comparisons/solidworks-mcp",
+        "solidworks-mcp"
+      ],
+      "env": {
+        "SWMCP_ALLOWED_ROOTS": "C:/projects/cad-mcp-comparisons/solidworks-mcp-example/work",
+        "SWMCP_TOOL_TIER": "all",
+        "SWMCP_AUDIT_PATH": "C:/projects/cad-mcp-comparisons/solidworks-mcp-example/.mcp-audit/audit.jsonl",
+        "SWMCP_CHECKPOINT_DIR": "C:/projects/cad-mcp-comparisons/solidworks-mcp-example/.checkpoints"
+      }
+    }
+  }
+}

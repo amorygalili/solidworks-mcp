@@ -1,0 +1,5 @@
+# Everything the server writes while you test against it.
+work/*
+!work/.gitkeep
+.checkpoints/
+.mcp-audit/
