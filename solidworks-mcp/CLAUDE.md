@@ -185,11 +185,13 @@ Probing has already caught, in code that looked correct:
   `sw_feature_fillet` and `sw_feature_chamfer` possible without any new COM. Prefer
   extending `ProbeFilters` to writing another traversal: the predicate then selects
   exactly what probing for the same thing reports.
-- **Only `SaveBMP` honours a requested pixel size.** `sw_view_capture` writing a `.png`
-  goes through `Extension.SaveAs`, which ignores width and height entirely and produces
-  whatever the viewport is — every request came back 1204x771 on this machine. Ask for
-  a `.bmp` output_path when the size matters; the schema and the size warning both say
-  so now.
+- **Only `SaveBMP` honours a requested pixel size.** `Extension.SaveAs` ignores width
+  and height entirely and writes whatever the viewport is — every PNG request came back
+  1204x771 on this machine, whatever was asked for. `sw_view_capture` therefore renders
+  a PNG *through* `SaveBMP` at the requested size and re-encodes the bitmap with Pillow,
+  which is lossless and, more to the point, a true render at that resolution rather than
+  an upscale of a smaller one. If either step fails it falls back to `Extension.SaveAs`
+  and says so in `details.fallback_reason`, because a wrong-size capture beats none.
 
 If you call an interface that `src/swmcp/generated/swapi.json` does not cover, add it to
 `INTERFACES` in `scripts/gen_swapi.py` and re-run that script plus

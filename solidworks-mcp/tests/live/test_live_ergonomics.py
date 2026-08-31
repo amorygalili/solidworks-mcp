@@ -247,3 +247,37 @@ def test_deleting_a_feature_takes_the_sketch_it_absorbed(call, part):
     names = [f["name"] for f in call("sw_feature_list")["result"]["features"]]
     assert sketch not in names
     assert "Block" not in names
+
+
+# --- a capture at the size that was asked for ---------------------------------
+
+
+@pytest.mark.parametrize("size", [(640, 480), (1600, 1200)])
+def test_a_png_comes_out_the_size_it_was_asked_for(call, part, scratch_root, size):
+    """Every PNG used to come back at the viewport's size, whatever was requested.
+
+    Both a smaller and a larger size than the viewport, because the interesting claim
+    is that SaveBMP renders at the size rather than the viewport clamping it: 1600x1200
+    is bigger than the window this runs in.
+    """
+    _plate(call, half=25.0, thickness=6.0)
+    width, height = size
+    target = scratch_root / f"swmcp_capture_{width}x{height}.png"
+    target.unlink(missing_ok=True)
+
+    captured = call(
+        "sw_view_capture",
+        {
+            "output_path": str(target),
+            "orientation": "isometric",
+            "width": width,
+            "height": height,
+            "overwrite": "allow",
+        },
+    )["result"]
+
+    assert captured["actual_size"] == [width, height]
+    assert captured["method"] == "SaveBMP+PIL"
+    assert not [w for w in captured["warnings"] if "rather than the requested" in w]
+    # The intermediate bitmap lands in the caller's output directory, so it has to go.
+    assert not list(scratch_root.glob("*__swmcp_capture.bmp"))

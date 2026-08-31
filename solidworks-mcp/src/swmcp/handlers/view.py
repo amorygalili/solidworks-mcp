@@ -8,11 +8,14 @@ not exist.
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import struct
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+from PIL import Image
 
 from swmcp.catalog.registry import op
 from swmcp.catalog.spec import NonModelSideEffect, ReadSafety
@@ -134,6 +137,66 @@ def view_set(ctx: OpContext, args: ViewSetArgs) -> ViewSetResult:
     )
 
 
+def _save_as_png(doc: Any, target: Path) -> dict[str, Any]:
+    """SOLIDWORKS' own PNG writer: whatever size the viewport happens to be."""
+    errors, warnings = out_long(0), out_long(0)
+    details: dict[str, Any] = {
+        "returned": doc.Extension.SaveAs(
+            str(target),
+            swconst.value("swSaveAsVersion_e", "swSaveAsCurrentVersion"),
+            swconst.value("swSaveAsOptions_e", "swSaveAsOptions_Silent"),
+            null_dispatch(),
+            errors,
+            warnings,
+        )
+    }
+    details["error_code"] = getattr(errors, "value", errors)
+    details["warning_code"] = getattr(warnings, "value", warnings)
+    return details
+
+
+def _write_png(doc: Any, target: Path, width: int, height: int) -> tuple[str, dict[str, Any]]:
+    """Write a PNG at the size that was actually asked for.
+
+    ``Extension.SaveAs`` ignores width and height entirely - every request came back at
+    the viewport's own size - so a PNG route through it can only ever report the
+    mismatch, never fix it. ``SaveBMP`` does take pixel dimensions, so the image is
+    rendered there at full size and re-encoded to PNG.
+
+    Re-encoding rather than resampling is the point: the bitmap is a true render at the
+    requested resolution, not an upscale of a smaller one, and BMP to PNG is lossless in
+    both directions. A caller asking for 4000px gets 4000px of actual geometry.
+
+    The fallback matters as much as the path. If SaveBMP or the encode fails for any
+    reason, SOLIDWORKS' own writer still produces a usable image at viewport size, and
+    the existing size warning tells the caller what they got. A capture that is the
+    wrong size beats no capture at all.
+    """
+    scratch = target.with_name(f"{target.stem}__swmcp_capture.bmp")
+    details: dict[str, Any] = {}
+    try:
+        # Called directly rather than through try_com_member: that helper degrades a COM
+        # failure to a default, which would leave the fallback reporting "wrote no
+        # bitmap" for something that actually raised. The reason is the useful part, and
+        # the except below is already the safety net.
+        details["bmp_returned"] = doc.SaveBMP(str(scratch), width, height)
+        if scratch.is_file():
+            with Image.open(scratch) as bitmap:
+                bitmap.save(target, format="PNG")
+            if target.is_file():
+                details["rendered_via"] = "SaveBMP + PNG re-encode"
+                return "SaveBMP+PIL", details
+        details["fallback_reason"] = "SaveBMP wrote no bitmap"
+    except Exception as exc:  # a wrong-size capture beats no capture
+        details["fallback_reason"] = f"{type(exc).__name__}: {exc}"
+    finally:
+        with contextlib.suppress(OSError):
+            scratch.unlink(missing_ok=True)
+
+    details.update(_save_as_png(doc, target))
+    return "Extension.SaveAs", details
+
+
 @op(
     name="sw_view_capture",
     tier="core",
@@ -182,24 +245,14 @@ def view_capture(ctx: OpContext, args: ViewCaptureArgs) -> ViewCaptureResult:
 
     details: dict[str, Any] = {}
     if _FORMATS[suffix] == "bmp":
-        # SaveBMP is the only call that takes an explicit pixel size.
+        # SaveBMP is the only SOLIDWORKS call that takes an explicit pixel size.
         method = "SaveBMP"
         details["returned"] = try_com_member(
             doc, "SaveBMP", str(target), args.width, args.height, default=None
         )
     else:
-        method = "Extension.SaveAs"
-        errors, warnings = out_long(0), out_long(0)
-        details["returned"] = doc.Extension.SaveAs(
-            str(target),
-            swconst.value("swSaveAsVersion_e", "swSaveAsCurrentVersion"),
-            swconst.value("swSaveAsOptions_e", "swSaveAsOptions_Silent"),
-            null_dispatch(),
-            errors,
-            warnings,
-        )
-        details["error_code"] = getattr(errors, "value", errors)
-        details["warning_code"] = getattr(warnings, "value", warnings)
+        method, png_details = _write_png(doc, target, args.width, args.height)
+        details.update(png_details)
 
     if not target.is_file():
         raise SwMcpError(
@@ -224,18 +277,12 @@ def view_capture(ctx: OpContext, args: ViewCaptureArgs) -> ViewCaptureResult:
             "existing file."
         )
     if actual is not None and actual != [args.width, args.height]:
-        # Naming the fix matters more than naming the limit. Only SaveBMP takes a pixel
-        # size; Extension.SaveAs writes whatever the viewport is, so a caller who needs
-        # an exact size needs a different extension, not a different number.
-        remedy = (
-            " Ask for a .bmp output_path to get the size requested: SaveBMP takes pixel "
-            "dimensions, while the PNG path writes whatever the viewport is."
-            if _FORMATS[suffix] == "png"
-            else ""
-        )
+        # Reaching here now means the sized path failed and the fallback ran, so the
+        # warning should say that rather than present the viewport size as the rule.
         result_warnings.append(
             f"SOLIDWORKS produced {actual[0]}x{actual[1]} rather than the requested "
-            f"{args.width}x{args.height}; a capture is limited by the viewport.{remedy}"
+            f"{args.width}x{args.height}. The sized capture did not run, so this is the "
+            f"viewport's own size: {details.get('fallback_reason', 'reason unknown')}."
         )
     if actual is None:
         result_warnings.append(
