@@ -304,3 +304,91 @@ def test_deleting_sketch_geometry_needs_confirmation(call, open_part):
     deleted = call("sw_sketch_delete", {"segment_ids": [ids[0]], "confirm": True})["result"]
     assert deleted["deleted"] == [ids[0]]
     assert deleted["verification"]["after"]["segment_count"] == 3
+
+
+def _line_and_arc(call) -> dict[str, str]:
+    """One line and one arc in a fresh sketch, keyed by requested type.
+
+    These two are the pair that collides: ``GetID`` is scoped per segment type, so both
+    used to answer ``0:1``. The primitives in the older id test happen not to clash,
+    which is why this went unnoticed.
+    """
+    call("sw_sketch_start", {"on": {"standard_plane": "front"}})
+    added = call(
+        "sw_sketch_add_geometry",
+        {
+            "entities": [
+                {"type": "line", "start": [0, 0], "end": [50, 0]},
+                {"type": "arc_3pt", "start": [50, 0], "through": [70, 25], "end": [50, 50]},
+            ]
+        },
+    )["result"]
+    assert added["failed"] == []
+    assert added["verification"]["after"]["segment_count"] == 2, (
+        "both segments must be counted; a collapsed id map reports one"
+    )
+    return {entry["requested_type"]: entry["sketch_local_id"] for entry in added["created"]}
+
+
+def test_a_line_and_an_arc_do_not_share_a_handle(call, open_part):
+    """SK-004: a handle has to address exactly one segment, whatever its type."""
+    ids = _line_and_arc(call)
+    assert ids["line"] != ids["arc_3pt"], (
+        f"a line and an arc must not share a handle, got {ids['line']!r} for both"
+    )
+
+
+def test_deleting_a_segment_leaves_its_neighbour_intact(call, open_part):
+    """Regression: deleting the line used to destroy it while reporting nothing deleted.
+
+    The line and the arc shared a handle, so the map held only one of them: the delete
+    took the wrong segment, recorded it as ``missing``, and every check still passed.
+    """
+    ids = _line_and_arc(call)
+
+    deleted = call("sw_sketch_delete", {"segment_ids": [ids["line"]], "confirm": True})["result"]
+    assert deleted["deleted"] == [ids["line"]]
+    assert deleted["missing"] == [], "the id the create call handed back must resolve"
+    assert all(check["passed"] for check in deleted["verification"]["checks"])
+
+    listed = call("sw_sketch_list", {"include_geometry": True})["result"]
+    active = next(entry for entry in listed["sketches"] if entry["is_active"])
+    surviving = [segment["sketch_local_id"] for segment in active["segments"]]
+    assert surviving == [ids["arc_3pt"]], "only the arc should be left"
+
+
+def test_a_delete_that_removes_nothing_does_not_report_success(call, open_part):
+    """An empty ``deleted`` list must not satisfy ``no_deleted_id_remains`` vacuously."""
+    _line_and_arc(call)
+
+    outcome = call("sw_sketch_delete", {"segment_ids": ["line:99:99"], "confirm": True})["result"]
+    assert outcome["deleted"] == []
+    assert outcome["missing"] == ["line:99:99"]
+
+    checks = {check["name"]: check["passed"] for check in outcome["verification"]["checks"]}
+    assert checks["no_deleted_id_remains"] is False, (
+        "a delete that removed nothing must not report an all-green verification"
+    )
+
+
+def test_a_spline_creates_geometry(call, open_part):
+    """SK-003: CreateSpline2 needs its points as a SAFEARRAY of doubles.
+
+    Passed as a bare list they marshal as VT_ARRAY | VT_VARIANT, and SOLIDWORKS returns
+    nothing rather than raising, so the spline silently never appeared.
+    """
+    call("sw_sketch_start", {"on": {"standard_plane": "front"}})
+    added = call(
+        "sw_sketch_add_geometry",
+        {
+            "entities": [
+                {"type": "spline", "points": [[0, 0], [20, 15], [40, 5], [60, 30]]},
+            ]
+        },
+    )["result"]
+
+    assert added["failed"] == [], f"the spline should have been created: {added['failed']}"
+    assert len(added["created"]) == 1
+    created = added["created"][0]
+    assert created["type"] == "spline"
+    assert created["length_m"] > 0.06, "a spline through those points spans at least 60mm"

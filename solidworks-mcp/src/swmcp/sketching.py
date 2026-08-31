@@ -1,13 +1,18 @@
 """Shared sketch helpers: segment identity, creation, and solver state.
 
-Segment identity is the piece everything else depends on. ``ISketchSegment.GetID``
-returns a two-integer pair that is stable for the life of the sketch, so it makes a
-good handle to hand back to a caller: relations, dimensions, and deletes all address
-segments by it rather than by relying on selection order.
+Segment identity is the piece everything else depends on: relations, dimensions, and
+deletes all address segments by handle rather than by relying on selection order.
+
+``ISketchSegment.GetID`` returns a two-integer pair that is stable for the life of the
+sketch, but it is only unique *within* a segment type - a line and an arc in the same
+sketch both answer ``0:1``. The handle therefore carries the type as well, and
+:func:`segments_by_id` refuses a sketch whose handles still collide rather than
+quietly dropping a segment from the map.
 """
 
 from __future__ import annotations
 
+from collections import Counter
 from typing import Any
 
 from swmcp.com import swconst
@@ -60,12 +65,27 @@ RELATION_ARITY = {
 }
 
 
+def segment_kind(segment: Any) -> str:
+    """The segment's type token, lowercased: ``line``, ``arc``, ``spline``, ``ellipse``."""
+    raw = try_com_member(segment, "GetType", default=None)
+    name = swconst.name_of("swSketchSegments_e", raw) if isinstance(raw, int) else None
+    return (name or "unknown").replace("swSketch", "").lower()
+
+
 def segment_id(segment: Any) -> str:
-    """``ISketchSegment.GetID`` is a pair of ints; render it as a stable string."""
+    """A handle that addresses exactly one segment in the sketch.
+
+    ``ISketchSegment.GetID`` is a pair of ints, but SOLIDWORKS scopes that pair *per
+    segment type*: a line and an arc in one sketch both answer ``0:1``. Keying anything
+    on the bare pair silently collapses the two, which drops a segment from every count
+    and points deletes at whichever one happened to be built last. The type qualifies
+    the handle so it stays unique sketch-wide.
+    """
     raw = normalize_sequence(try_com_member(segment, "GetID", default=None))
+    kind = segment_kind(segment)
     if len(raw) >= 2:
-        return f"{int(raw[0])}:{int(raw[1])}"
-    return str(raw[0]) if raw else "unknown"
+        return f"{kind}:{int(raw[0])}:{int(raw[1])}"
+    return f"{kind}:{raw[0]}" if raw else f"{kind}:unknown"
 
 
 def active_sketch(doc: Any) -> Any | None:
@@ -109,17 +129,35 @@ def sketch_segments(sketch: Any) -> list[Any]:
 
 
 def segments_by_id(sketch: Any) -> dict[str, Any]:
-    return {segment_id(segment): segment for segment in sketch_segments(sketch)}
+    """Address every segment by its handle.
+
+    Callers delete and count through this map, so a duplicate key must not be absorbed:
+    dropping a segment here is how a delete silently takes the wrong geometry. Refuse
+    instead, and name the handles that clashed.
+    """
+    segments = sketch_segments(sketch)
+    mapped = {segment_id(segment): segment for segment in segments}
+    if len(mapped) != len(segments):
+        counts = Counter(segment_id(segment) for segment in segments)
+        raise SwMcpError(
+            make_error(
+                "SEGMENT_ID_COLLISION",
+                "reference",
+                "Two sketch segments share one handle, so the sketch cannot be addressed safely.",
+                context={"colliding_ids": sorted(k for k, n in counts.items() if n > 1)},
+                remediation=[
+                    "This is a defect in the server's segment identity, not in the model.",
+                    "Report the sketch that produced it; no geometry has been changed.",
+                ],
+            )
+        )
+    return mapped
 
 
 def describe_segment(segment: Any) -> dict[str, Any]:
-    raw_type = try_com_member(segment, "GetType", default=None)
-    type_name = (
-        swconst.name_of("swSketchSegments_e", raw_type) if isinstance(raw_type, int) else None
-    )
     return {
         "sketch_local_id": segment_id(segment),
-        "type": (type_name or "unknown").replace("swSketch", "").lower(),
+        "type": segment_kind(segment),
         "construction": bool(try_com_member(segment, "ConstructionGeometry", default=False)),
         "length_m": try_com_member(segment, "GetLength", default=None),
     }

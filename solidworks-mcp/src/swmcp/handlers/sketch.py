@@ -7,7 +7,12 @@ from typing import Any
 from swmcp.catalog.registry import op
 from swmcp.catalog.spec import ModelMutation, ReadSafety
 from swmcp.com import swconst
-from swmcp.com.marshal import normalize_sequence, null_dispatch, try_com_member
+from swmcp.com.marshal import (
+    array_of_doubles,
+    normalize_sequence,
+    null_dispatch,
+    try_com_member,
+)
 from swmcp.context import OpContext
 from swmcp.envelope import Check, Verification
 from swmcp.errors import SwMcpError, make_error, validation_error
@@ -182,10 +187,13 @@ def _create_entity(manager: Any, entity: Any) -> list[Any]:
         return _create_slot(manager, entity, kind)
 
     if kind == "spline":
+        # CreateSpline2 reads PointData as a SAFEARRAY of doubles. A bare Python list
+        # marshals as VT_ARRAY | VT_VARIANT, which SOLIDWORKS answers by returning
+        # nothing at all rather than raising - so the spline just never appears.
         flattened: list[float] = []
         for point in entity.points:
             flattened.extend([point[0], point[1], 0.0])
-        return normalize_sequence(manager.CreateSpline2(flattened, True))
+        return normalize_sequence(manager.CreateSpline2(array_of_doubles(flattened), True))
 
     raise SwMcpError(
         validation_error("UNSUPPORTED_SKETCH_ENTITY", f"{kind!r} is not a supported primitive.")
@@ -627,8 +635,16 @@ def sketch_delete(ctx: OpContext, args: SketchDeleteArgs) -> SketchDeleteResult:
                 ),
                 Check(
                     name="no_deleted_id_remains",
-                    passed=all(identifier not in after_map for identifier in deleted),
-                    detail="deleted ids are gone from the sketch",
+                    # Requiring `deleted` to be non-empty is the point: over an empty
+                    # list this passes vacuously, so a delete that removed nothing used
+                    # to report all-green.
+                    passed=bool(deleted)
+                    and all(identifier not in after_map for identifier in deleted),
+                    detail=(
+                        "deleted ids are gone from the sketch"
+                        if deleted
+                        else f"nothing was deleted; {len(missing)} id(s) did not resolve"
+                    ),
                 ),
             ],
         ),
