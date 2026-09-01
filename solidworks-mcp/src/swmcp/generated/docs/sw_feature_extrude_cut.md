@@ -127,9 +127,11 @@ Cut material with an extruded sketch profile, with the same end conditions as a 
     },
     "end_condition": {
       "default": "blind",
+      "description": "'through_all' reaches one way from the sketch plane, 'through_all_both' reaches both and needs no second direction - prefer it to a blind depth picked larger than the part, which silently cuts short if the guess is too small.",
       "enum": [
         "blind",
         "through_all",
+        "through_all_both",
         "up_to_next",
         "up_to_vertex",
         "up_to_surface",
@@ -195,7 +197,7 @@ Cut material with an extruded sketch profile, with the same end conditions as a 
     },
     "second_direction": {
       "default": false,
-      "description": "Also extrude the other way.",
+      "description": "Also extrude the other way, to second_depth. Implied by 'through_all_both', which sets both directions itself.",
       "title": "Second Direction",
       "type": "boolean"
     },

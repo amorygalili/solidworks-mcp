@@ -753,6 +753,13 @@ def _read_csys_transform(doc: Any, name: str) -> DatumCsysTransform | None:
 _END_CONDITION = {
     "blind": "swEndCondBlind",
     "through_all": "swEndCondThroughAll",
+    # Both ways from the sketch plane. Sent as through-all on a double-ended feature
+    # rather than as swEndCondThroughAllBoth, which does not do what its name says from
+    # here - see _extrude. Without this the only way to cut clean through a part is a
+    # blind depth guessed larger than the material in each direction, and a guess that
+    # comes up short still removes volume, so every check here passes on a cut that
+    # stopped inside the part.
+    "through_all_both": "swEndCondThroughAll",
     "up_to_next": "swEndCondUpToNext",
     "up_to_vertex": "swEndCondUpToVertex",
     "up_to_surface": "swEndCondUpToSurface",
@@ -768,21 +775,32 @@ def _extrude(ctx: OpContext, args: ExtrudeArgs, *, cut: bool) -> ExtrudeResult:
     before = model_snapshot(doc)
 
     end = swconst.value("swEndConditions_e", _END_CONDITION[args.end_condition])
+    second_direction = args.second_direction
     second_end = (
-        swconst.value("swEndConditions_e", "swEndCondBlind") if args.second_direction else 0
+        swconst.value("swEndConditions_e", "swEndCondBlind") if second_direction else 0
     )
+
+    # "Through all - both" is not one end condition here, whatever the enum implies.
+    # Passing swEndCondThroughAllBoth (9) as T1 on a single-ended cut behaves exactly
+    # like swEndCondThroughAll: measured on 2026 (34.3.0), a 10mm hole through a 40mm
+    # cube sketched on its mid-plane removed 1570mm3 - precisely half the 3141mm3 the
+    # bore should be, so it went one way and stopped at the sketch plane. Both
+    # directions means a double-ended feature with through-all on each.
+    if args.end_condition == "through_all_both":
+        end = second_end = swconst.value("swEndConditions_e", "swEndCondThroughAll")
+        second_direction = True
     manager = doc.FeatureManager
 
     # FeatureExtrusion3 always adds material; the parameter that looks like a cut flag
     # is "single-ended". Removing material is a different call altogether.
     if cut:
         feature = manager.FeatureCut4(
-            not args.second_direction,  # Sd: single-ended
+            not second_direction,  # Sd: single-ended
             False,                      # Flip
             args.reverse,               # Dir
             end, second_end,            # T1, T2
             args.depth, args.second_depth,
-            args.draft > 0, args.second_direction and args.draft > 0,
+            args.draft > 0, second_direction and args.draft > 0,
             args.draft_outward, args.draft_outward,
             args.draft, args.draft,
             False, False,               # offset reverse
@@ -795,12 +813,12 @@ def _extrude(ctx: OpContext, args: ExtrudeArgs, *, cut: bool) -> ExtrudeResult:
         )
     else:
         feature = manager.FeatureExtrusion3(
-            not args.second_direction,
+            not second_direction,
             False,
             args.reverse,
             end, second_end,
             args.depth, args.second_depth,
-            args.draft > 0, args.second_direction and args.draft > 0,
+            args.draft > 0, second_direction and args.draft > 0,
             args.draft_outward, args.draft_outward,
             args.draft, args.draft,
             False, False,
@@ -1593,11 +1611,32 @@ def _edges_for(ctx: OpContext, doc: Any, args: Any, kind: str) -> tuple[list[Any
         limit=query.limit,
     )
     if not found:
+        # Nothing examined and nothing matched are different failures. A feature that
+        # merged into an existing body owns no edges of its own - every edge it made
+        # belongs to that body - so scoping to its name searches an empty set, which is
+        # not the same as a predicate that was too strict.
+        nothing_examined = not examined
+        remediation = [
+            "Run sw_probe_faces with entity_class='edge' and the same bounds to "
+            "see what is actually there.",
+            "A body_name or feature_name that names nothing matches nothing; "
+            "check it against sw_body_list or sw_feature_list.",
+        ]
+        if nothing_examined and query.feature_name:
+            remediation.insert(
+                0,
+                f"No edges were examined at all: {query.feature_name!r} contributes none "
+                f"directly. A feature merged into an existing body gives its edges to "
+                f"that body, so scope by body_name instead - sw_body_list names the body "
+                f"and its owning features.",
+            )
         raise SwMcpError(
             make_error(
                 "NO_EDGES_MATCHED",
                 "reference",
-                f"No edge matched the {kind} predicate, out of {examined} examined.",
+                f"No edge matched the {kind} predicate, out of {examined} examined."
+                if examined
+                else f"No edges were examined for the {kind} predicate, so none could match.",
                 context={
                     "examined": examined,
                     "body_name": query.body_name,
@@ -1606,12 +1645,7 @@ def _edges_for(ctx: OpContext, doc: Any, args: Any, kind: str) -> tuple[list[Any
                     "min_length_m": query.min_length,
                     "max_length_m": query.max_length,
                 },
-                remediation=[
-                    "Run sw_probe_faces with entity_class='edge' and the same bounds to "
-                    "see what is actually there.",
-                    "A body_name or feature_name that names nothing matches nothing; "
-                    "check it against sw_body_list or sw_feature_list.",
-                ],
+                remediation=remediation,
             )
         )
     return found, {"edges_examined": examined, "edges_matched": len(found)}
@@ -1658,7 +1692,7 @@ def feature_fillet(ctx: OpContext, args: FilletArgs) -> EdgeFeatureResult:
     )
     return _edge_feature_result(
         ctx, doc, feature, before, selected=selected, kind="fillet", name=args.name,
-        tallies=tallies,
+        tallies=tallies, sizing=_edge_sizing(refs, args.radius),
     )
 
 
@@ -1715,8 +1749,38 @@ def feature_chamfer(ctx: OpContext, args: ChamferArgs) -> EdgeFeatureResult:
     )
     return _edge_feature_result(
         ctx, doc, feature, before, selected=selected, kind="chamfer", name=args.name,
-        tallies=tallies,
+        tallies=tallies, sizing=_edge_sizing(refs, args.distance),
     )
+
+
+def _edge_sizing(refs: list[Any], size: float) -> dict[str, Any]:
+    """Measure the selection against the radius, so a failure can name the culprits.
+
+    A fillet needs roughly its own radius of edge to sit in, so the shortest edges are
+    where one fails. Their lengths were already measured when the references were
+    captured, so this costs no extra COM calls - and "which edge" is the question the
+    caller is left holding when SOLIDWORKS answers only "could not create the fillet".
+    """
+    measured: list[tuple[float, str]] = []
+    for ref in refs:
+        semantic = getattr(ref, "semantic", None)
+        measurements = getattr(semantic, "measurements", None)
+        length = getattr(measurements, "length_m", None)
+        if isinstance(length, (int, float)) and length > 0:
+            measured.append((float(length), str(getattr(ref, "label", "") or "")))
+    if not measured:
+        return {"size_mm": round(from_meters(size), 4)}
+    measured.sort()
+    tight = [
+        {"label": label, "length_mm": round(from_meters(length), 4)}
+        for length, label in measured
+        if length < size
+    ]
+    return {
+        "size_mm": round(from_meters(size), 4),
+        "shortest_edge_mm": round(from_meters(measured[0][0]), 4),
+        "edges_shorter_than_size": tight[:10],
+    }
 
 
 def _edge_feature_result(
@@ -1729,18 +1793,31 @@ def _edge_feature_result(
     kind: str,
     name: str | None,
     tallies: dict[str, Any] | None = None,
+    sizing: dict[str, Any] | None = None,
 ) -> EdgeFeatureResult:
     if feature is None:
+        context: dict[str, Any] = {"edges_selected": selected, **(tallies or {}), **(sizing or {})}
+        remediation = [
+            f"The {kind} may be too large for the geometry, or the edges may not "
+            "form a valid chain.",
+            "Try a smaller value, or fewer edges.",
+        ]
+        tight = (sizing or {}).get("edges_shorter_than_size") or []
+        if tight:
+            remediation.insert(
+                0,
+                f"{len(tight)} selected edge(s) are shorter than the {kind} size itself "
+                f"(shortest {context.get('shortest_edge_mm')}mm against "
+                f"{context.get('size_mm')}mm); a {kind} has nowhere to sit on those. "
+                f"Exclude them with a min_length above that, or reduce the size.",
+            )
         raise SwMcpError(
             make_error(
                 f"{kind.upper()}_FAILED",
                 "solidworks",
                 f"SOLIDWORKS could not create the {kind}.",
-                remediation=[
-                    f"The {kind} may be too large for the geometry, or the edges may not "
-                    "form a valid chain.",
-                    "Try a smaller value, or fewer edges.",
-                ],
+                context=context,
+                remediation=remediation,
             )
         )
     if name:

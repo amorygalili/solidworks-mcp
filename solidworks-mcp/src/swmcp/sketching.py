@@ -251,20 +251,53 @@ def point_of(sketch_point: Any) -> Point | None:
     return (float(x), float(y))
 
 
-def segment_endpoints(segment: Any) -> list[Point]:
-    """The segment's two ends in metres, or ``[]`` when it has none.
+def _spline_endpoints(segment: Any) -> tuple[Point, Point] | None:
+    """A spline's first and last interpolation points, in metres.
 
-    A circle and a full ellipse have no ends: SOLIDWORKS either refuses the call or
-    answers the same point twice. Both come back as an empty list, so a caller can
-    read "no endpoints" as the closed case rather than as a failure to read them.
+    ``GetStartPoint2`` and ``GetEndPoint2`` live on ``ISketchLine`` and ``ISketchArc``,
+    not on ``ISketchSegment``: asking a spline for either raises ``AttributeError``.
+    ``ISketchSpline::GetPoints`` answers instead, as a flat array of three doubles per
+    through-point in sketch space, so the ends are the first and last triples.
+
+    Measured on 2026 (34.3.0): a seven-point spline returns 21 doubles whose first and
+    last triples are exactly the coordinates it was drawn with. ``GetPoints2`` returns
+    point *objects* rather than doubles, which is why this reads ``GetPoints``.
+    """
+    values = normalize_sequence(try_com_member(segment, "GetPoints", default=None))
+    if len(values) < 6 or len(values) % 3:
+        return None
+    try:
+        numbers = [float(value) for value in values]
+    except (TypeError, ValueError):
+        return None
+    return (numbers[0], numbers[1]), (numbers[-3], numbers[-2])
+
+
+def read_endpoints(segment: Any) -> tuple[list[Point], bool]:
+    """The segment's two ends in metres, and whether they could be read at all.
+
+    The flag is the load-bearing half. "Has no ends" and "would not say" are different
+    facts that used to arrive as the same empty list, and contour analysis reads an
+    empty list as *closed* - so every spline counted as a closed ring, and the open
+    chain of lines left behind was reported as a profile that does not close. A
+    knight's head of three splines and three lines reported three closed contours and
+    two broken ones, and neither number was real.
     """
     start = point_of(try_com_member(segment, "GetStartPoint2", default=None))
     end = point_of(try_com_member(segment, "GetEndPoint2", default=None))
     if start is None or end is None:
-        return []
+        ends = _spline_endpoints(segment)
+        if ends is None:
+            return [], False
+        start, end = ends
     if distance(start, end) <= COORDINATE_TOLERANCE_M:
-        return []
-    return [start, end]
+        return [], True  # a circle, or a spline closed back onto its own start
+    return [start, end], True
+
+
+def segment_endpoints(segment: Any) -> list[Point]:
+    """The segment's two ends in metres, or ``[]`` when it has none."""
+    return read_endpoints(segment)[0]
 
 
 def segment_topology(sketch: Any) -> list[dict[str, Any]]:
@@ -274,17 +307,24 @@ def segment_topology(sketch: Any) -> list[dict[str, Any]]:
     decides whether a profile closes works on what this returns, so the topology can
     be tested without SOLIDWORKS attached.
     """
-    return [
-        {
-            "id": segment_id(segment),
-            "kind": segment_kind(segment),
-            "construction": bool(
-                try_com_member(segment, "ConstructionGeometry", default=False)
-            ),
-            "endpoints": segment_endpoints(segment),
-        }
-        for segment in sketch_segments(sketch)
-    ]
+    topology = []
+    for segment in sketch_segments(sketch):
+        endpoints, read = read_endpoints(segment)
+        topology.append(
+            {
+                "id": segment_id(segment),
+                "kind": segment_kind(segment),
+                "construction": bool(
+                    try_com_member(segment, "ConstructionGeometry", default=False)
+                ),
+                "endpoints": endpoints,
+                # False only when SOLIDWORKS would not say where the segment ends.
+                # Absent is treated as True, so hand-built topology in tests reads the
+                # way it always did.
+                "endpoints_read": read,
+            }
+        )
+    return topology
 
 
 def anchor_deviation(requested: list[Point], actual: list[Point]) -> float | None:
@@ -342,8 +382,13 @@ def analyze_contours(
     having two loose ends.
     """
     profile = [s for s in segments if not s.get("construction")]
-    rings = [s for s in profile if not s.get("endpoints")]
-    chained = [s for s in profile if s.get("endpoints")]
+    # A segment whose ends could not be read says nothing about closure either way.
+    # Counting it as a ring - which is what "no endpoints" used to mean - invents a
+    # closed contour and orphans whatever it was joined to.
+    unreadable = [s for s in profile if not s.get("endpoints_read", True)]
+    known = [s for s in profile if s.get("endpoints_read", True)]
+    rings = [s for s in known if not s.get("endpoints")]
+    chained = [s for s in known if s.get("endpoints")]
 
     points: list[Point] = []
     for segment in chained:
@@ -401,7 +446,42 @@ def analyze_contours(
         "loose_ends_mm": [_to_mm(centres[v]) for v, n in sorted(degree.items()) if n == 1],
         "branch_points_mm": [_to_mm(centres[v]) for v, n in sorted(degree.items()) if n > 2],
         "open_segment_ids": sorted(set(unjoined)),
+        # Empty in the ordinary case. When it is not, every other count here covers
+        # only the segments that did answer, so closure is undecided rather than false.
+        "unreadable_segment_ids": sorted(str(s.get("id", "")) for s in unreadable),
     }
+
+
+def contour_warnings(contours: dict[str, Any]) -> list[str]:
+    """What is worth saying out loud about a profile's closure, if anything.
+
+    Shared so that creating a sketch and diagnosing one cannot drift into describing
+    the same topology differently.
+    """
+    if not contours:
+        return []
+    warnings: list[str] = []
+    unreadable = contours.get("unreadable_segment_ids") or []
+    if contours.get("open_contour_count"):
+        where = contours["loose_ends_mm"] or contours["branch_points_mm"]
+        hedge = (
+            " This ignores the segment(s) below that would not report their ends, so "
+            "the gap may be theirs."
+            if unreadable
+            else ""
+        )
+        warnings.append(
+            f"{contours['open_contour_count']} contour(s) do not close. An extrude will "
+            f"refuse this profile; a revolve will too unless the gap lies on its axis, "
+            f"which it closes by itself. Loose points (mm): {where}.{hedge}"
+        )
+    if unreadable:
+        warnings.append(
+            f"{len(unreadable)} segment(s) would not report their endpoints, so whether "
+            f"they close was not determined either way: {unreadable}. The counts above "
+            f"cover the rest."
+        )
+    return warnings
 
 
 def coincident_axis_segments(

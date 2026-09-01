@@ -36,6 +36,7 @@ from swmcp.sketching import (
     RELATION_ARITY,
     RELATION_TOKENS,
     analyze_contours,
+    contour_warnings,
     find_sketch,
     require_active_sketch,
     segment_topology,
@@ -158,18 +159,28 @@ def sketch_add_relations(
             ],
         )
 
+    # A merge fuses two points into one. It leaves no relation behind to count, so the
+    # before/after relation tally cannot speak for it and the profile topology has to:
+    # read it only when a merge is actually in the batch, since it walks every segment.
+    merges_planned = sum(1 for _, relation, _ in planned if relation.type == "merge")
+    before_contours = analyze_contours(segment_topology(sketch)) if merges_planned else {}
+
     applied = 0
+    merges_applied = 0
     for index, relation, segments in planned:
         select_segments(doc, segments)
         try:
             doc.SketchAddConstraints(RELATION_TOKENS[relation.type])
             applied += 1
+            if relation.type == "merge":
+                merges_applied += 1
         except Exception as exc:  # one bad relation must not lose the batch
             failed.append({"index": index, "type": relation.type, "reason": str(exc)})
 
     try_com_member(doc, "ClearSelection2", True, default=None)
     after_state = sketch_state(sketch)
     after_undefined = under_defined_count(sketch)
+    after_contours = analyze_contours(segment_topology(sketch)) if merges_applied else {}
 
     return SketchAddRelationsResult(
         applied=applied,
@@ -190,13 +201,33 @@ def sketch_add_relations(
             checks=[
                 Check(
                     name="relations_added",
+                    # Merges are excluded deliberately. They delete a point rather than
+                    # add a relation, so a batch of nothing but merges cannot move this
+                    # count, and reporting that as a failure called a working operation
+                    # broken.
                     passed=after_state["relation_count"] > before_state["relation_count"]
-                    if applied
+                    if applied - merges_applied
                     else True,
                     detail=(
                         f"{before_state['relation_count']} -> "
                         f"{after_state['relation_count']} relations"
+                        + (
+                            f" ({merges_applied} merge(s) add none by design)"
+                            if merges_applied
+                            else ""
+                        )
                     ),
+                ),
+                *(
+                    [
+                        Check(
+                            name="points_merged",
+                            passed=_points_were_merged(before_contours, after_contours),
+                            detail=_merge_detail(before_contours, after_contours),
+                        )
+                    ]
+                    if merges_applied
+                    else []
                 ),
                 Check(
                     name="sketch_not_over_defined",
@@ -211,6 +242,34 @@ def sketch_add_relations(
             ],
         ),
         warnings=_relation_warnings(failed, after_state),
+    )
+
+
+def _loose_end_count(contours: dict[str, Any]) -> int:
+    return len(contours.get("loose_ends_mm") or ())
+
+
+def _points_were_merged(before: dict[str, Any], after: dict[str, Any]) -> bool:
+    """Did fusing points actually join the profile up?
+
+    Fewer loose ends is the direct evidence. A merge on a profile that had none to
+    begin with - joining two points mid-chain, say - changes nothing measurable here,
+    and passes rather than claiming a failure it cannot see.
+    """
+    if not before or not after:
+        return True
+    if _loose_end_count(before) == 0:
+        return True
+    return _loose_end_count(after) < _loose_end_count(before) or after.get(
+        "open_contour_count", 0
+    ) < before.get("open_contour_count", 0)
+
+
+def _merge_detail(before: dict[str, Any], after: dict[str, Any]) -> str:
+    return (
+        f"{_loose_end_count(before)} -> {_loose_end_count(after)} loose ends, "
+        f"{before.get('open_contour_count', 0)} -> {after.get('open_contour_count', 0)} "
+        f"open contour(s)"
     )
 
 
@@ -399,13 +458,7 @@ def sketch_diagnose(ctx: OpContext, args: SketchDiagnoseArgs) -> SketchDiagnoseR
     # measured rather than as a prediction: an extrude does need this closed, but a
     # revolve closes a profile against its own axis, so an open contour whose ends sit
     # on the centerline revolves perfectly well.
-    if contours["open_contour_count"]:
-        where = contours["loose_ends_mm"] or contours["branch_points_mm"]
-        warnings.append(
-            f"{contours['open_contour_count']} contour(s) do not close. An extrude will "
-            f"refuse this profile; a revolve will too unless the gap lies on its axis, "
-            f"which it closes by itself. Loose points (mm): {where}."
-        )
+    warnings.extend(contour_warnings(contours))
 
     return SketchDiagnoseResult(
         sketch_name=name,

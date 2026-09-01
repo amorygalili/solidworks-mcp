@@ -192,6 +192,7 @@ class DatumCsysCreateResult(MutationResult):
 EndCondition = Literal[
     "blind",
     "through_all",
+    "through_all_both",
     "up_to_next",
     "up_to_vertex",
     "up_to_surface",
@@ -205,7 +206,15 @@ class ExtrudeArgs(BaseArgs):
     sketch_name: str | None = Field(
         default=None, description="Profile sketch. Defaults to the most recent unused sketch."
     )
-    end_condition: EndCondition = "blind"
+    end_condition: EndCondition = Field(
+        default="blind",
+        description=(
+            "'through_all' reaches one way from the sketch plane, 'through_all_both' "
+            "reaches both and needs no second direction - prefer it to a blind depth "
+            "picked larger than the part, which silently cuts short if the guess is too "
+            "small."
+        ),
+    )
     depth: Length = Field(default=10.0, description="Depth for blind and mid-plane conditions.")
     reverse: bool = Field(default=False, description="Extrude in the opposite direction.")
     draft: Angle = Field(default=0.0, description="Draft angle.")
@@ -216,7 +225,13 @@ class ExtrudeArgs(BaseArgs):
     thin_thickness: Length | None = Field(
         default=None, description="Wall thickness for a thin feature. Omit for a solid extrude."
     )
-    second_direction: bool = Field(default=False, description="Also extrude the other way.")
+    second_direction: bool = Field(
+        default=False,
+        description=(
+            "Also extrude the other way, to second_depth. Implied by "
+            "'through_all_both', which sets both directions itself."
+        ),
+    )
     second_depth: Length = Field(default=10.0, description="Depth of the second direction.")
     name: str | None = None
 

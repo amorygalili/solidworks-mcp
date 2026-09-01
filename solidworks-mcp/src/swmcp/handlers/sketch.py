@@ -44,6 +44,7 @@ from swmcp.sketching import (
     active_sketch,
     analyze_contours,
     anchor_deviation,
+    contour_warnings,
     describe_segment,
     find_sketch,
     require_active_sketch,
@@ -715,14 +716,7 @@ def sketch_create(ctx: OpContext, args: SketchCreateArgs) -> SketchCreateResult:
     sketch = find_sketch(doc, started.sketch_name)
     contours = analyze_contours(segment_topology(sketch)) if sketch is not None else {}
 
-    warnings = list(started.warnings) + list(added.warnings)
-    if contours.get("open_contour_count"):
-        where = contours["loose_ends_mm"] or contours["branch_points_mm"]
-        warnings.append(
-            f"{contours['open_contour_count']} contour(s) do not close. An extrude will "
-            f"refuse this profile; a revolve will too unless the gap lies on its axis. "
-            f"Loose points (mm): {where}."
-        )
+    warnings = list(started.warnings) + list(added.warnings) + contour_warnings(contours)
 
     return SketchCreateResult(
         sketch_name=started.sketch_name,

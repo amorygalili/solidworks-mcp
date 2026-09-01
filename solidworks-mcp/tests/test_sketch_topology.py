@@ -24,6 +24,7 @@ from swmcp.sketching import (
     anchor_deviation,
     cluster_points,
     coincident_axis_segments,
+    contour_warnings,
     straddling_axes,
     unsupported_loose_ends,
 )
@@ -428,3 +429,62 @@ def test_a_build_that_refuses_the_property_reports_that_it_did_not_engage():
     with _InferenceOff(manager, enabled=True) as toggle:
         assert toggle.engaged is False
     assert manager.writes == []
+
+
+# --- segments that will not say where they end --------------------------------
+
+
+def unreadable(name: str, kind: str = "spline") -> dict:
+    """A segment SOLIDWORKS would not give endpoints for.
+
+    ``ISketchSegment`` has no ``GetStartPoint2``; it lives on ``ISketchLine`` and
+    ``ISketchArc``. Asking a spline raises, which used to arrive here as an empty
+    endpoint list - indistinguishable from a circle.
+    """
+    return {"id": name, "kind": kind, "construction": False, "endpoints": [], "endpoints_read": False}
+
+
+def test_a_segment_that_would_not_report_its_ends_is_not_a_closed_ring():
+    """The knight's head: three splines and three lines, and none of it was real.
+
+    Every spline counted as a closed contour and the lines between them were reported
+    as two broken ones, on a profile that extruded perfectly well.
+    """
+    segments = [
+        unreadable("spline:0:1"),
+        seg("line:0:1", (4, 49), (3, 55)),
+        unreadable("spline:1:2"),
+    ]
+    result = analyze_contours(segments)
+
+    assert result["closed_contour_count"] == 0, "a spline is not a ring"
+    assert result["unreadable_segment_ids"] == ["spline:0:1", "spline:1:2"]
+    assert result["profile_segment_count"] == 3
+
+
+def test_readable_segments_are_still_judged_when_others_are_not():
+    """The counts cover what answered; the rest is declared, not guessed at."""
+    result = analyze_contours([*square(), unreadable("spline:0:1")])
+
+    assert result["closed_contour_count"] == 1
+    assert result["open_contour_count"] == 0
+    assert result["unreadable_segment_ids"] == ["spline:0:1"]
+
+
+def test_topology_without_the_flag_reads_the_way_it_always_did():
+    """Hand-built topology, and anything older than the flag, means "readable"."""
+    result = analyze_contours([ring("c1")])
+    assert result["closed_contour_count"] == 1
+    assert result["unreadable_segment_ids"] == []
+
+
+def test_the_warning_says_closure_was_undecided_rather_than_false():
+    contours = analyze_contours([unreadable("spline:0:1"), seg("l1", (0, 0), (1, 0))])
+    warnings = " ".join(contour_warnings(contours))
+
+    assert "spline:0:1" in warnings
+    assert "not determined" in warnings
+
+
+def test_a_clean_profile_says_nothing():
+    assert contour_warnings(analyze_contours(square())) == []

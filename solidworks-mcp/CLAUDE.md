@@ -164,6 +164,32 @@ Probing has already caught, in code that looked correct:
   rather than the overlap itself. The finding is reported last and hedged accordingly.
   `tests/live/test_live_sketch_fidelity.py` pins all three as passing, so a build that
   starts refusing one announces itself.
+- **`GetStartPoint2` is not on `ISketchSegment`.** It lives on `ISketchLine` and
+  `ISketchArc`; asking a spline for it raises `AttributeError`. That empty answer used
+  to reach contour analysis as "no endpoints", which means *closed* — so every spline
+  was counted as a ring and whatever it joined was left as a broken chain. A knight's
+  head of three splines and three lines reported three closed contours and two open
+  ones; the real profile had one closed contour and extruded first time.
+  `ISketchSpline::GetPoints` answers instead: a flat array of three doubles per
+  through-point, in sketch space, so the ends are the first and last triples. Measured
+  on 2026 (34.3.0), a seven-point spline returns 21 doubles matching the coordinates it
+  was drawn with. (`GetPoints2` returns point *objects*, not doubles.) The wider lesson
+  is in `read_endpoints`: **"has no ends" and "would not say" must not share a return
+  value.** Topology now carries `endpoints_read`, and `analyze_contours` reports
+  `unreadable_segment_ids` rather than deciding closure for a segment that never spoke.
+  Pinned by `tests/live/test_live_spline_contours.py`.
+- **`swEndCondThroughAllBoth` (9) exists and does not do what its name says** — at least
+  not as `T1` on a single-ended `FeatureCut4`. Measured on 2026 (34.3.0): a 10mm bore
+  through a 40mm cube, sketched on the cube's own mid-plane, removed 1570mm³ against the
+  3141mm³ the hole should be — exactly half, so it went one way and stopped at the sketch
+  plane, behaving like plain `swEndCondThroughAll`. Both directions is a **double-ended
+  feature with through-all on each**, which is what `through_all_both` now sends. The
+  constant being present in the type library was not evidence it worked; a unit test
+  asserting the enum resolves passed the whole time the cut was half-depth, and only the
+  live volume check in `tests/live/test_live_spline_contours.py` caught it. Worth having
+  at all because the alternative — a blind depth guessed larger than the material — still
+  removes volume when the guess is short, so every verification here passes on a cut that
+  stopped inside the part.
 
 - **`swDelete_Children` and `swDelete_Absorbed` are independent bits (1 and 2), not two
   modes.** `sw_feature_delete` sent Children alone for `delete_children=true`, which
