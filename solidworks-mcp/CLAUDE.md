@@ -219,6 +219,29 @@ Probing has already caught, in code that looked correct:
   an upscale of a smaller one. If either step fails it falls back to `Extension.SaveAs`
   and says so in `details.fallback_reason`, because a wrong-size capture beats none.
 
+- **A closed contour is not a valid one, and endpoints cannot tell you which.** A
+  centre-point arc and its complement share a centre, a radius and *both endpoints* —
+  so `arc_center` honouring the `direction` it was given produces, for a wrong guess, a
+  272 degree arc where an 88 degree fillet was meant, and every reading the server had
+  reported it healthy: one closed contour, `max_deviation_mm` 0.0, all checks green.
+  The cut then failed with a bare `EXTRUDE_FAILED` whose remediation named neither the
+  segment nor the cause, and suggested `reverse=true` for a `through_all_both` cut that
+  reaches both ways already. Found on an involute gear tooth space; two attempts went
+  into end conditions before **arc length over radius** gave it away — a 0.76 mm fillet
+  reporting 3.61 mm of length is 272 degrees, not 88.
+
+  Three things came out of it. `describe_segment` reports `sweep_deg` and `radius_mm`,
+  so the distinguishing number is stated rather than left to be derived.
+  `segment_topology` carries a flattened `polyline` per segment — where a segment
+  *goes*, not just where it ends — and `find_self_intersections` tests those for
+  crossings, which is a fault wholly independent of closure. And the extrude
+  remediation is conditioned on the end condition, because suggesting `reverse` for a
+  symmetric cut sends the caller to re-run the same failure. Arc and spline geometry is
+  read **only after `GetType` says so**: `GetCenterPoint2` and `GetRadius` are
+  `ISketchArc` members and `GetPoints` is a spline's, the same split that
+  `GetStartPoint2` has. Pinned by `tests/live/test_live_sketch_validity.py` and
+  `tests/test_sketch_self_intersection.py`, both built from the profile that failed.
+
 If you call an interface that `src/swmcp/generated/swapi.json` does not cover, add it to
 `INTERFACES` in `scripts/gen_swapi.py` and re-run that script plus
 `scripts/fetch_api_docs.py`, so the new surface is arity-checked and documented like the
@@ -240,6 +263,50 @@ partly implemented, use `partially_satisfies` **and** add the reason to `DECLARE
 the tests fail if a declared limitation never reaches the generated coverage file, or if
 the README's headline counts drift from the catalog. After changing the catalog, run
 `uv run solidworks-mcp --write-artifacts`.
+
+## Warm the session before a live run
+
+**The first `sw_doc_new` after SOLIDWORKS starts can take minutes. Every one after it
+takes ~1.5s.** Measured here: a live module timed out at 90s inside its very first
+`sw_doc_new`, and the identical test passed in 16s the moment the session had one
+document behind it. The audit log's `p50` of 1452ms is the *warm* figure and hides this
+completely, because a p50 over hundreds of calls cannot show a cost paid once.
+
+This matters more than the wasted minute, because of what happens next:
+
+- `pytest-timeout` fires at 120s (`pyproject.toml`), which kills the client **mid-COM
+  call**. The call does not stop — it is running inside SOLIDWORKS.
+- SOLIDWORKS then reported `Responding=False` with a part open and modified, recovered
+  on its own once the client process was gone, and on the first occurrence **exited**:
+  the next call returned `COM_RPC_SERVER_UNAVAILABLE` (0x800706BA).
+- On this machine only the user can restart it, so that is a hard stop costing a
+  relaunch and a sign-in.
+
+So a cold first call does not merely fail slowly; it can take the session down and block
+everything after it. Before starting any live module on a freshly launched SOLIDWORKS,
+create and close one document — or run a single cheap test first and let it warm the
+session. When a live run hangs early, check `Responding` and the CPU delta before
+assuming the code is at fault:
+
+```powershell
+$p = Get-Process SLDWORKS; $c = $p.CPU; Start-Sleep 6; $p.Refresh()
+"{0:N2} CPU-s in 6s, Responding={1}" -f ($p.CPU - $c), $p.Responding
+```
+
+Idle CPU with `Responding=False` is a block or a wait, not a spin — and after a killed
+client it is very often just the client's own corpse holding a proxy.
+
+### `swDefaultTemplatePart` is not File Locations
+
+`sw_doc_new` without `template_path` reads the `swDefaultTemplate*` user preferences —
+**Tools > Options > System Options > Default Templates**, which names three specific
+files. That is a different setting from **File Locations > Document Templates**, which
+is a directory list; setting the latter does not populate the former, and the error
+`TEMPLATE_NOT_FOUND ... (got '')` means the former is empty. Still unexplained: a
+long-lived server process read `''` from that preference while a freshly started process
+attached to the same SOLIDWORKS read it correctly and created the document, so a live
+module that must not depend on it can pass `template_path` explicitly —
+`tests/live/test_live_sketch_validity.py` falls back that way.
 
 ## SOLIDWORKS session health
 

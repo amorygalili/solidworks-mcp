@@ -100,7 +100,17 @@ class OutputPathArgs(StrictModel):
 #: normalized but not root-checked: a document the user opened by hand outside the
 #: allowed roots is still legitimately addressable.
 DOCUMENT_PATH_FIELDS: frozenset[str] = frozenset(
-    {"path", "part_path", "assembly_path", "model_path", "component_path", "source_path"}
+    {
+        "path",
+        "part_path",
+        "assembly_path",
+        "model_path",
+        "component_path",
+        "source_path",
+        # Read, never written, and authored by the caller the same way a document is -
+        # so it is normalized like one rather than root-checked like an output.
+        "entities_file",
+    }
 )
 
 #: Argument field names naming a file the server is about to create or overwrite.

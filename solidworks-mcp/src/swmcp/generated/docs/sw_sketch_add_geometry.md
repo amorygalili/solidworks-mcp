@@ -1708,12 +1708,23 @@ Create sketch primitives in one batch — lines, centerlines, points, rectangles
       "title": "Auto Relations",
       "type": "boolean"
     },
+    "detail": {
+      "default": "auto",
+      "description": "How much to say about each created segment. 'full' describes every one; 'compact' returns only the handle, type and index; 'auto' (the default) is full up to 60 segments and compact beyond that. Handles are always returned, so relations, dimensions and deletes can still address the geometry. Entities that landed off their requested coordinates keep full detail in every mode.",
+      "enum": [
+        "auto",
+        "full",
+        "compact"
+      ],
+      "title": "Detail",
+      "type": "string"
+    },
     "document": {
       "$ref": "#/$defs/DocTarget",
       "description": "Which document to act on. Defaults to the active document."
     },
     "entities": {
-      "description": "Sketch primitives to create, in order.",
+      "description": "Sketch primitives to create, in order. Give this or entities_file, not both.",
       "items": {
         "discriminator": {
           "mapping": {
@@ -1784,9 +1795,21 @@ Create sketch primitives in one batch — lines, centerlines, points, rectangles
         ]
       },
       "maxItems": 500,
-      "minItems": 1,
       "title": "Entities",
       "type": "array"
+    },
+    "entities_file": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Path to a UTF-8 JSON file holding the same list, so a generated profile does not have to travel through the request. Either a bare array of entities or an object with an 'entities' key. A few hundred splined segments is tens of kilobytes of argument otherwise, and anything that computes a profile has already written it to a file.",
+      "title": "Entities File"
     },
     "preflight": {
       "default": false,
@@ -1808,9 +1831,6 @@ Create sketch primitives in one batch — lines, centerlines, points, rectangles
       "title": "Sketch Name"
     }
   },
-  "required": [
-    "entities"
-  ],
   "title": "SketchAddGeometryArgs",
   "type": "object"
 }
@@ -2046,6 +2066,18 @@ Create sketch primitives in one batch — lines, centerlines, points, rectangles
       },
       "title": "Created",
       "type": "array"
+    },
+    "created_compacted": {
+      "default": false,
+      "description": "True when 'created' entries were trimmed to their handles. Nothing is omitted from the list; each entry says less.",
+      "title": "Created Compacted",
+      "type": "boolean"
+    },
+    "created_total": {
+      "default": 0,
+      "description": "How many segments were created, however much detail is shown.",
+      "title": "Created Total",
+      "type": "integer"
     },
     "failed": {
       "items": {

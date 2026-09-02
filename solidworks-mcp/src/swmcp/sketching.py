@@ -157,12 +157,27 @@ def segments_by_id(sketch: Any) -> dict[str, Any]:
 
 
 def describe_segment(segment: Any) -> dict[str, Any]:
-    return {
+    """What a segment is, plus - for an arc - how far it actually turns.
+
+    The sweep is reported because it is the only field that distinguishes a
+    centre-point arc from its complement: both share a centre, a radius and both
+    endpoints, so a caller who named the wrong ``direction`` gets back a description
+    identical to the one they intended. ``length_m`` always implied the answer;
+    stating it in degrees means nobody has to divide by the radius to notice.
+    """
+    described: dict[str, Any] = {
         "sketch_local_id": segment_id(segment),
         "type": segment_kind(segment),
         "construction": bool(try_com_member(segment, "ConstructionGeometry", default=False)),
         "length_m": try_com_member(segment, "GetLength", default=None),
     }
+    frame = arc_frame(segment)
+    if frame is not None:
+        sweep = arc_sweep(segment, frame)
+        described["radius_mm"] = round(from_meters(frame[1], "mm"), 6)
+        if sweep is not None:
+            described["sweep_deg"] = round(math.degrees(sweep), 4)
+    return described
 
 
 def _relations(sketch: Any, filter_name: str) -> list[dict[str, Any]]:
@@ -300,6 +315,127 @@ def segment_endpoints(segment: Any) -> list[Point]:
     return read_endpoints(segment)[0]
 
 
+#: How finely a curve is flattened before it is tested for crossings. Ten degrees
+#: puts 36 chords on a full circle, whose worst deviation from the true arc is
+#: r*(1-cos(5deg)) = 0.4% of the radius - well under a millimetre on any gear tooth,
+#: and cheap enough to run on every segment of a 240-segment profile.
+_ARC_STEP_RAD = math.pi / 18.0
+_MIN_ARC_SAMPLES = 4
+
+
+def arc_frame(segment: Any) -> tuple[Point, float] | None:
+    """An arc's centre and radius in metres, or ``None`` if it is not an arc.
+
+    ``GetCenterPoint2`` and ``GetRadius`` live on ``ISketchArc``, not on
+    ``ISketchSegment`` - the same split that ``GetStartPoint2`` has, and the reason
+    this asks ``GetType`` **first** rather than trying the call and catching the
+    failure. Probing a line or a spline with an arc's methods is a call into an
+    interface the object does not implement, and this module has already been bitten
+    once by assuming a missing member fails cleanly. A circle is an ``ISketchArc``
+    too, so it passes this gate and is handled as the closed case below.
+    """
+    if segment_kind(segment) != "arc":
+        return None
+    centre = point_of(try_com_member(segment, "GetCenterPoint2", default=None))
+    radius = try_com_member(segment, "GetRadius", default=None)
+    if centre is None or radius is None:
+        return None
+    try:
+        radius = float(radius)
+    except (TypeError, ValueError):
+        return None
+    return (centre, radius) if radius > 0 else None
+
+
+def arc_sweep(segment: Any, frame: tuple[Point, float] | None = None) -> float | None:
+    """How far an arc actually turns, in radians.
+
+    Derived from arc length over radius rather than from the two endpoints, because
+    **the endpoints cannot tell you**: a 272 degree arc and the 88 degree one it
+    complements share both of them. That ambiguity is not academic - ``arc_center``
+    honours the ``direction`` it is given, so naming the wrong one builds the
+    complement, and every endpoint-based check in this module reports the result as
+    healthy. Length is the one reading that distinguishes them.
+    """
+    frame = frame or arc_frame(segment)
+    if frame is None:
+        return None
+    length = try_com_member(segment, "GetLength", default=None)
+    if length is None:
+        return None
+    try:
+        return abs(float(length)) / frame[1]
+    except (TypeError, ValueError, ZeroDivisionError):
+        return None
+
+
+def sample_arc(
+    centre: Point, radius: float, start: Point, end: Point | None, sweep: float
+) -> list[Point]:
+    """Flatten an arc to a polyline of ``sweep`` radians, starting at ``start``.
+
+    The turn direction is recovered by asking which way round reaches ``end`` in the
+    sweep the arc actually reports - so a major arc flattens as the major arc, which
+    is the whole point of doing this rather than trusting the chord.
+    """
+    a0 = math.atan2(start[1] - centre[1], start[0] - centre[0])
+    if end is None:  # a circle: no endpoints to disambiguate, and none needed
+        signed = sweep
+    else:
+        a1 = math.atan2(end[1] - centre[1], end[0] - centre[0])
+        ccw = (a1 - a0) % (2.0 * math.pi)
+        # Whichever direction lands nearer the measured sweep is the one it turned.
+        signed = sweep if abs(ccw - sweep) <= abs((2.0 * math.pi - ccw) - sweep) else -sweep
+    steps = max(_MIN_ARC_SAMPLES, math.ceil(abs(sweep) / _ARC_STEP_RAD))
+    return [
+        (
+            centre[0] + radius * math.cos(a0 + signed * i / steps),
+            centre[1] + radius * math.sin(a0 + signed * i / steps),
+        )
+        for i in range(steps + 1)
+    ]
+
+
+def _spline_polyline(segment: Any) -> list[Point]:
+    """A spline's interpolation points as a polyline, in metres.
+
+    Type-gated for the same reason as :func:`arc_frame`: ``GetPoints`` is a spline
+    member, and this is not the place to find out what a line does with it.
+    """
+    if segment_kind(segment) != "spline":
+        return []
+    values = normalize_sequence(try_com_member(segment, "GetPoints", default=None))
+    if len(values) < 6 or len(values) % 3:
+        return []
+    try:
+        numbers = [float(value) for value in values]
+    except (TypeError, ValueError):
+        return []
+    return [(numbers[i], numbers[i + 1]) for i in range(0, len(numbers), 3)]
+
+
+def segment_polyline(segment: Any, endpoints: list[Point]) -> list[Point]:
+    """The segment flattened to points in metres, for geometric tests.
+
+    Endpoints alone describe where a segment *starts and stops*, never where it goes -
+    so they can say a profile closes while its edges cross straight through each
+    other. This is what makes the difference visible. An unreadable segment returns
+    ``[]`` and is left out of the crossing test rather than guessed at.
+    """
+    frame = arc_frame(segment)
+    if frame is not None:
+        centre, radius = frame
+        sweep = arc_sweep(segment, frame)
+        if sweep is None:
+            sweep = 2.0 * math.pi if not endpoints else math.pi
+        if not endpoints:  # closed: a full circle
+            return sample_arc(centre, radius, (centre[0] + radius, centre[1]), None, sweep)
+        return sample_arc(centre, radius, endpoints[0], endpoints[1], sweep)
+
+    spline = _spline_polyline(segment)
+    return spline or list(endpoints)
+
+
 def segment_topology(sketch: Any) -> list[dict[str, Any]]:
     """Plain data for every segment: id, kind, construction flag, and endpoints.
 
@@ -310,6 +446,7 @@ def segment_topology(sketch: Any) -> list[dict[str, Any]]:
     topology = []
     for segment in sketch_segments(sketch):
         endpoints, read = read_endpoints(segment)
+        sweep = arc_sweep(segment)
         topology.append(
             {
                 "id": segment_id(segment),
@@ -318,6 +455,12 @@ def segment_topology(sketch: Any) -> list[dict[str, Any]]:
                     try_com_member(segment, "ConstructionGeometry", default=False)
                 ),
                 "endpoints": endpoints,
+                # Where the segment *goes*, not just where it ends, so crossings can be
+                # found. Empty when the geometry would not read.
+                "polyline": segment_polyline(segment, endpoints) if read else [],
+                # Radians. Only arcs have one; it is the reading that separates a major
+                # arc from the minor one sharing its endpoints.
+                "sweep_rad": sweep,
                 # False only when SOLIDWORKS would not say where the segment ends.
                 # Absent is treated as True, so hand-built topology in tests reads the
                 # way it always did.
@@ -365,6 +508,103 @@ def cluster_points(
 
 def _to_mm(point: Point) -> list[float]:
     return [round(from_meters(point[0], "mm"), 4), round(from_meters(point[1], "mm"), 4)]
+
+
+def _bounds(points: list[Point]) -> tuple[float, float, float, float]:
+    xs = [p[0] for p in points]
+    ys = [p[1] for p in points]
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+def _crossing(a1: Point, a2: Point, b1: Point, b2: Point) -> Point | None:
+    """Where two straight spans properly cross, or ``None``.
+
+    Parallel and merely-touching spans return ``None``: an endpoint shared with a
+    neighbour is how a profile is *supposed* to be built, so counting it as a crossing
+    would flag every closed contour ever drawn.
+    """
+    dxa, dya = a2[0] - a1[0], a2[1] - a1[1]
+    dxb, dyb = b2[0] - b1[0], b2[1] - b1[1]
+    denominator = dxa * dyb - dya * dxb
+    if abs(denominator) < 1e-18:
+        return None
+    tx, ty = b1[0] - a1[0], b1[1] - a1[1]
+    t = (tx * dyb - ty * dxb) / denominator
+    u = (tx * dya - ty * dxa) / denominator
+    # Strictly inside both spans. The margin keeps a shared vertex, which lands at
+    # t or u of exactly 0 or 1, from reading as a crossing.
+    if not (1e-9 < t < 1 - 1e-9) or not (1e-9 < u < 1 - 1e-9):
+        return None
+    return (a1[0] + t * dxa, a1[1] + t * dya)
+
+
+def find_self_intersections(
+    segments: list[dict[str, Any]],
+    *,
+    tolerance: float = COORDINATE_TOLERANCE_M,
+    limit: int = 12,
+) -> list[dict[str, Any]]:
+    """Profile edges that cross each other, as ``{segments, at_mm}`` records.
+
+    Closure and self-intersection are independent faults, and only the first of them
+    was ever measured here. A profile can be a perfectly closed ring whose edges pass
+    straight through one another - the commonest way being a centre-point arc built
+    the long way round - and SOLIDWORKS then refuses the feature with a message that
+    names neither the segments nor the reason. Every endpoint-based check passes,
+    because the endpoints are genuinely fine.
+
+    Junctions are excluded deliberately: a crossing within ``tolerance`` of a point
+    both segments touch is two edges meeting, which is how profiles are drawn.
+    """
+    usable = [
+        s
+        for s in segments
+        if not s.get("construction") and len(s.get("polyline") or []) >= 2
+    ]
+    boxes = [_bounds(s["polyline"]) for s in usable]
+
+    found: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for i in range(len(usable)):
+        for j in range(i + 1, len(usable)):
+            # Broad phase. Almost every pair on a real profile is disjoint, and this
+            # rejects those for the cost of four comparisons.
+            if (
+                boxes[i][2] < boxes[j][0] - tolerance
+                or boxes[j][2] < boxes[i][0] - tolerance
+                or boxes[i][3] < boxes[j][1] - tolerance
+                or boxes[j][3] < boxes[i][1] - tolerance
+            ):
+                continue
+            first, second = usable[i]["polyline"], usable[j]["polyline"]
+            shared = [
+                p
+                for p in (first[0], first[-1])
+                for q in (second[0], second[-1])
+                if distance(p, q) <= tolerance
+            ]
+            for a in range(len(first) - 1):
+                for b in range(len(second) - 1):
+                    hit = _crossing(first[a], first[a + 1], second[b], second[b + 1])
+                    if hit is None:
+                        continue
+                    if any(distance(hit, corner) <= tolerance * 4 for corner in shared):
+                        continue
+                    key = (
+                        str(usable[i].get("id", "")),
+                        str(usable[j].get("id", "")),
+                    )
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    found.append({"segments": list(key), "at_mm": _to_mm(hit)})
+                    break
+                else:
+                    continue
+                break
+            if len(found) >= limit:
+                return found
+    return found
 
 
 def analyze_contours(
@@ -439,6 +679,16 @@ def analyze_contours(
             open_count += 1
             unjoined.extend(str(chained[position].get("id", "")) for position in members)
 
+    crossings = find_self_intersections(profile, tolerance=tolerance)
+    # A major arc is reported alongside the crossing rather than on its own: building
+    # one is legitimate, so it is only worth mentioning when the profile is broken and
+    # the arc is a plausible reason why.
+    major_arcs = sorted(
+        str(s.get("id", ""))
+        for s in profile
+        if (s.get("sweep_rad") or 0.0) > math.pi + 1e-9
+    )
+
     return {
         "profile_segment_count": len(profile),
         "closed_contour_count": closed,
@@ -449,6 +699,13 @@ def analyze_contours(
         # Empty in the ordinary case. When it is not, every other count here covers
         # only the segments that did answer, so closure is undecided rather than false.
         "unreadable_segment_ids": sorted(str(s.get("id", "")) for s in unreadable),
+        # Independent of closure: a ring can be closed and still cross itself, and a
+        # feature refuses that just as firmly.
+        "self_intersections": crossings,
+        "self_intersecting_segment_ids": sorted(
+            {identifier for hit in crossings for identifier in hit["segments"]}
+        ),
+        "major_arc_segment_ids": major_arcs,
     }
 
 
@@ -475,6 +732,27 @@ def contour_warnings(contours: dict[str, Any]) -> list[str]:
             f"refuse this profile; a revolve will too unless the gap lies on its axis, "
             f"which it closes by itself. Loose points (mm): {where}.{hedge}"
         )
+    crossings = contours.get("self_intersections") or []
+    if crossings:
+        pairs = ", ".join(
+            f"{hit['segments'][0]} x {hit['segments'][1]} at {hit['at_mm']}"
+            for hit in crossings[:4]
+        )
+        more = "" if len(crossings) <= 4 else f" (+{len(crossings) - 4} more)"
+        message = (
+            f"{len(crossings)} profile self-intersection(s): {pairs}{more}. An extrude "
+            f"or revolve will refuse this even though the contour closes."
+        )
+        implicated = set(contours.get("self_intersecting_segment_ids") or [])
+        major = [a for a in (contours.get("major_arc_segment_ids") or []) if a in implicated]
+        if major:
+            message += (
+                f" {len(major)} of the crossing segment(s) turn more than 180 degrees "
+                f"({', '.join(major[:4])}); a centre-point arc built with the wrong "
+                f"`direction` sweeps the long way round and looks exactly like this."
+            )
+        warnings.append(message)
+
     if unreadable:
         warnings.append(
             f"{len(unreadable)} segment(s) would not report their endpoints, so whether "

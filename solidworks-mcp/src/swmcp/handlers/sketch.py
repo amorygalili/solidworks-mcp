@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 import contextlib
+import json
+from pathlib import Path
 from typing import Any
+
+from pydantic import TypeAdapter, ValidationError
 
 from swmcp.catalog.registry import op
 from swmcp.catalog.spec import ModelMutation, ReadSafety
@@ -16,8 +20,14 @@ from swmcp.com.marshal import (
 )
 from swmcp.context import OpContext
 from swmcp.envelope import Check, Verification
-from swmcp.errors import SwMcpError, make_error, validation_error
+from swmcp.errors import (
+    SwMcpError,
+    make_error,
+    validation_error,
+    wire_safe_validation_errors,
+)
 from swmcp.refs.resolve import resolve
+from swmcp.safety.paths import normalize_cad_path
 from swmcp.schemas.sketch import (
     SketchAddGeometryArgs,
     SketchAddGeometryResult,
@@ -27,6 +37,7 @@ from swmcp.schemas.sketch import (
     SketchCreateResult,
     SketchDeleteArgs,
     SketchDeleteResult,
+    SketchEntity,
     SketchExitArgs,
     SketchExitResult,
     SketchListArgs,
@@ -39,6 +50,7 @@ from swmcp.schemas.sketch import (
     SketchStartResult,
     SketchTextArgs,
     SketchTextResult,
+    compact_created,
 )
 from swmcp.sketching import (
     active_sketch,
@@ -56,6 +68,131 @@ from swmcp.sketching import (
     sketch_state,
 )
 from swmcp.units import COORDINATE_TOLERANCE_M, from_meters
+
+
+@contextlib.contextmanager
+def _editing(ctx: OpContext, doc: Any, name: str | None):
+    """Yield the sketch to work on, opening it for editing only if it is not already.
+
+    ``ISketchManager::InsertSketch`` *toggles*, so closing whatever happens to be open
+    and reopening the target would silently discard the caller's editing session. If a
+    different sketch is open, this refuses instead - shutting someone else's sketch is
+    not a side effect a delete should have.
+    """
+    open_now = active_sketch(doc)
+    open_name = (
+        str(try_com_member(open_now, "Name", default="") or "") if open_now is not None else None
+    )
+    if name is None:
+        yield require_active_sketch(doc)
+        return
+    if open_name == name:
+        yield open_now
+        return
+    if open_now is not None:
+        raise SwMcpError(
+            make_error(
+                "SKETCH_ALREADY_OPEN",
+                "validation",
+                f"{open_name!r} is open for editing, so {name!r} cannot be edited too.",
+                context={"open_sketch": open_name, "requested": name},
+                remediation=[
+                    "Exit the open sketch first, or address that one instead.",
+                ],
+            )
+        )
+
+    sketch = _resolve_sketch(ctx, doc, name)
+    try_com_member(doc, "ClearSelection2", True, default=None)
+    selected = doc.Extension.SelectByID2(
+        name, "SKETCH", 0, 0, 0, False, 0, null_dispatch(), 0
+    )
+    if not selected:
+        raise SwMcpError(
+            make_error(
+                "SKETCH_NOT_SELECTABLE",
+                "reference",
+                f"The sketch {name!r} exists but could not be selected for editing.",
+                context={"sketch": name},
+                remediation=["Open it by hand, or pass its segments while it is active."],
+            )
+        )
+    try_com_member(doc, "EditSketch", default=None)
+    try:
+        yield active_sketch(doc) or sketch
+    finally:
+        # Close it again only if this opened it, and only if it is still open.
+        if active_sketch(doc) is not None:
+            doc.SketchManager.InsertSketch(True)
+
+
+def load_entities(args: Any) -> list[Any]:
+    """The entities to draw, from the request or from the file it names.
+
+    Validated through the same discriminated union either way, so a file cannot
+    smuggle in a shape the inline route would have refused.
+    """
+    if not getattr(args, "entities_file", None):
+        return list(args.entities)
+
+    path = Path(normalize_cad_path(args.entities_file))
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise SwMcpError(
+            make_error(
+                "ENTITIES_FILE_NOT_FOUND",
+                "validation",
+                f"No entities file at {str(path)!r}.",
+                context={"entities_file": str(path)},
+                remediation=["Write the profile to that path, or pass entities inline."],
+            )
+        ) from exc
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise SwMcpError(
+            make_error(
+                "ENTITIES_FILE_UNREADABLE",
+                "validation",
+                f"Could not read {str(path)!r} as UTF-8 JSON: {exc}",
+                context={"entities_file": str(path)},
+                remediation=["The file must be UTF-8 JSON: a list of entities, or an "
+                             "object with an 'entities' key."],
+            )
+        ) from exc
+
+    if isinstance(raw, dict):
+        raw = raw.get("entities")
+    if not isinstance(raw, list) or not raw:
+        raise SwMcpError(
+            validation_error(
+                "ENTITIES_FILE_EMPTY",
+                f"{str(path)!r} holds no entities.",
+                context={"entities_file": str(path)},
+            )
+        )
+    if len(raw) > 500:
+        raise SwMcpError(
+            validation_error(
+                "ENTITIES_FILE_TOO_LARGE",
+                f"{str(path)!r} holds {len(raw)} entities; the limit is 500.",
+                context={"entities_file": str(path), "count": len(raw)},
+            )
+        )
+
+    adapter = TypeAdapter(list[SketchEntity])
+    try:
+        return adapter.validate_python(raw)
+    except ValidationError as exc:
+        raise SwMcpError(
+            validation_error(
+                "ENTITIES_FILE_INVALID",
+                f"{str(path)!r} does not hold valid sketch entities.",
+                context={
+                    "entities_file": str(path),
+                    "errors": wire_safe_validation_errors(exc)[:5],
+                },
+            )
+        ) from exc
 
 
 def _resolve_sketch(ctx: OpContext, doc: Any, name: str | None) -> Any:
@@ -544,8 +681,9 @@ def sketch_add_geometry(ctx: OpContext, args: SketchAddGeometryArgs) -> SketchAd
     failed: list[dict[str, Any]] = []
     deviations: list[tuple[int, str, float]] = []
 
+    entities = load_entities(args)
     with _InferenceOff(manager, enabled=not args.auto_relations) as inference:
-        for index, entity in enumerate(args.entities, start=1):
+        for index, entity in enumerate(entities, start=1):
             try:
                 segments = [s for s in _create_entity(manager, entity) if s is not None]
             except SwMcpError as exc:
@@ -623,9 +761,12 @@ def sketch_add_geometry(ctx: OpContext, args: SketchAddGeometryArgs) -> SketchAd
         )
 
     after = segments_by_id(sketch)
+    shown, compacted = compact_created(created, args.detail)
     return SketchAddGeometryResult(
         sketch_name=name,
-        created=created,
+        created=shown,
+        created_total=len(created),
+        created_compacted=compacted,
         failed=failed,
         sketch_state=sketch_state(sketch),
         max_deviation_mm=None if worst is None else round(from_meters(worst, "mm"), 6),
@@ -642,7 +783,7 @@ def sketch_add_geometry(ctx: OpContext, args: SketchAddGeometryArgs) -> SketchAd
                 Check(
                     name="every_entity_created",
                     passed=not failed,
-                    detail=f"{len(failed)} of {len(args.entities)} entities failed"
+                    detail=f"{len(failed)} of {len(entities)} entities failed"
                     if failed
                     else "all entities created",
                 ),
@@ -696,12 +837,16 @@ def sketch_create(ctx: OpContext, args: SketchCreateArgs) -> SketchCreateResult:
     doc = ctx.require_doc()
 
     started = sketch_start(ctx, SketchStartArgs(on=args.on))
+    # The file is handed on rather than read here, so both routes load it in exactly
+    # one place and a malformed file fails the same way whichever tool was called.
     added = sketch_add_geometry(
         ctx,
         SketchAddGeometryArgs(
             entities=args.entities,
+            entities_file=args.entities_file,
             sketch_name=None,
             auto_relations=args.auto_relations,
+            detail=args.detail,
         ),
     )
 
@@ -722,6 +867,8 @@ def sketch_create(ctx: OpContext, args: SketchCreateArgs) -> SketchCreateResult:
         sketch_name=started.sketch_name,
         plane=started.plane,
         created=added.created,
+        created_total=added.created_total,
+        created_compacted=added.created_compacted,
         failed=added.failed,
         sketch_state=added.sketch_state,
         max_deviation_mm=added.max_deviation_mm,
@@ -733,7 +880,7 @@ def sketch_create(ctx: OpContext, args: SketchCreateArgs) -> SketchCreateResult:
             before={"segment_count": 0},
             after={
                 "sketch": started.sketch_name,
-                "segment_count": len(added.created),
+                "segment_count": added.created_total,
                 "closed_contour_count": contours.get("closed_contour_count"),
             },
             checks=[
@@ -745,7 +892,8 @@ def sketch_create(ctx: OpContext, args: SketchCreateArgs) -> SketchCreateResult:
                 Check(
                     name="every_entity_created",
                     passed=not added.failed,
-                    detail=f"{len(added.failed)} of {len(args.entities)} entities failed"
+                    detail=f"{len(added.failed)} of "
+                    f"{len(added.failed) + added.created_total} entities failed"
                     if added.failed
                     else "all entities created",
                 ),
@@ -848,31 +996,33 @@ def sketch_set_construction(
 )
 def sketch_delete(ctx: OpContext, args: SketchDeleteArgs) -> SketchDeleteResult:
     doc = ctx.require_doc()
-    sketch = require_active_sketch(doc)
-    available = segments_by_id(sketch)
-    before = len(available)
-
     deleted, missing = [], []
     absorbed = swconst.value("swDeleteSelectionOptions_e", "swDelete_Absorbed")
-    for identifier in args.segment_ids:
-        segment = available.get(identifier)
-        if segment is None:
-            missing.append(identifier)
-            continue
-        select_segments(doc, [segment])
-        try_com_member(doc.Extension, "DeleteSelection2", absorbed, default=None)
-        # Trust the model, not the return value: SOLIDWORKS reports deletion
-        # inconsistently, so the evidence is that the id no longer resolves.
-        if identifier in segments_by_id(sketch):
-            missing.append(identifier)
-        else:
-            deleted.append(identifier)
 
-    after_map = segments_by_id(sketch)
+    with _editing(ctx, doc, args.sketch_name) as sketch:
+        available = segments_by_id(sketch)
+        before = len(available)
+
+        for identifier in args.segment_ids:
+            segment = available.get(identifier)
+            if segment is None:
+                missing.append(identifier)
+                continue
+            select_segments(doc, [segment])
+            try_com_member(doc.Extension, "DeleteSelection2", absorbed, default=None)
+            # Trust the model, not the return value: SOLIDWORKS reports deletion
+            # inconsistently, so the evidence is that the id no longer resolves.
+            if identifier in segments_by_id(sketch):
+                missing.append(identifier)
+            else:
+                deleted.append(identifier)
+
+        after_map = segments_by_id(sketch)
+        state = sketch_state(sketch)
     return SketchDeleteResult(
         deleted=deleted,
         missing=missing,
-        sketch_state=sketch_state(sketch),
+        sketch_state=state,
         verification=Verification(
             read_back=True,
             before={"segment_count": before},

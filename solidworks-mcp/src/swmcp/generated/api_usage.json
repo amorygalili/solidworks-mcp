@@ -1,5 +1,5 @@
 {
-  "call_count": 265,
+  "call_count": 266,
   "calls": [
     {
       "argument_counts": [
@@ -499,6 +499,15 @@
         "swmcp/handlers/constraint.py",
         "swmcp/handlers/document.py",
         "swmcp/handlers/parameter.py"
+      ]
+    },
+    {
+      "argument_counts": [
+        0
+      ],
+      "member": "EditSketch",
+      "sources": [
+        "swmcp/handlers/sketch.py"
       ]
     },
     {

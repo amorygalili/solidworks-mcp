@@ -76,6 +76,19 @@ Delete sketch segments by their stable ids, reporting which ones were removed.
       "minItems": 1,
       "title": "Segment Ids",
       "type": "array"
+    },
+    "sketch_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Sketch to edit, as on sw_sketch_add_geometry. Defaults to the sketch currently open for editing. Naming a closed sketch opens it, deletes, and closes it again; another sketch already open is refused rather than shut on your behalf.",
+      "title": "Sketch Name"
     }
   },
   "required": [

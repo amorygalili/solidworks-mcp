@@ -168,8 +168,61 @@ def _feature_names(doc: Any) -> set[str]:
     return names
 
 
-def _geometry_checks(before: dict[str, Any], after: dict[str, Any], *, expect: str) -> list[Check]:
-    """The invariants that make a feature operation verifiable rather than assumed."""
+def feature_error_check(feature: Any) -> Check:
+    """FEAT-019 evidence: did SOLIDWORKS flag the feature it just built?
+
+    A feature can be created, change the geometry, and still be in error - a fillet
+    that skipped edges, a pattern with failed instances. Every op that returns a
+    feature owes this check, so it is written once.
+    """
+    code = try_com_member(feature, "GetErrorCode2", default=0)
+    return Check(name="feature_has_no_error", passed=not code, detail=str(code))
+
+
+#: End conditions that reach both ways from the sketch plane. Reversing one of these
+#: cannot change what it touches, so suggesting it sends the caller to re-run the same
+#: failure - which is exactly what happened: two attempts spent on `reverse` and
+#: `mid_plane` for a cut whose real fault was a self-intersecting profile.
+_SYMMETRIC_END_CONDITIONS = frozenset({"through_all_both", "mid_plane"})
+
+
+def _extrude_remediation(end_condition: str, *, cut: bool) -> list[str]:
+    """What to actually try, given how this extrude was asked to end."""
+    steps: list[str] = []
+    if cut and end_condition not in _SYMMETRIC_END_CONDITIONS:
+        steps.append(
+            "A one-way cut that points away from the material removes nothing and "
+            "fails. Try reverse=true."
+        )
+    elif cut:
+        steps.append(
+            f"{end_condition!r} already reaches both ways from the sketch plane, so "
+            f"reverse and a larger depth cannot change what it touches. The fault is "
+            f"more likely in the profile."
+        )
+    steps.append(
+        "Run sw_sketch_diagnose on the profile. It reports self-intersections and "
+        "major arcs as well as closure - a contour can close cleanly and still have "
+        "edges that cross, which no feature will accept."
+    )
+    steps.append("The profile may also be open, or already consumed by another feature.")
+    return steps
+
+
+def _geometry_checks(
+    before: dict[str, Any],
+    after: dict[str, Any],
+    *,
+    expect: str,
+    feature: Any = None,
+) -> list[Check]:
+    """The invariants that make a feature operation verifiable rather than assumed.
+
+    ``feature`` adds the rebuild-error check. It lives here rather than at each call
+    site because it was written out by hand at four of them and omitted at the rest -
+    so a sweep or a loft that SOLIDWORKS had flagged came back all-green while an
+    extrude in the same document did not. One place to add it is one place to forget.
+    """
     volume_before = before.get("volume_m3") or 0.0
     volume_after = after.get("volume_m3") or 0.0
 
@@ -183,7 +236,7 @@ def _geometry_checks(before: dict[str, Any], after: dict[str, Any], *, expect: s
         passed = volume_after != volume_before or after["body_count"] != before["body_count"]
         detail = "the model changed"
 
-    return [
+    checks = [
         Check(
             name="geometry_changed",
             passed=passed,
@@ -201,6 +254,9 @@ def _geometry_checks(before: dict[str, Any], after: dict[str, Any], *, expect: s
             detail=f"{after['body_count']} solid body(ies)",
         ),
     ]
+    if feature is not None:
+        checks.append(feature_error_check(feature))
+    return checks
 
 
 # --- datum --------------------------------------------------------------------
@@ -836,18 +892,7 @@ def _extrude(ctx: OpContext, args: ExtrudeArgs, *, cut: bool) -> ExtrudeResult:
                 "solidworks",
                 f"SOLIDWORKS could not create the extrude from {sketch!r}.",
                 context={"sketch": sketch, "end_condition": args.end_condition},
-                remediation=(
-                    [
-                        "A through-all cut that points away from the material creates "
-                        "nothing and fails. Try reverse=true.",
-                        "The profile may be open, self-intersecting, or already consumed.",
-                    ]
-                    if cut
-                    else [
-                        "The profile may be open, self-intersecting, or already consumed.",
-                        "Check the sketch is closed and fully contained.",
-                    ]
-                ),
+                remediation=_extrude_remediation(args.end_condition, cut=cut),
             )
         )
 
@@ -870,12 +915,7 @@ def _extrude(ctx: OpContext, args: ExtrudeArgs, *, cut: bool) -> ExtrudeResult:
             after=after,
             checks=[
                 Check(name="feature_created", passed=bool(name), detail=name),
-                *_geometry_checks(before, after, expect="less" if cut else "more"),
-                Check(
-                    name="feature_has_no_error",
-                    passed=not try_com_member(feature, "GetErrorCode2", default=0),
-                    detail=str(try_com_member(feature, "GetErrorCode2", default=0)),
-                ),
+                *_geometry_checks(before, after, expect="less" if cut else "more", feature=feature),
             ],
         ),
 
@@ -1112,7 +1152,10 @@ def feature_revolve(ctx: OpContext, args: RevolveArgs) -> RevolveResult:
             before=before,
             after=after,
             checks=_geometry_checks(
-                before, after, expect="less" if args.mode == "cut" else "more"
+                before,
+                after,
+                expect="less" if args.mode == "cut" else "more",
+                feature=feature,
             ),
         ),
     )
@@ -1247,7 +1290,7 @@ def feature_draft(ctx: OpContext, args: DraftArgs) -> DraftResult:
             after=after,
             # A draft adds material one way and removes it the other, so "changed" is
             # the honest invariant; the caller sees which way from the volumes.
-            checks=_geometry_checks(before, after, expect="any"),
+            checks=_geometry_checks(before, after, expect="any", feature=feature),
         ),
     )
 
@@ -1462,7 +1505,10 @@ def feature_sweep(ctx: OpContext, args: SweepArgs) -> SweepResult:
             before=before,
             after=after,
             checks=_geometry_checks(
-                before, after, expect="less" if args.mode == "cut" else "more"
+                before,
+                after,
+                expect="less" if args.mode == "cut" else "more",
+                feature=feature,
             ),
         ),
     )
@@ -1576,7 +1622,10 @@ def feature_loft(ctx: OpContext, args: LoftArgs) -> LoftResult:
             before=before,
             after=after,
             checks=_geometry_checks(
-                before, after, expect="less" if args.mode == "cut" else "more"
+                before,
+                after,
+                expect="less" if args.mode == "cut" else "more",
+                feature=feature,
             ),
         ),
     )
@@ -1851,11 +1900,7 @@ def _edge_feature_result(
                         f"volume {before['volume_mm3']:.3f} -> {after['volume_mm3']:.3f} mm³"
                     ),
                 ),
-                Check(
-                    name="feature_has_no_error",
-                    passed=not try_com_member(feature, "GetErrorCode2", default=0),
-                    detail=str(try_com_member(feature, "GetErrorCode2", default=0)),
-                ),
+                feature_error_check(feature),
             ],
         ),
     )
@@ -2098,11 +2143,7 @@ def feature_pattern(ctx: OpContext, args: PatternArgs) -> PatternResult:
                     or after["volume_m3"] != before["volume_m3"],
                     detail=f"faces {before['face_count']} -> {after['face_count']}",
                 ),
-                Check(
-                    name="feature_has_no_error",
-                    passed=not try_com_member(feature, "GetErrorCode2", default=0),
-                    detail=str(try_com_member(feature, "GetErrorCode2", default=0)),
-                ),
+                feature_error_check(feature),
             ],
         ),
     )
@@ -2184,11 +2225,7 @@ def feature_hole(ctx: OpContext, args: HoleArgs) -> HoleResult:
                         f"{from_meters(radius_m, 'mm'):.3f} mm"
                     ),
                 ),
-                Check(
-                    name="feature_has_no_error",
-                    passed=not try_com_member(feature, "GetErrorCode2", default=0),
-                    detail=str(try_com_member(feature, "GetErrorCode2", default=0)),
-                ),
+                feature_error_check(feature),
             ],
         ),
         warnings=warnings,

@@ -305,11 +305,70 @@ class SketchListResult(ReadResult):
     sketches: list[dict[str, Any]] = Field(default_factory=list)
 
 
-class SketchAddGeometryArgs(BaseArgs, PreflightMixin):
+#: Above this many created segments, ``detail="auto"`` stops restating every field of
+#: every entity. A 240-segment profile returned 64 KB describing geometry the caller had
+#: just supplied, which is the bulk of what one of these calls costs to read.
+CREATED_DETAIL_LIMIT = 60
+
+#: What a ``created`` entry keeps when the batch is compacted. The handle is the load
+#: bearing part - relations, dimensions and deletes all address segments by it - so
+#: compacting must never drop it.
+_COMPACT_KEYS = ("index", "requested_type", "sketch_local_id", "type")
+
+DetailLevel = Literal["auto", "full", "compact"]
+
+
+def compact_created(
+    created: list[dict[str, Any]], detail: DetailLevel
+) -> tuple[list[dict[str, Any]], bool]:
+    """Trim ``created`` entries to their handles, and say whether that happened.
+
+    Anything that landed away from the coordinates it was given keeps its full entry
+    whatever the mode: those are the entries a caller actually has to look at.
+    """
+    if detail == "full" or (detail == "auto" and len(created) <= CREATED_DETAIL_LIMIT):
+        return created, False
+    trimmed = [
+        entry
+        if entry.get("deviation_mm")
+        else {key: entry[key] for key in _COMPACT_KEYS if key in entry}
+        for entry in created
+    ]
+    return trimmed, True
+
+
+class DetailMixin(StrictModel):
+    detail: DetailLevel = Field(
+        default="auto",
+        description=(
+            "How much to say about each created segment. 'full' describes every one; "
+            "'compact' returns only the handle, type and index; 'auto' (the default) "
+            f"is full up to {CREATED_DETAIL_LIMIT} segments and compact beyond that. "
+            "Handles are always returned, so relations, dimensions and deletes can "
+            "still address the geometry. Entities that landed off their requested "
+            "coordinates keep full detail in every mode."
+        ),
+    )
+
+
+class SketchAddGeometryArgs(BaseArgs, PreflightMixin, DetailMixin):
     entities: list[SketchEntity] = Field(
-        min_length=1,
+        default_factory=list,
         max_length=500,
-        description="Sketch primitives to create, in order.",
+        description=(
+            "Sketch primitives to create, in order. Give this or entities_file, not "
+            "both."
+        ),
+    )
+    entities_file: str | None = Field(
+        default=None,
+        description=(
+            "Path to a UTF-8 JSON file holding the same list, so a generated profile "
+            "does not have to travel through the request. Either a bare array of "
+            "entities or an object with an 'entities' key. A few hundred splined "
+            "segments is tens of kilobytes of argument otherwise, and anything that "
+            "computes a profile has already written it to a file."
+        ),
     )
     sketch_name: str | None = Field(
         default=None,
@@ -329,6 +388,19 @@ class SketchAddGeometryArgs(BaseArgs, PreflightMixin):
         ),
     )
 
+    @model_validator(mode="after")
+    def _one_source_of_entities(self):
+        """Exactly one of the two, and never zero.
+
+        ``entities`` lost its ``min_length=1`` when the file route arrived, so an empty
+        request would otherwise validate and open an empty sketch.
+        """
+        if bool(self.entities) == bool(self.entities_file):
+            raise ValueError(
+                "Give either entities or entities_file, not both and not neither."
+            )
+        return self
+
 
 class SketchAddGeometryResult(MutationResult):
     sketch_name: str
@@ -342,9 +414,19 @@ class SketchAddGeometryResult(MutationResult):
             "landed. None when no entity in the batch had checkable anchor points."
         ),
     )
+    created_total: int = Field(
+        default=0, description="How many segments were created, however much detail is shown."
+    )
+    created_compacted: bool = Field(
+        default=False,
+        description=(
+            "True when 'created' entries were trimmed to their handles. Nothing is "
+            "omitted from the list; each entry says less."
+        ),
+    )
 
 
-class SketchCreateArgs(BaseArgs):
+class SketchCreateArgs(BaseArgs, DetailMixin):
     """Open a sketch, draw a profile, and close it - the whole cadence in one call.
 
     Starting a sketch, adding geometry and exiting are three separate operations
@@ -356,9 +438,22 @@ class SketchCreateArgs(BaseArgs):
 
     on: SketchPlaneTarget
     entities: list[SketchEntity] = Field(
-        min_length=1,
+        default_factory=list,
         max_length=500,
-        description="Sketch primitives to create, in order.",
+        description=(
+            "Sketch primitives to create, in order. Give this or entities_file, not "
+            "both."
+        ),
+    )
+    entities_file: str | None = Field(
+        default=None,
+        description=(
+            "Path to a UTF-8 JSON file holding the same list, so a generated profile "
+            "does not have to travel through the request. Either a bare array of "
+            "entities or an object with an 'entities' key. A few hundred splined "
+            "segments is tens of kilobytes of argument otherwise, and anything that "
+            "computes a profile has already written it to a file."
+        ),
     )
     auto_relations: bool = Field(
         default=True,
@@ -376,6 +471,19 @@ class SketchCreateArgs(BaseArgs):
     )
     rebuild: bool = Field(default=True, description="Rebuild the model on exiting.")
 
+    @model_validator(mode="after")
+    def _one_source_of_entities(self):
+        """Exactly one of the two, and never zero.
+
+        ``entities`` lost its ``min_length=1`` when the file route arrived, so an empty
+        request would otherwise validate and open an empty sketch.
+        """
+        if bool(self.entities) == bool(self.entities_file):
+            raise ValueError(
+                "Give either entities or entities_file, not both and not neither."
+            )
+        return self
+
 
 class SketchCreateResult(MutationResult):
     sketch_name: str
@@ -384,6 +492,8 @@ class SketchCreateResult(MutationResult):
     failed: list[dict[str, Any]] = Field(default_factory=list)
     sketch_state: SketchState
     max_deviation_mm: float | None = None
+    created_total: int = 0
+    created_compacted: bool = False
     exited: bool = False
     contours: dict[str, Any] = Field(
         default_factory=dict,
@@ -408,6 +518,15 @@ class SketchSetConstructionResult(MutationResult):
 
 class SketchDeleteArgs(BaseArgs):
     segment_ids: list[str] = Field(min_length=1, max_length=500)
+    sketch_name: str | None = Field(
+        default=None,
+        description=(
+            "Sketch to edit, as on sw_sketch_add_geometry. Defaults to the sketch "
+            "currently open for editing. Naming a closed sketch opens it, deletes, and "
+            "closes it again; another sketch already open is refused rather than shut "
+            "on your behalf."
+        ),
+    )
     confirm: ConfirmField
 
 
