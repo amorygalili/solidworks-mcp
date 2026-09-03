@@ -282,9 +282,19 @@ class SketchState(StrictModel):
     over_defining_relations: list[dict[str, Any]] = Field(default_factory=list)
 
 
+#: Shared wording: the same field appears on every result that names a sketch.
+FRAME_DESCRIPTION = (
+    "Where this sketch's own axes point in model space: the origin, the model "
+    "direction of sketch +X and +Y, the plane normal, and a 'maps' sentence stating "
+    "it in words. Without this, which way a sketch coordinate runs in the model has "
+    "to be guessed and then confirmed from a finished body's bounding box."
+)
+
+
 class SketchStartResult(MutationResult):
     sketch_name: str
     plane: str
+    frame: dict[str, Any] | None = Field(default=None, description=FRAME_DESCRIPTION)
 
 
 class SketchExitArgs(BaseArgs):
@@ -495,6 +505,7 @@ class SketchCreateResult(MutationResult):
     created_total: int = 0
     created_compacted: bool = False
     exited: bool = False
+    frame: dict[str, Any] | None = Field(default=None, description=FRAME_DESCRIPTION)
     contours: dict[str, Any] = Field(
         default_factory=dict,
         description=(
@@ -502,6 +513,71 @@ class SketchCreateResult(MutationResult):
             "before a revolve or extrude is attempted rather than after one is refused."
         ),
     )
+
+
+class SketchDeriveArgs(BaseArgs, DetailMixin):
+    source_sketch: str = Field(
+        description="The sketch to copy geometry from. It is read, never modified."
+    )
+    on: SketchPlaneTarget = Field(description="Where the derived sketch goes.")
+    scale: float = Field(
+        default=1.0,
+        gt=0,
+        description=(
+            "Uniform scale about 'about'. Only uniform: a non-uniform scale turns a "
+            "circle into an ellipse and an arc into a curve with no arc_center spec, "
+            "so the derived sketch could not be expressed at all."
+        ),
+    )
+    rotate: Angle = Field(default=0, description="Rotation about 'about'.")
+    translate: list[Length] = Field(
+        default_factory=lambda: [0.0, 0.0],
+        min_length=2,
+        max_length=2,
+        description="Applied last, after mirror, scale and rotation.",
+    )
+    mirror: Literal["x", "y"] | None = Field(
+        default=None,
+        description=(
+            "Mirror across the named sketch axis through 'about'. This reverses every "
+            "arc's direction, which is done for you: leaving it alone would rebuild "
+            "each arc as its own complement, with identical endpoints and no complaint."
+        ),
+    )
+    about: list[Length] = Field(
+        default_factory=lambda: [0.0, 0.0],
+        min_length=2,
+        max_length=2,
+        description="The fixed point for scale, rotation and mirror. Sketch origin by default.",
+    )
+    include_construction: bool = Field(
+        default=True, description="Carry construction geometry across as construction."
+    )
+    exit_sketch: bool = Field(default=True, description="Close the sketch when the geometry is in.")
+    rebuild: bool = Field(default=True, description="Rebuild the model on exiting.")
+
+
+class SketchDeriveResult(MutationResult):
+    sketch_name: str
+    source_sketch: str
+    plane: str | None = None
+    created: list[dict[str, Any]] = Field(default_factory=list)
+    created_total: int = 0
+    created_compacted: bool = False
+    failed: list[dict[str, Any]] = Field(default_factory=list)
+    skipped: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description=(
+            "Source segments that have no lossless primitive spec - an ellipse, a "
+            "parabola, sketch text. Named rather than dropped, because a derived "
+            "sketch quietly missing a segment is a profile that will not close."
+        ),
+    )
+    sketch_state: SketchState
+    max_deviation_mm: float | None = None
+    exited: bool = False
+    frame: dict[str, Any] | None = Field(default=None, description=FRAME_DESCRIPTION)
+    contours: dict[str, Any] = Field(default_factory=dict)
 
 
 class SketchSetConstructionArgs(BaseArgs):
@@ -616,6 +692,7 @@ class SketchDiagnoseResult(ReadResult):
     sketch_name: str
     sketch_state: SketchState
     segment_count: int
+    frame: dict[str, Any] | None = Field(default=None, description=FRAME_DESCRIPTION)
     contours: dict[str, Any] = Field(
         default_factory=dict,
         description=(

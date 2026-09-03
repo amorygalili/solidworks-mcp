@@ -15,7 +15,6 @@ size, which catches a truncated write that every other check would pass.
 
 from __future__ import annotations
 
-import contextlib
 import hashlib
 import struct
 from datetime import UTC, datetime
@@ -26,6 +25,7 @@ from swmcp.catalog.registry import op
 from swmcp.catalog.spec import NonModelSideEffect
 from swmcp.com import swconst
 from swmcp.com.marshal import null_dispatch, out_long, try_com_member
+from swmcp.com.preferences import Preferences
 from swmcp.context import OpContext
 from swmcp.decode.status import decode_save
 from swmcp.envelope import ArtifactEvidence
@@ -140,47 +140,8 @@ def _verify(fmt: str, path: Path) -> tuple[bool, str]:
 # --- preferences --------------------------------------------------------------
 
 
-class _Preferences:
-    """Apply export preferences, then put the user's own settings back.
-
-    These are application-wide settings that belong to whoever is using SOLIDWORKS.
-    Changing them permanently as a side effect of one export would be rude, and would
-    also make the next export's behaviour depend on the previous one.
-    """
-
-    def __init__(self, app: Any) -> None:
-        self.app = app
-        self.integers: dict[int, int] = {}
-        self.toggles: dict[int, bool] = {}
-        self.applied: dict[str, Any] = {}
-
-    def set_integer(self, name: str, value: int, *, label: str, shown: Any) -> None:
-        code = swconst.value("swUserPreferenceIntegerValue_e", name)
-        previous = try_com_member(self.app, "GetUserPreferenceIntegerValue", code, default=None)
-        if isinstance(previous, int):
-            self.integers.setdefault(code, previous)
-        try_com_member(self.app, "SetUserPreferenceIntegerValue", code, value, default=None)
-        self.applied[label] = shown
-
-    def set_toggle(self, name: str, value: bool, *, label: str, shown: Any) -> None:
-        code = swconst.value("swUserPreferenceToggle_e", name)
-        previous = try_com_member(self.app, "GetUserPreferenceToggle", code, default=None)
-        if previous is not None:
-            self.toggles.setdefault(code, bool(previous))
-        try_com_member(self.app, "SetUserPreferenceToggle", code, value, default=None)
-        self.applied[label] = shown
-
-    def restore(self) -> None:
-        for code, previous in self.integers.items():
-            with contextlib.suppress(Exception):
-                self.app.SetUserPreferenceIntegerValue(code, previous)
-        for code, previous in self.toggles.items():
-            with contextlib.suppress(Exception):
-                self.app.SetUserPreferenceToggle(code, previous)
-
-
-def _apply_settings(app: Any, args: ExportArgs, fmt: str) -> _Preferences:
-    preferences = _Preferences(app)
+def _apply_settings(app: Any, args: ExportArgs, fmt: str) -> Preferences:
+    preferences = Preferences(app)
     if fmt in _MESH_FORMATS:
         preferences.set_integer(
             "swSTLQuality",
@@ -401,7 +362,7 @@ _KNIT_OPTIONS = {
 }
 
 
-def _apply_import_settings(app: Any, args: ImportArgs, fmt: str) -> _Preferences:
+def _apply_import_settings(app: Any, args: ImportArgs, fmt: str) -> Preferences:
     """Import options are user preferences, exactly as the export ones are.
 
     ``ISldWorks::GetImportFileData`` looks like the argument-shaped alternative, but on
@@ -410,7 +371,7 @@ def _apply_import_settings(app: Any, args: ImportArgs, fmt: str) -> _Preferences
     into ``LoadFile4`` changed nothing that could be measured. So the preference route is
     the one that works, and the caller's own settings are put back afterwards.
     """
-    preferences = _Preferences(app)
+    preferences = Preferences(app)
     if fmt in MESH_IMPORT_FORMATS:
         preferences.set_integer(
             "swImportStlVrmlModelType",

@@ -222,8 +222,12 @@ def doc_new(ctx: OpContext, args: DocNewArgs) -> DocNewResult:
                     context={"template_dirs": list(ctx.session.install().template_dirs)},
                     remediation=[
                         "Pass template_path explicitly.",
-                        "Or set the default template in SOLIDWORKS "
-                        "(Tools > Options > File Locations).",
+                        # Not File Locations, which is the directory list: populating
+                        # that does not set this preference. The page that does names
+                        # three specific files, which is why this can be empty on an
+                        # install whose template directory is perfectly well configured.
+                        "Or set it in Tools > Options > System Options > "
+                        "Default Templates.",
                     ],
                 )
             )

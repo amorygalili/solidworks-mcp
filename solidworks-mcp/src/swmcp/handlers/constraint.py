@@ -42,6 +42,7 @@ from swmcp.sketching import (
     segment_topology,
     segments_by_id,
     select_segments,
+    sketch_frame,
     sketch_segments,
     sketch_state,
     under_defined_count,
@@ -464,6 +465,7 @@ def sketch_diagnose(ctx: OpContext, args: SketchDiagnoseArgs) -> SketchDiagnoseR
         sketch_name=name,
         sketch_state=state,
         segment_count=len(sketch_segments(sketch)),
+        frame=sketch_frame(sketch),
         contours=contours,
         warnings=warnings,
     )

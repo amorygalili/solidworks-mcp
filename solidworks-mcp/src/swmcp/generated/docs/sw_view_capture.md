@@ -142,6 +142,12 @@ Save a PNG or BMP of the model at a requested size, after clearing the selection
       "title": "Overwrite",
       "type": "string"
     },
+    "show_reference_geometry": {
+      "default": false,
+      "description": "Include datum planes, axes, origins, coordinate systems, reference points and curves in the image. Off by default, because a preview is evidence of the model and the scaffolding it was built on obscures that: a gear preview came back with 'swmcp_axis_z' and 'InnerConePlane' drawn across it. Unconsumed sketches are left alone either way - those are content. The settings are application-wide and are restored after the capture.",
+      "title": "Show Reference Geometry",
+      "type": "boolean"
+    },
     "width": {
       "default": 1280,
       "description": "Image width in pixels. Rendered at this size rather than scaled to it, so asking for more gets more detail, not a bigger blur.",

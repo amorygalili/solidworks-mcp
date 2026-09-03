@@ -1,10 +1,10 @@
-# sw_sketch_start
+# sw_sketch_derive
 
-Open a new sketch on a standard plane, a named plane, or a planar face. Standard planes resolve by tree position, so a non-English SOLIDWORKS works.
+Copy an existing sketch onto another plane, optionally scaled, rotated, mirrored or moved, without re-transmitting its geometry.
 
 | | |
 |---|---|
-| Tier | `core` |
+| Tier | `extended` |
 | Domains | `sketch` |
 | Document precondition | `part_or_assembly` |
 | Safety | `model_mutation` |
@@ -13,8 +13,8 @@ Open a new sketch on a standard plane, a named plane, or a planar face. Standard
 | Confirmation required | False |
 | Auto-checkpointed | True |
 | Idempotent | False |
-| Timeout | 180s |
-| Satisfies | `SK-001` |
+| Timeout | 300s |
+| Satisfies | `SK-001`, `SK-003`, `SK-004` |
 
 ## Input schema
 
@@ -498,18 +498,175 @@ Open a new sketch on a standard plane, a named plane, or a planar face. Standard
   },
   "additionalProperties": false,
   "properties": {
+    "about": {
+      "description": "The fixed point for scale, rotation and mirror. Sketch origin by default.",
+      "items": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+            "type": "string"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "value"
+            ],
+            "type": "object"
+          }
+        ],
+        "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+      },
+      "maxItems": 2,
+      "minItems": 2,
+      "title": "About",
+      "type": "array"
+    },
+    "detail": {
+      "default": "auto",
+      "description": "How much to say about each created segment. 'full' describes every one; 'compact' returns only the handle, type and index; 'auto' (the default) is full up to 60 segments and compact beyond that. Handles are always returned, so relations, dimensions and deletes can still address the geometry. Entities that landed off their requested coordinates keep full detail in every mode.",
+      "enum": [
+        "auto",
+        "full",
+        "compact"
+      ],
+      "title": "Detail",
+      "type": "string"
+    },
     "document": {
       "$ref": "#/$defs/DocTarget",
       "description": "Which document to act on. Defaults to the active document."
     },
+    "exit_sketch": {
+      "default": true,
+      "description": "Close the sketch when the geometry is in.",
+      "title": "Exit Sketch",
+      "type": "boolean"
+    },
+    "include_construction": {
+      "default": true,
+      "description": "Carry construction geometry across as construction.",
+      "title": "Include Construction",
+      "type": "boolean"
+    },
+    "mirror": {
+      "anyOf": [
+        {
+          "enum": [
+            "x",
+            "y"
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Mirror across the named sketch axis through 'about'. This reverses every arc's direction, which is done for you: leaving it alone would rebuild each arc as its own complement, with identical endpoints and no complaint.",
+      "title": "Mirror"
+    },
     "on": {
-      "$ref": "#/$defs/SketchPlaneTarget"
+      "$ref": "#/$defs/SketchPlaneTarget",
+      "description": "Where the derived sketch goes."
+    },
+    "rebuild": {
+      "default": true,
+      "description": "Rebuild the model on exiting.",
+      "title": "Rebuild",
+      "type": "boolean"
+    },
+    "rotate": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "unit": {
+              "type": "string"
+            },
+            "value": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "value"
+          ],
+          "type": "object"
+        }
+      ],
+      "default": 0,
+      "description": "Rotation about 'about'.",
+      "title": "Rotate"
+    },
+    "scale": {
+      "default": 1.0,
+      "description": "Uniform scale about 'about'. Only uniform: a non-uniform scale turns a circle into an ellipse and an arc into a curve with no arc_center spec, so the derived sketch could not be expressed at all.",
+      "exclusiveMinimum": 0,
+      "title": "Scale",
+      "type": "number"
+    },
+    "source_sketch": {
+      "description": "The sketch to copy geometry from. It is read, never modified.",
+      "title": "Source Sketch",
+      "type": "string"
+    },
+    "translate": {
+      "description": "Applied last, after mirror, scale and rotation.",
+      "items": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "pattern": "^\\s*[+-]?(\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\s*\\S*\\s*$",
+            "type": "string"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "unit": {
+                "type": "string"
+              },
+              "value": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "value"
+            ],
+            "type": "object"
+          }
+        ],
+        "description": "Length. A bare number is millimetres; or use '50mm' / '2in' / {'value': 2, 'unit': 'inch'}. Supported units: mm, cm, m, in, ft."
+      },
+      "maxItems": 2,
+      "minItems": 2,
+      "title": "Translate",
+      "type": "array"
     }
   },
   "required": [
+    "source_sketch",
     "on"
   ],
-  "title": "SketchStartArgs",
+  "title": "SketchDeriveArgs",
   "type": "object"
 }
 ```
@@ -634,6 +791,58 @@ Open a new sketch on a standard plane, a named plane, or a planar face. Standard
       "title": "CheckpointRecord",
       "type": "object"
     },
+    "SketchState": {
+      "additionalProperties": false,
+      "description": "CON-005, carried on every relation and dimension result so it cannot be skipped.",
+      "properties": {
+        "dangling_relations": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Dangling Relations",
+          "type": "array"
+        },
+        "fully_defined": {
+          "title": "Fully Defined",
+          "type": "boolean"
+        },
+        "over_defined": {
+          "title": "Over Defined",
+          "type": "boolean"
+        },
+        "over_defining_relations": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Over Defining Relations",
+          "type": "array"
+        },
+        "relation_count": {
+          "title": "Relation Count",
+          "type": "integer"
+        },
+        "status": {
+          "description": "fully_defined, under_defined, over_defined, or no_solution.",
+          "title": "Status",
+          "type": "string"
+        },
+        "status_code": {
+          "title": "Status Code",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "status",
+        "status_code",
+        "fully_defined",
+        "over_defined",
+        "relation_count"
+      ],
+      "title": "SketchState",
+      "type": "object"
+    },
     "Verification": {
       "additionalProperties": false,
       "description": "Evidence that a mutation actually happened, read back out of the model.",
@@ -685,6 +894,42 @@ Open a new sketch on a standard plane, a named plane, or a planar face. Standard
       "default": null,
       "description": "Populated by the dispatch pipeline, not by handlers."
     },
+    "contours": {
+      "additionalProperties": true,
+      "title": "Contours",
+      "type": "object"
+    },
+    "created": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Created",
+      "type": "array"
+    },
+    "created_compacted": {
+      "default": false,
+      "title": "Created Compacted",
+      "type": "boolean"
+    },
+    "created_total": {
+      "default": 0,
+      "title": "Created Total",
+      "type": "integer"
+    },
+    "exited": {
+      "default": false,
+      "title": "Exited",
+      "type": "boolean"
+    },
+    "failed": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Failed",
+      "type": "array"
+    },
     "frame": {
       "anyOf": [
         {
@@ -699,9 +944,29 @@ Open a new sketch on a standard plane, a named plane, or a planar face. Standard
       "description": "Where this sketch's own axes point in model space: the origin, the model direction of sketch +X and +Y, the plane normal, and a 'maps' sentence stating it in words. Without this, which way a sketch coordinate runs in the model has to be guessed and then confirmed from a finished body's bounding box.",
       "title": "Frame"
     },
+    "max_deviation_mm": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Max Deviation Mm"
+    },
     "plane": {
-      "title": "Plane",
-      "type": "string"
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Plane"
     },
     "rebuild_errors": {
       "items": {
@@ -712,6 +977,22 @@ Open a new sketch on a standard plane, a named plane, or a planar face. Standard
     },
     "sketch_name": {
       "title": "Sketch Name",
+      "type": "string"
+    },
+    "sketch_state": {
+      "$ref": "#/$defs/SketchState"
+    },
+    "skipped": {
+      "description": "Source segments that have no lossless primitive spec - an ellipse, a parabola, sketch text. Named rather than dropped, because a derived sketch quietly missing a segment is a profile that will not close.",
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Skipped",
+      "type": "array"
+    },
+    "source_sketch": {
+      "title": "Source Sketch",
       "type": "string"
     },
     "verification": {
@@ -729,9 +1010,10 @@ Open a new sketch on a standard plane, a named plane, or a planar face. Standard
   "required": [
     "verification",
     "sketch_name",
-    "plane"
+    "source_sketch",
+    "sketch_state"
   ],
-  "title": "SketchStartResult",
+  "title": "SketchDeriveResult",
   "type": "object"
 }
 ```

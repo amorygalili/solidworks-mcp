@@ -436,6 +436,242 @@ def segment_polyline(segment: Any, endpoints: list[Point]) -> list[Point]:
     return spline or list(endpoints)
 
 
+def _mm_point(point: Point) -> list[float]:
+    return [round(from_meters(point[0], "mm"), 9), round(from_meters(point[1], "mm"), 9)]
+
+
+def arc_direction(centre: Point, start: Point, end: Point, sweep: float | None) -> str:
+    """Which way an arc turns, decided by the sweep it actually reports.
+
+    The endpoints alone cannot answer this - that is the whole lesson of the 272
+    degree fillet - so the measured sweep picks between the two candidates, and the
+    minor arc is assumed only when there is no sweep to go on.
+    """
+    a0 = math.atan2(start[1] - centre[1], start[0] - centre[0])
+    a1 = math.atan2(end[1] - centre[1], end[0] - centre[0])
+    ccw = (a1 - a0) % (2.0 * math.pi)
+    if sweep is None:
+        return "counterclockwise" if ccw <= math.pi else "clockwise"
+    nearer_ccw = abs(ccw - sweep) <= abs((2.0 * math.pi - ccw) - sweep)
+    return "counterclockwise" if nearer_ccw else "clockwise"
+
+
+def _arc_entity(
+    segment: Any, ends: list[Point], *, construction: bool
+) -> dict[str, Any] | None:
+    """A circle or a centre-point arc, whichever this ``ISketchArc`` turns out to be.
+
+    Split out from :func:`segment_to_entity` because the two shapes share a read but
+    not a spec: a full circle has no endpoints to name, and an arc has no meaning
+    without the direction its measured sweep implies.
+    """
+    frame = arc_frame(segment)
+    if frame is None:
+        return None
+    centre, radius = frame
+    if not ends:  # closed: a full circle rather than an arc
+        return {
+            "type": "circle",
+            "center": _mm_point(centre),
+            "radius": round(from_meters(radius, "mm"), 9),
+            "construction": construction,
+        }
+    return {
+        "type": "arc_center",
+        "center": _mm_point(centre),
+        "start": _mm_point(ends[0]),
+        "end": _mm_point(ends[1]),
+        "direction": arc_direction(centre, ends[0], ends[1], arc_sweep(segment, frame)),
+        "construction": construction,
+    }
+
+
+def segment_to_entity(segment: Any) -> dict[str, Any] | None:
+    """Rebuild the entity spec that would draw this segment again, in millimetres.
+
+    The inverse of the sketch handlers' ``_create_entity``, and deliberately partial:
+    ``None`` means "this segment cannot be restated as a primitive", which the caller
+    reports rather than silently dropping. Ellipses, parabolas and sketch text have no
+    lossless spec here and are refused by name.
+
+    Only four shapes ever come out - line, arc, circle, spline - because that is all a
+    *segment* can be. A rectangle, polygon or slot has already been decomposed into
+    lines and arcs by the time SOLIDWORKS stores it, which is what makes the result
+    closed under an arbitrary rotation: there is no axis-aligned spec left to break.
+    """
+    kind = segment_kind(segment)
+    construction = bool(try_com_member(segment, "ConstructionGeometry", default=False))
+    ends, read = read_endpoints(segment)
+
+    if kind == "line":
+        if not read or len(ends) != 2:
+            return None
+        return {
+            "type": "line",
+            "start": _mm_point(ends[0]),
+            "end": _mm_point(ends[1]),
+            "construction": construction,
+        }
+
+    if kind == "arc":
+        return _arc_entity(segment, ends, construction=construction)
+
+    if kind == "spline":
+        points = _spline_polyline(segment)
+        if len(points) < 2:
+            return None
+        return {
+            "type": "spline",
+            "points": [_mm_point(point) for point in points],
+            "construction": construction,
+        }
+
+    return None
+
+
+class SketchTransform:
+    """A similarity transform applied to a derived sketch's geometry, in millimetres.
+
+    Applied about ``about`` in a fixed order - mirror, scale, rotate, then translate -
+    so a caller reading the arguments back knows what they asked for. Only similarity
+    transforms are offered (no shear, no non-uniform scale) because anything else turns
+    a circle into an ellipse and an arc into something with no ``arc_center`` spec at
+    all, which would make the derived sketch unrepresentable rather than merely wrong.
+    """
+
+    __slots__ = ("about", "mirror", "rotate_deg", "scale", "translate")
+
+    def __init__(
+        self,
+        *,
+        scale: float = 1.0,
+        rotate_deg: float = 0.0,
+        mirror: str | None = None,
+        translate: tuple[float, float] = (0.0, 0.0),
+        about: tuple[float, float] = (0.0, 0.0),
+    ) -> None:
+        self.scale = float(scale)
+        self.rotate_deg = float(rotate_deg)
+        self.mirror = mirror
+        self.translate = (float(translate[0]), float(translate[1]))
+        self.about = (float(about[0]), float(about[1]))
+
+    @property
+    def flips(self) -> bool:
+        """Whether the mapping reverses handedness, which reverses every arc."""
+        return self.mirror in ("x", "y")
+
+    def point(self, point: tuple[float, float] | list[float]) -> list[float]:
+        x = float(point[0]) - self.about[0]
+        y = float(point[1]) - self.about[1]
+        if self.mirror == "x":  # mirror across the x axis: y changes sign
+            y = -y
+        elif self.mirror == "y":
+            x = -x
+        x *= self.scale
+        y *= self.scale
+        if self.rotate_deg:
+            angle = math.radians(self.rotate_deg)
+            cos, sin = math.cos(angle), math.sin(angle)
+            x, y = x * cos - y * sin, x * sin + y * cos
+        return [
+            round(x + self.about[0] + self.translate[0], 9),
+            round(y + self.about[1] + self.translate[1], 9),
+        ]
+
+    def entity(self, entity: dict[str, Any]) -> dict[str, Any]:
+        """Transform one spec from :func:`segment_to_entity`."""
+        out = dict(entity)
+        for key in ("start", "end", "center"):
+            if key in out:
+                out[key] = self.point(out[key])
+        if "points" in out:
+            out["points"] = [self.point(point) for point in out["points"]]
+        if "radius" in out:
+            out["radius"] = round(float(out["radius"]) * abs(self.scale), 9)
+        # A mirror swaps which way round an arc goes. Leaving the direction alone here
+        # would rebuild the complement - the exact 272-degree fault this module exists
+        # to catch, reintroduced by the transform itself.
+        if self.flips and "direction" in out:
+            out["direction"] = (
+                "clockwise" if out["direction"] == "counterclockwise" else "counterclockwise"
+            )
+        return out
+
+
+#: Model directions worth naming, so a frame reads as words rather than as a matrix.
+_AXIS_NAMES = {
+    (1, 0, 0): "+X", (-1, 0, 0): "-X",
+    (0, 1, 0): "+Y", (0, -1, 0): "-Y",
+    (0, 0, 1): "+Z", (0, 0, -1): "-Z",
+}
+#: How close a direction must be to an axis before it is named as that axis.
+_AXIS_TOLERANCE = 1e-9
+
+
+def _name_direction(vector: list[float]) -> str:
+    for axis, name in _AXIS_NAMES.items():
+        if all(abs(vector[i] - axis[i]) <= _AXIS_TOLERANCE for i in range(3)):
+            return name
+    return "[{}]".format(", ".join(format(v, ".6g") for v in vector))
+
+
+def sketch_frame(sketch: Any) -> dict[str, Any] | None:
+    """Where this sketch's own axes point in model space.
+
+    ``ISketch::ModelToSketchTransform`` is named for the direction it does *not*
+    conveniently give you, and its ``ArrayData`` is sixteen bare doubles with no
+    documented layout, so this is measured rather than assumed. On 2026 (34.3.0):
+
+        model = R . (sketch - t)
+
+    with ``R`` the row-major 3x3 in slots 0-8, ``t`` the translation in 9-11, and the
+    scale in 12. Verified on a case that could have falsified it - a plane offset 30mm
+    from Top, where ``R`` is not identity and ``t`` is not zero at the same time. The
+    four mapped corners of a known rectangle landed exactly on the extruded body's
+    measured box.
+
+    Why report it at all: a line drawn ``(0,0)->(0,-20)`` on Top runs along model
+    **+Z**, and nothing in the sketch result used to say so. That had to be guessed and
+    then confirmed after the fact from a swept body's bounding box, once per sketch
+    plane, on work that was otherwise fully determined.
+    """
+    transform = try_com_member(sketch, "ModelToSketchTransform", default=None)
+    raw = normalize_sequence(try_com_member(transform, "ArrayData", default=None))
+    if len(raw) < 13:
+        return None
+    try:
+        values = [float(value) for value in raw]
+    except (TypeError, ValueError):
+        return None
+
+    rows = [values[0:3], values[3:6], values[6:9]]
+    shift = values[9:12]
+
+    def apply(point: tuple[float, float, float]) -> list[float]:
+        moved = [point[i] - shift[i] for i in range(3)]
+        return [sum(rows[r][c] * moved[c] for c in range(3)) for r in range(3)]
+
+    origin = apply((0.0, 0.0, 0.0))
+    # A direction is the image of a unit vector with the translation cancelled out,
+    # which is exactly the corresponding column of R.
+    axes = {
+        "x_axis": [rows[r][0] for r in range(3)],
+        "y_axis": [rows[r][1] for r in range(3)],
+        "normal": [rows[r][2] for r in range(3)],
+    }
+    return {
+        "origin_mm": [round(from_meters(value, "mm"), 9) for value in origin],
+        **{name: [round(value, 12) for value in vector] for name, vector in axes.items()},
+        "scale": round(values[12], 12),
+        "maps": ", ".join(
+            f"sketch {label} -> model {_name_direction(axes[key])}"
+            for label, key in (("+X", "x_axis"), ("+Y", "y_axis"))
+        )
+        + f", normal -> model {_name_direction(axes['normal'])}",
+    }
+
+
 def segment_topology(sketch: Any) -> list[dict[str, Any]]:
     """Plain data for every segment: id, kind, construction flag, and endpoints.
 

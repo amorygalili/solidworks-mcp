@@ -2561,18 +2561,77 @@ def body_list(ctx: OpContext, args: BodyListArgs) -> BodyListResult:
     return BodyListResult(count=len(summaries), bodies=summaries)
 
 
-def _aggregate_bodies(chosen: list[Any], density: float) -> dict[str, Any]:
+#: The six axis directions a tight box needs, paired with the slot of the returned
+#: point that is extreme in that direction and whether it is a maximum.
+_EXTREME_DIRECTIONS = (
+    ((1.0, 0.0, 0.0), 0, True), ((-1.0, 0.0, 0.0), 0, False),
+    ((0.0, 1.0, 0.0), 1, True), ((0.0, -1.0, 0.0), 1, False),
+    ((0.0, 0.0, 1.0), 2, True), ((0.0, 0.0, -1.0), 2, False),
+)
+
+
+def tight_body_box(body: Any) -> list[float] | None:
+    """A bounding box measured on the body itself, in metres, or ``None``.
+
+    ``IBody2::GetBodyBox`` is cheap and, on anything spline-shaped, *loose*: it bounds
+    the underlying surface definition rather than the trimmed material. Measured on
+    2026 (34.3.0), a spline body whose true height is exactly 10.000mm reported
+    10.843mm - 0.84mm of material that is not there. The same call is exact on
+    analytic geometry: a cylinder and a box both agreed to the micron.
+
+    ``IBody2::GetExtremePoint`` answers the real question, one direction at a time, and
+    six calls give the axis-aligned box. It returns four values through pywin32 - the
+    method's own success flag followed by the point - so the coordinates are slots 1-3.
+
+    ``IModelDocExtension::GetBoundingBox`` would be the obvious alternative and is
+    simply not available on this build: it returned ``None`` for every option value.
+    """
+    low: list[float] = []
+    high: list[float] = []
+    for direction, axis, is_max in _EXTREME_DIRECTIONS:
+        raw = normalize_sequence(try_com_member(body, "GetExtremePoint", *direction))
+        if len(raw) != 4:
+            return None
+        try:
+            value = float(raw[1 + axis])
+        except (TypeError, ValueError):
+            return None
+        (high if is_max else low).append(value)
+    if len(low) != 3 or len(high) != 3:
+        return None
+    return [*low, *high]
+
+
+def _aggregate_bodies(
+    chosen: list[Any], density: float, *, tight: bool = False
+) -> dict[str, Any]:
     """Sum volume, area, mass, bounding box, and topology over the chosen bodies.
 
     Only solid bodies carry a volume and a mass. A sheet body contributes its area and
     nothing else, and is counted separately so the caller can be told that a volume of
     zero means "these are surfaces", not "the measurement failed".
+
+    ``tight`` swaps the box for one measured with :func:`tight_body_box`. It is opt-in
+    because it costs six extra COM calls per body against one, and ``sw_measure`` is
+    already among the slower reads.
     """
     total_volume = total_area = total_mass = 0.0
     weighted_center = [0.0, 0.0, 0.0]
     box: list[float] | None = None
+    fast_box: list[float] | None = None
+    unmeasured = 0
     faces = edges = 0
     volumeless = 0
+
+    def union(current: list[float] | None, values: list[float] | None) -> list[float] | None:
+        if values is None:
+            return current
+        if current is None:
+            return list(values)
+        return [
+            *[min(a, b) for a, b in zip(current[0:3], values[0:3], strict=True)],
+            *[max(a, b) for a, b in zip(current[3:6], values[3:6], strict=True)],
+        ]
 
     for body in chosen:
         properties = body_mass_properties(body, density)
@@ -2587,15 +2646,20 @@ def _aggregate_bodies(chosen: list[Any], density: float) -> dict[str, Any]:
             weighted_center[index] += center[index] * (mass or volume or 1.0)
 
         raw_box = normalize_sequence(try_com_member(body, "GetBodyBox", default=None))
-        if len(raw_box) == 6:
-            values = [float(v) for v in raw_box]
-            if box is None:
-                box = values
+        fast_values = [float(v) for v in raw_box] if len(raw_box) == 6 else None
+        fast_box = union(fast_box, fast_values)
+
+        values = fast_values
+        if tight:
+            measured = tight_body_box(body)
+            if measured is None:
+                # Fall back to the loose box rather than dropping the body out of the
+                # union entirely - a box missing a body is worse than a box that is
+                # slightly large, and the count says which happened.
+                unmeasured += 1
             else:
-                box = [
-                    *[min(a, b) for a, b in zip(box[0:3], values[0:3], strict=True)],
-                    *[max(a, b) for a, b in zip(box[3:6], values[3:6], strict=True)],
-                ]
+                values = measured
+        box = union(box, values)
         faces += len(normalize_sequence(get_com_member(body, "GetFaces", default=None)))
         edges += len(normalize_sequence(get_com_member(body, "GetEdges", default=None)))
 
@@ -2607,8 +2671,32 @@ def _aggregate_bodies(chosen: list[Any], density: float) -> dict[str, Any]:
         "volumeless_body_count": volumeless,
         "center_of_mass_m": [value / divisor for value in weighted_center],
         "box": box,
+        "fast_box": fast_box,
+        "box_method": "extreme_point" if tight and not unmeasured else "body_box",
+        "box_unmeasured_bodies": unmeasured,
         "face_count": faces,
         "edge_count": edges,
+    }
+
+
+def _overshoot(totals: dict[str, Any], unit: str) -> dict[str, Any]:
+    """How much the cheap box overstated, once there is a tight one to compare it to.
+
+    Reported as evidence rather than as a claim: it is the difference between two
+    readings taken on the same bodies in the same call, which is the only way a caller
+    can see that the default reading would have been wrong for them.
+    """
+    box, fast = totals.get("box"), totals.get("fast_box")
+    if totals.get("box_method") != "extreme_point" or not box or not fast:
+        return {}
+    return {
+        f"fast_box_overstated_{unit}": [
+            round(
+                from_meters((fast[i + 3] - fast[i]) - (box[i + 3] - box[i]), unit),
+                9,
+            )
+            for i in range(3)
+        ]
     }
 
 
@@ -2716,7 +2804,7 @@ def measure(ctx: OpContext, args: MeasureArgs) -> MeasureResult:
     density = whole_document.get("density_kg_m3") or 1.0
     measuring_everything = len(chosen) == len(bodies(doc))
 
-    totals = _aggregate_bodies(chosen, density)
+    totals = _aggregate_bodies(chosen, density, tight=args.bounding_box == "tight")
     total_volume = totals["volume_m3"]
     total_area = totals["surface_area_m2"]
     total_mass = totals["mass_kg"]
@@ -2734,6 +2822,12 @@ def measure(ctx: OpContext, args: MeasureArgs) -> MeasureResult:
             f"{totals['volumeless_body_count']} of {len(chosen)} bodies enclose no "
             "volume - a sheet body has an area and a perimeter but no volume or mass, "
             "so neither is included in the totals."
+        )
+    if totals["box_unmeasured_bodies"]:
+        warnings.append(
+            f"{totals['box_unmeasured_bodies']} of {len(chosen)} bodies would not "
+            "report an extreme point, so the bounding box falls back to the "
+            "approximate GetBodyBox reading for those and is reported as approximate."
         )
     if measuring_everything and whole_document:
         total_mass = whole_document["mass_kg"]
@@ -2757,6 +2851,12 @@ def measure(ctx: OpContext, args: MeasureArgs) -> MeasureResult:
             f"size_{unit}": [from_meters(box[i + 3] - box[i], unit) for i in range(3)]
             if box
             else None,
+            # Never leave the caller to guess which reading they got: the two differ by
+            # nearly a millimetre on spline geometry, which is enough to mislead a
+            # clearance check either way.
+            "method": totals["box_method"],
+            "approximate": totals["box_method"] != "extreme_point",
+            **_overshoot(totals, unit),
         },
         topology={
             "body_count": len(chosen),

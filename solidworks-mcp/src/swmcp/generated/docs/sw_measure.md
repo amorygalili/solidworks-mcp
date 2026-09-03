@@ -496,6 +496,16 @@ Measure the model, a body, a feature, or a single face: bounding box, volume, su
   },
   "additionalProperties": false,
   "properties": {
+    "bounding_box": {
+      "default": "fast",
+      "description": "'fast' is one GetBodyBox call per body. That bounds the underlying surface definition rather than the trimmed material, so it reads large on spline-shaped bodies - measured 0.84mm over on a body exactly 10mm tall, while being exact on analytic geometry. 'tight' measures the material itself with six GetExtremePoint calls per body: exact, at six times the COM calls. The result always names which was used, and 'tight' also reports how much the fast box overstated.",
+      "enum": [
+        "fast",
+        "tight"
+      ],
+      "title": "Bounding Box",
+      "type": "string"
+    },
     "document": {
       "$ref": "#/$defs/DocTarget",
       "description": "Which document to act on. Defaults to the active document."

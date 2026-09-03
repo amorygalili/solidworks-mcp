@@ -146,6 +146,20 @@ Report a sketch's solver state and its profile topology: fully or under defined,
       "title": "Contours",
       "type": "object"
     },
+    "frame": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Where this sketch's own axes point in model space: the origin, the model direction of sketch +X and +Y, the plane normal, and a 'maps' sentence stating it in words. Without this, which way a sketch coordinate runs in the model has to be guessed and then confirmed from a finished body's bounding box.",
+      "title": "Frame"
+    },
     "segment_count": {
       "title": "Segment Count",
       "type": "integer"

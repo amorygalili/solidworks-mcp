@@ -89,6 +89,17 @@ class ViewCaptureArgs(BaseArgs):
     clear_selection: bool = Field(
         default=True, description="Deselect first, so nothing is highlighted in the image."
     )
+    show_reference_geometry: bool = Field(
+        default=False,
+        description=(
+            "Include datum planes, axes, origins, coordinate systems, reference points "
+            "and curves in the image. Off by default, because a preview is evidence of "
+            "the model and the scaffolding it was built on obscures that: a gear "
+            "preview came back with 'swmcp_axis_z' and 'InnerConePlane' drawn across "
+            "it. Unconsumed sketches are left alone either way - those are content. "
+            "The settings are application-wide and are restored after the capture."
+        ),
+    )
 
 
 class ViewCaptureResult(SideEffectResult):

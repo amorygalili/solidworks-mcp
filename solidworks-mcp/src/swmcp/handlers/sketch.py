@@ -37,6 +37,8 @@ from swmcp.schemas.sketch import (
     SketchCreateResult,
     SketchDeleteArgs,
     SketchDeleteResult,
+    SketchDeriveArgs,
+    SketchDeriveResult,
     SketchEntity,
     SketchExitArgs,
     SketchExitResult,
@@ -53,6 +55,7 @@ from swmcp.schemas.sketch import (
     compact_created,
 )
 from swmcp.sketching import (
+    SketchTransform,
     active_sketch,
     analyze_contours,
     anchor_deviation,
@@ -61,9 +64,13 @@ from swmcp.sketching import (
     find_sketch,
     require_active_sketch,
     segment_endpoints,
+    segment_id,
+    segment_kind,
+    segment_to_entity,
     segment_topology,
     segments_by_id,
     select_segments,
+    sketch_frame,
     sketch_segments,
     sketch_state,
 )
@@ -519,6 +526,7 @@ def sketch_start(ctx: OpContext, args: SketchStartArgs) -> SketchStartResult:
     return SketchStartResult(
         sketch_name=name,
         plane=described,
+        frame=sketch_frame(sketch),
         verification=Verification(
             read_back=True,
             before={"sketch_count": len(before)},
@@ -873,6 +881,9 @@ def sketch_create(ctx: OpContext, args: SketchCreateArgs) -> SketchCreateResult:
         sketch_state=added.sketch_state,
         max_deviation_mm=added.max_deviation_mm,
         exited=exited,
+        # Taken from sketch_start rather than re-read: it is the same sketch, and the
+        # frame cannot change between opening it and closing it.
+        frame=started.frame,
         contours=contours,
         warnings=warnings,
         verification=Verification(
@@ -918,6 +929,132 @@ def sketch_create(ctx: OpContext, args: SketchCreateArgs) -> SketchCreateResult:
                 ),
             ],
         ),
+    )
+
+
+@op(
+    name="sw_sketch_derive",
+    tier="extended",
+    domains=("sketch",),
+    tags=("sketch", "derive", "copy", "transform", "loft"),
+    summary=(
+        "Copy an existing sketch onto another plane, optionally scaled, rotated, "
+        "mirrored or moved, without re-transmitting its geometry."
+    ),
+    safety=ModelMutation(destructive=False),
+    satisfies=("SK-001", "SK-003", "SK-004"),
+    precondition="part_or_assembly",
+    idempotent=False,
+    timeout_s=300.0,
+)
+def sketch_derive(ctx: OpContext, args: SketchDeriveArgs) -> SketchDeriveResult:
+    """Read a sketch back as a spec, transform it, and draw it somewhere else.
+
+    A loft between related sections is the case this exists for. A bevel gear's two
+    sections are one profile and the same profile scaled by 0.717, which is
+    geometrically a single input - but with no way to say that, both had to be computed
+    and transmitted in full: 160 entities twice, 101s and 114s.
+
+    The copy is **independent**, not a SOLIDWORKS derived sketch. A derived sketch is
+    linked to its parent and cannot be scaled, which is the opposite of what a loft
+    section wants; this reads the geometry and draws it afresh, so the two sketches
+    have no relationship afterwards.
+
+    Composed out of the existing handlers for the same reason ``sw_sketch_create`` is:
+    the geometry goes in through the path every other profile uses, so placement
+    deviation, contour analysis and the frame all come back without being restated
+    here. ``auto_relations`` is forced off - inferencing a derived profile onto
+    whatever is nearby would defeat the point of deriving it exactly.
+    """
+    doc = ctx.require_doc()
+    source = _resolve_sketch(ctx, doc, args.source_sketch)
+
+    transform = SketchTransform(
+        scale=args.scale,
+        rotate_deg=args.rotate,
+        mirror=args.mirror,
+        translate=tuple(from_meters(v, "mm") for v in args.translate),
+        about=tuple(from_meters(v, "mm") for v in args.about),
+    )
+
+    entities: list[Any] = []
+    skipped: list[dict[str, Any]] = []
+    for segment in sketch_segments(source):
+        spec = segment_to_entity(segment)
+        if spec is None:
+            skipped.append(
+                {
+                    "sketch_local_id": segment_id(segment),
+                    "type": segment_kind(segment),
+                    "reason": "no lossless primitive spec for this segment type",
+                }
+            )
+            continue
+        if spec["construction"] and not args.include_construction:
+            continue
+        entities.append(transform.entity(spec))
+
+    if not entities:
+        raise SwMcpError(
+            make_error(
+                "NOTHING_TO_DERIVE",
+                "validation",
+                f"{args.source_sketch!r} yielded no geometry that can be redrawn.",
+                context={
+                    "segment_count": len(sketch_segments(source)),
+                    "skipped": skipped[:10],
+                },
+                remediation=[
+                    "Ellipses, parabolas and sketch text have no primitive spec and "
+                    "cannot be derived; redraw those directly.",
+                    "With include_construction=false, a sketch of only centerlines "
+                    "derives to nothing.",
+                ],
+            )
+        )
+
+    # Back through the same discriminated union the inline route uses, so a spec this
+    # module builds cannot bypass a validation the caller's own entities would face.
+    validated = TypeAdapter(list[SketchEntity]).validate_python(entities)
+
+    made = sketch_create(
+        ctx,
+        SketchCreateArgs(
+            on=args.on,
+            entities=validated,
+            auto_relations=False,
+            exit_sketch=args.exit_sketch,
+            rebuild=args.rebuild,
+            detail=args.detail,
+        ),
+    )
+
+    return SketchDeriveResult(
+        sketch_name=made.sketch_name,
+        source_sketch=args.source_sketch,
+        plane=made.plane,
+        created=made.created,
+        created_total=made.created_total,
+        created_compacted=made.created_compacted,
+        failed=made.failed,
+        skipped=skipped,
+        sketch_state=made.sketch_state,
+        max_deviation_mm=made.max_deviation_mm,
+        exited=made.exited,
+        frame=made.frame,
+        contours=made.contours,
+        warnings=[
+            *made.warnings,
+            *(
+                [
+                    f"{len(skipped)} source segment(s) have no primitive spec and were "
+                    "not derived, so this profile is not a complete copy."
+                ]
+                if skipped
+                else []
+            ),
+        ],
+        verification=made.verification,
     )
 
 

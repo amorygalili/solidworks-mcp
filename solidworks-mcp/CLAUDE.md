@@ -242,6 +242,64 @@ Probing has already caught, in code that looked correct:
   `GetStartPoint2` has. Pinned by `tests/live/test_live_sketch_validity.py` and
   `tests/test_sketch_self_intersection.py`, both built from the profile that failed.
 
+- **`ISketch::ModelToSketchTransform` is named for the direction it does not give
+  you.** Its `ArrayData` is sixteen bare doubles with no documented layout. Measured:
+  slots 0-8 are a **row-major** 3x3, 9-11 a translation in metres, 12 the scale, 13-15
+  unused — and the mapping that reproduces reality is
+
+      model = R . (sketch - t)
+
+  so the array read this way is the *sketch to model* transform, despite the name. Both
+  halves had to be measured separately before they could be trusted together: the
+  standard planes give rotation with `t = 0`, a plane offset from Front gives
+  translation with `R = I`, and only a plane offset from **Top** exercises both at once.
+  That last case is what makes it a measurement rather than an assumed composition —
+  the four mapped corners of a known rectangle landed exactly on the extruded body's
+  box, `[0,30,0]->[10,35,20]`. Note the translation is stored **negated**: reading slot
+  11 as the answer puts an offset sketch on the wrong side of the model. The payoff is
+  that a line drawn `(0,0)->(0,-20)` on Top can be *reported* as running along model
+  `+Z` instead of guessed and then confirmed from a finished body. `sketch_frame` in
+  `sketching.py`; pinned in `tests/test_sketch_frame.py` against these arrays.
+
+- **`IBody2::GetBodyBox` bounds the surfaces, not the material.** On a spline body whose
+  apex was specified at exactly 10.000mm it reported **10.843455mm** — 0.84mm of
+  material that is not there — while `GetExtremePoint` reported 10.000mm. On analytic
+  geometry the two agree to the micron: a cylinder r=10 and a 10x5x20 box measured
+  identically both ways. So this cannot be corrected by a blanket fudge; it has to be
+  measured per body, which is why `bounding_box="tight"` is opt-in at six calls per body
+  against one. This is the fault that reported a helical gear as 47.48mm across a
+  46.57mm OD. Two traps: `GetExtremePoint` comes back as **four** values through
+  pywin32 — its own success flag, then the point, so the coordinates are slots 1-3 — and
+  `IModelDocExtension::GetBoundingBox`, the obvious alternative, is **not available on
+  this build** at all, returning `None` for every option value.
+
+- **pywin32's property-versus-method split goes both ways, on the same object.**
+  `GetBodyBox` must be called (`body.GetBodyBox()`); `GetSketchSegments`, `GetTitle`,
+  `GetPathName` and `GetDocumentCount` must **not** be. Guessing either way raises
+  `TypeError: 'tuple'/'method'/'int' object is not callable` — which reads like a bug in
+  your logic rather than a marshalling detail, and cost two probe rounds here. Never
+  hand-roll these in a probe: `try_com_member` already resolves both forms, and using it
+  is the difference between a probe that harvests everything in one run and one that
+  dies halfway with the session warm and the document open.
+
+- **A dead COM proxy answers some calls and refuses others.** After a SOLIDWORKS
+  restart, `sw_connect` returned happily with `revision 34.3.0` while every
+  `sw_doc_new` came back `COM_RPC_SERVER_UNAVAILABLE (0x800706BA)` — with SLDWORKS.exe
+  alive, `Responding=True`, idle CPU, and no dialog on screen. The process was fine; the
+  server's cached proxy was not. `sw_health --probe` had already said so quietly
+  (`"answered": false`). **The diagnostic is a fresh process**: a standalone script that
+  dispatches the ProgID and creates a document settles in seconds whether SOLIDWORKS or
+  the client is at fault, and it is the difference between asking the user for a restart
+  they do not need and restarting the server, which is what actually fixes it.
+
+- **`swDisplayDimension` is not a member of `swUserPreferenceToggle_e`.** It reads like
+  one and resolves to nothing. The display toggles that do exist, and that
+  `sw_view_capture` switches off: `swDisplayPlanes` (5), `swDisplayAxes` (4),
+  `swDisplayTemporaryAxes` (7), `swDisplayOrigins` (6), `swDisplayCoordSystems` (13),
+  `swDisplayReferencePoints` (19), `swDisplayCurves` (195), `swDisplayDatums` (39),
+  `swDisplaySketchPlanes` (664). `swDisplaySketches` (196) is deliberately left alone —
+  an unconsumed sketch is content someone may be capturing on purpose.
+
 If you call an interface that `src/swmcp/generated/swapi.json` does not cover, add it to
 `INTERFACES` in `scripts/gen_swapi.py` and re-run that script plus
 `scripts/fetch_api_docs.py`, so the new surface is arity-checked and documented like the
@@ -302,11 +360,18 @@ client it is very often just the client's own corpse holding a proxy.
 **Tools > Options > System Options > Default Templates**, which names three specific
 files. That is a different setting from **File Locations > Document Templates**, which
 is a directory list; setting the latter does not populate the former, and the error
-`TEMPLATE_NOT_FOUND ... (got '')` means the former is empty. Still unexplained: a
-long-lived server process read `''` from that preference while a freshly started process
-attached to the same SOLIDWORKS read it correctly and created the document, so a live
-module that must not depend on it can pass `template_path` explicitly —
-`tests/live/test_live_sketch_validity.py` falls back that way.
+`TEMPLATE_NOT_FOUND ... (got '')` means the former is empty. The error's own
+remediation used to name File Locations, which is the setting that does *not* fix it.
+
+**Correction to an earlier note here.** This section once said a long-lived server
+process saw `''` while a freshly started process attached to the same SOLIDWORKS read
+the preference correctly, and left process age as the suspected cause. Re-measured with
+a standalone script: a brand-new process reads `''` as well, and goes on to create a
+document perfectly well once handed a `template_path`. The preference is simply **not
+set on this machine**, and the earlier apparent success was not reproduced. There is no
+process-age effect to work around — a live module that must not depend on the
+preference passes `template_path` explicitly, as `test_live_sketch_validity.py`,
+`test_live_sketch_derive.py` and `test_live_measure_capture.py` all do.
 
 ## SOLIDWORKS session health
 

@@ -1,5 +1,5 @@
 {
-  "call_count": 266,
+  "call_count": 267,
   "calls": [
     {
       "argument_counts": [
@@ -1539,7 +1539,7 @@
       ],
       "member": "GetUserPreferenceIntegerValue",
       "sources": [
-        "swmcp/handlers/exchange.py",
+        "swmcp/com/preferences.py",
         "swmcp/handlers/parameter.py"
       ]
     },
@@ -1560,8 +1560,8 @@
       ],
       "member": "GetUserPreferenceToggle",
       "sources": [
-        "swmcp/com/session.py",
-        "swmcp/handlers/exchange.py"
+        "swmcp/com/preferences.py",
+        "swmcp/com/session.py"
       ]
     },
     {
@@ -1964,6 +1964,15 @@
     },
     {
       "argument_counts": [
+        0
+      ],
+      "member": "ModelToSketchTransform",
+      "sources": [
+        "swmcp/sketching.py"
+      ]
+    },
+    {
+      "argument_counts": [
         9
       ],
       "member": "MoveOrCopy",
@@ -2324,7 +2333,7 @@
       ],
       "member": "SetUserPreferenceIntegerValue",
       "sources": [
-        "swmcp/handlers/exchange.py"
+        "swmcp/com/preferences.py"
       ]
     },
     {
@@ -2333,8 +2342,8 @@
       ],
       "member": "SetUserPreferenceToggle",
       "sources": [
-        "swmcp/com/session.py",
-        "swmcp/handlers/exchange.py"
+        "swmcp/com/preferences.py",
+        "swmcp/com/session.py"
       ]
     },
     {

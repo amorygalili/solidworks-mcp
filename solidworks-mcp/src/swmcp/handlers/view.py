@@ -27,6 +27,7 @@ from swmcp.com.marshal import (
     out_long,
     try_com_member,
 )
+from swmcp.com.preferences import Preferences
 from swmcp.context import OpContext
 from swmcp.envelope import ArtifactEvidence
 from swmcp.errors import SwMcpError, make_error, validation_error
@@ -70,6 +71,41 @@ _DISPLAY_METHODS = {
 }
 
 _FORMATS = {".png": "png", ".bmp": "bmp"}
+
+#: What "reference geometry" means for a capture: the construction scaffolding a model
+#: is built on, which is not the model. Deliberately excludes swDisplaySketches - an
+#: unconsumed sketch is content a caller may be capturing on purpose, whereas nobody
+#: asks for a preview in order to look at the front plane. Every name here was resolved
+#: against swUserPreferenceToggle_e on 2026 (34.3.0); swDisplayDimension, which reads
+#: like it belongs, is not a member of that enum at all.
+_REFERENCE_GEOMETRY_TOGGLES = (
+    "swDisplayPlanes",
+    "swDisplayAxes",
+    "swDisplayTemporaryAxes",
+    "swDisplayOrigins",
+    "swDisplayCoordSystems",
+    "swDisplayReferencePoints",
+    "swDisplayCurves",
+    "swDisplayDatums",
+    "swDisplaySketchPlanes",
+)
+
+
+def _hide_reference_geometry(preferences: Preferences) -> None:
+    """Turn the datum scaffolding off for the length of one capture.
+
+    Takes an already-constructed :class:`Preferences` rather than building one, so the
+    caller holds the undo record *before* the first toggle is written. Building it here
+    and returning it would mean a failure partway through the list threw away the
+    record of the toggles already changed, leaving the user's planes switched off with
+    nothing left that knew how to put them back.
+
+    The caller restores in a ``finally``. These are the user's own view settings, and a
+    capture that left them altered would be a lasting change made on their behalf
+    without asking - the same fault as leaving ``AddToDB`` set.
+    """
+    for name in _REFERENCE_GEOMETRY_TOGGLES:
+        preferences.set_toggle(name, False, label=name, shown=False)
 
 
 def _orient(doc: Any, orientation: str | None, display_mode: str | None, *, fit: bool) -> None:
@@ -241,18 +277,34 @@ def view_capture(ctx: OpContext, args: ViewCaptureArgs) -> ViewCaptureResult:
 
     if args.clear_selection:
         try_com_member(doc, "ClearSelection2", True, default=None)
-    _orient(doc, args.orientation, args.display_mode, fit=args.fit)
+
+    hidden = None if args.show_reference_geometry else Preferences(ctx.session.app)
 
     details: dict[str, Any] = {}
-    if _FORMATS[suffix] == "bmp":
-        # SaveBMP is the only SOLIDWORKS call that takes an explicit pixel size.
-        method = "SaveBMP"
-        details["returned"] = try_com_member(
-            doc, "SaveBMP", str(target), args.width, args.height, default=None
-        )
-    else:
-        method, png_details = _write_png(doc, target, args.width, args.height)
-        details.update(png_details)
+    try:
+        # Hidden before the orient, so the zoom-to-fit frames the model rather than
+        # whatever the datum planes happen to extend to.
+        if hidden is not None:
+            _hide_reference_geometry(hidden)
+        _orient(doc, args.orientation, args.display_mode, fit=args.fit)
+        if _FORMATS[suffix] == "bmp":
+            # SaveBMP is the only SOLIDWORKS call that takes an explicit pixel size.
+            method = "SaveBMP"
+            details["returned"] = try_com_member(
+                doc, "SaveBMP", str(target), args.width, args.height, default=None
+            )
+        else:
+            method, png_details = _write_png(doc, target, args.width, args.height)
+            details.update(png_details)
+    finally:
+        # Unconditional: these are the user's own view settings, and a failed capture
+        # must not leave their planes switched off.
+        if hidden is not None:
+            hidden.restore()
+            try_com_member(doc, "GraphicsRedraw2", default=None)
+    details["reference_geometry_hidden"] = (
+        sorted(hidden.applied) if hidden is not None else []
+    )
 
     if not target.is_file():
         raise SwMcpError(
