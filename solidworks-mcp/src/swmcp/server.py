@@ -1,5 +1,9 @@
 """The MCP server: tools registered from the catalog, gated by tier.
 
+One of three front ends over :meth:`swmcp.dispatch.Dispatcher.execute`, beside the
+library (:mod:`swmcp.library`) and the skill's CLI (:mod:`swmcp.__main__`). Nothing
+here may decide anything about an operation; it only describes and serializes.
+
 The low-level ``Server`` is used rather than ``MCPServer``/FastMCP because the catalog
 owns the schemas. FastMCP infers a schema from the Python signature, which would nest
 a pydantic argument model under an ``args`` key and put a second source of truth in the
@@ -20,10 +24,12 @@ from mcp import types
 from mcp.server.lowlevel import Server
 
 from swmcp.catalog.projection import project
-from swmcp.catalog.registry import OPS, load_all_ops
-from swmcp.catalog.spec import OpSpec, tier_allowed
+from swmcp.catalog.search import active_ops, search_tools
+from swmcp.catalog.spec import OpSpec
 from swmcp.config import SwmcpConfig, get_config
 from swmcp.dispatch import Dispatcher
+
+__all__ = ["SEARCH_TOOL", "active_ops", "build_server", "list_tool_descriptors", "search_tools"]
 
 SEARCH_TOOL = "sw_search_tools"
 
@@ -40,13 +46,6 @@ Lengths accept a bare number (millimetres), a string such as "50mm" or "2in", or
 
 Use sw_search_tools to find operations, including any the active tier has not exposed.
 """
-
-
-def active_ops(config: SwmcpConfig | None = None) -> dict[str, OpSpec]:
-    """Operations exposed at the configured tier."""
-    config = config or get_config()
-    load_all_ops()
-    return {name: spec for name, spec in OPS.items() if tier_allowed(spec.tier, config.tool_tier)}
 
 
 def tool_descriptor(spec: OpSpec) -> types.Tool:
@@ -91,74 +90,6 @@ def search_descriptor() -> types.Tool:
             read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False
         ),
     )
-
-
-def search_tools(
-    query: str = "",
-    domain: str | None = None,
-    limit: int = 20,
-    config: SwmcpConfig | None = None,
-) -> dict[str, Any]:
-    """DISC-001. Searches the full catalog, not just the registered subset."""
-    config = config or get_config()
-    load_all_ops()
-    terms = [t for t in query.lower().split() if t]
-    available = set(active_ops(config))
-
-    scored: list[tuple[int, OpSpec]] = []
-    for spec in OPS.values():
-        if domain and domain not in spec.domains:
-            continue
-        haystack = " ".join(
-            [
-                spec.name,
-                spec.summary,
-                *spec.tags,
-                *spec.domains,
-                *spec.satisfies,
-                *spec.partially_satisfies,
-            ]
-        ).lower()
-        if not terms:
-            scored.append((0, spec))
-            continue
-        score = sum(
-            3 if term in spec.name.lower() else (1 if term in haystack else 0) for term in terms
-        )
-        if score:
-            scored.append((-score, spec))
-
-    scored.sort(key=lambda item: (item[0], item[1].name))
-    hits = []
-    for _score, spec in scored[:limit]:
-        projection = project(spec.safety)
-        hits.append(
-            {
-                "name": spec.name,
-                "tier": spec.tier,
-                "available": spec.name in available,
-                "tier_needed": None if spec.name in available else spec.tier,
-                "domains": list(spec.domains),
-                "summary": spec.summary,
-                "read_only": projection.read_only,
-                "destructive": projection.destructive,
-                "satisfies": list(spec.satisfies),
-            }
-        )
-
-    return {
-        "query": query,
-        "domain": domain,
-        "active_tier": config.tool_tier,
-        "matched": len(scored),
-        "returned": len(hits),
-        "tools": hits,
-        "hint": (
-            "Set SWMCP_TOOL_TIER=all to register every operation."
-            if any(not hit["available"] for hit in hits)
-            else None
-        ),
-    }
 
 
 def list_tool_descriptors(config: SwmcpConfig | None = None) -> list[types.Tool]:

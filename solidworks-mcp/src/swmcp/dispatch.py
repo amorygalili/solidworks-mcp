@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import time
 import uuid
+from dataclasses import dataclass
 from typing import Any
 
 from pydantic import BaseModel, ValidationError
@@ -37,6 +38,42 @@ from swmcp.safety.checkpoint import CheckpointStore
 from swmcp.safety.paths import assert_output_path, prepare_document_path
 from swmcp.schemas.common import DOCUMENT_PATH_FIELDS, OUTPUT_PATH_FIELDS
 from swmcp.timing import elapsed_ms
+
+#: Every successful payload states its units, so a caller never has to guess them.
+WIRE_UNITS: dict[str, str] = {"length": "mm", "angle": "deg", "mass": "kg"}
+
+
+@dataclass(frozen=True, slots=True)
+class Outcome:
+    """What one call produced: a typed result or an error envelope, never both."""
+
+    tool: str | None
+    request_id: str
+    duration_ms: float
+    result: BaseModel | None = None
+    error: ErrorEnvelope | None = None
+
+    @property
+    def ok(self) -> bool:
+        return self.error is None
+
+    def payload(self) -> dict[str, Any]:
+        """The wire shape the MCP server and the CLI both emit."""
+        if self.error is not None:
+            return {
+                "ok": False,
+                "request_id": self.request_id,
+                "error": self.error.model_dump(mode="json", exclude_none=True),
+            }
+        assert self.result is not None
+        return {
+            "ok": True,
+            "tool": self.tool,
+            "request_id": self.request_id,
+            "units": dict(WIRE_UNITS),
+            "duration_ms": self.duration_ms,
+            "result": self.result.model_dump(mode="json"),
+        }
 
 
 class Dispatcher:
@@ -285,20 +322,28 @@ class Dispatcher:
 
     # -- entry point -------------------------------------------------------
 
-    def call(self, name: str, raw_args: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Run one operation and return its wire payload."""
+    def execute(self, name: str, raw_args: dict[str, Any] | None = None) -> Outcome:
+        """Run one operation and return its typed outcome.
+
+        This is the entry point every front end shares. The MCP server and the CLI
+        serialize the outcome with :meth:`Outcome.payload`; the Python library hands
+        the typed result model straight to its caller. Either way the request went
+        through the same gates, so no front end can skip one.
+        """
         started = time.monotonic()
         request_id = uuid.uuid4().hex[:12]
         spec = OPS.get(name)
         if spec is None:
-            return _error_payload(
-                make_error(
+            return Outcome(
+                tool=None,
+                request_id=request_id,
+                duration_ms=elapsed_ms(started),
+                error=make_error(
                     "UNKNOWN_TOOL",
                     "validation",
                     f"There is no operation named {name!r}.",
                     remediation=["Use the tool search operation to find the right name."],
                 ),
-                request_id,
             )
 
         projection = project(spec.safety)
@@ -310,23 +355,35 @@ class Dispatcher:
             result = self._run_on_worker(spec, args, request_id)
         except SwMcpError as exc:
             self._audit(spec, projection, args, ok=False, error=exc.envelope, started=started)
-            return _error_payload(exc.envelope, request_id)
+            return Outcome(
+                tool=spec.name,
+                request_id=request_id,
+                duration_ms=elapsed_ms(started),
+                error=exc.envelope,
+            )
         except Exception as exc:
             from swmcp.com.classify import to_envelope
 
             envelope = to_envelope(exc, context={"tool": spec.name})
             self._audit(spec, projection, args, ok=False, error=envelope, started=started)
-            return _error_payload(envelope, request_id)
+            return Outcome(
+                tool=spec.name,
+                request_id=request_id,
+                duration_ms=elapsed_ms(started),
+                error=envelope,
+            )
 
         self._audit(spec, projection, args, ok=True, result=result, started=started)
-        return {
-            "ok": True,
-            "tool": spec.name,
-            "request_id": request_id,
-            "units": {"length": "mm", "angle": "deg", "mass": "kg"},
-            "duration_ms": elapsed_ms(started),
-            "result": result.model_dump(mode="json"),
-        }
+        return Outcome(
+            tool=spec.name,
+            request_id=request_id,
+            duration_ms=elapsed_ms(started),
+            result=result,
+        )
+
+    def call(self, name: str, raw_args: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Run one operation and return its wire payload."""
+        return self.execute(name, raw_args).payload()
 
     def _audit(
         self,
@@ -375,14 +432,6 @@ def _warn_about_failed_checks(result: MutationResult) -> None:
     warning = f"Read-back verification did not hold: {detail}"
     if warning not in result.warnings:
         result.warnings.append(warning)
-
-
-def _error_payload(envelope: ErrorEnvelope, request_id: str) -> dict[str, Any]:
-    return {
-        "ok": False,
-        "request_id": request_id,
-        "error": envelope.model_dump(mode="json", exclude_none=True),
-    }
 
 
 def _sketch_is_open(doc: Any) -> bool:

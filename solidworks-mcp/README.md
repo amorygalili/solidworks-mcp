@@ -1,7 +1,10 @@
 # solidworks-mcp
 
-A typed, auditable MCP server for SOLIDWORKS, driven over COM from a dedicated STA
-worker thread.
+Typed, auditable SOLIDWORKS automation, driven over COM from a dedicated STA worker
+thread, and usable three ways: as a **Python library**, as an **MCP server**, or as an
+**agent skill**. All three are front ends over one dispatch pipeline, so they share
+the same validation, path policy, confirmation gate, checkpoints, audit and read-back
+verification. See [Three front ends](#three-front-ends-one-pipeline).
 
 It implements the P0 foundation and a P1 modelling vertical from
 [`docs/solidworks-target-requirements.md`](../docs/solidworks-target-requirements.md),
@@ -40,6 +43,82 @@ MCP client configuration:
 
 `SWMCP_ALLOWED_ROOTS` is the one setting you must provide. With it unset, no file can
 be written anywhere — the path guard fails closed by design.
+
+## Three front ends, one pipeline
+
+```
+ Python script ──► swmcp.SolidWorks ─┐
+ MCP client ─────► swmcp.server ─────┼──► Dispatcher.execute ──► STA worker ──► SOLIDWORKS
+ Agent skill ────► python -m swmcp ──┘    validate · guard · checkpoint · run · verify · audit
+```
+
+`Dispatcher.execute` is the one entry point. It returns a typed `Outcome`, and each
+front end only decides how to present it: the library returns the result model, while
+the MCP server and the CLI print `Outcome.payload()`, which is the same JSON either way.
+
+**Python library.** Each operation is a method named for it without the `sw_` prefix.
+A method takes keywords, a dict, or the operation's args model, and returns its result
+model:
+
+```python
+from swmcp import OperationError, SolidWorks, VerificationFailed
+
+with SolidWorks(allowed_roots=["C:/cad/work"]) as sw:
+    sw.doc_new(doc_type="part")
+    sw.sketch_start(on={"standard_plane": "front"})
+    sw.sketch_add_geometry(
+        entities=[{"type": "rect_corner", "corner": [0, 0], "opposite": [100, 60]}],
+        auto_relations=False,
+    )
+    sw.sketch_exit()
+    sw.feature_extrude_boss(depth=8)
+    print(sw.measure().mass_properties["volume_mm3"])   # ~48000 mm^3
+```
+
+A failure raises `OperationError`, which carries the same error envelope an MCP client
+would receive. One thing differs from MCP, and it is deliberate. An MCP client reads the
+verification block itself. A script that only looks at a return value would carry on
+building on geometry that was never made. So a mutation whose read-back checks did not
+hold raises `VerificationFailed`, unless the client was made with `strict=False`.
+`sw_import` is the one operation whose method name changes: it is `import_`, because
+`import` is a keyword. Tiers do not apply to the library, and every operation is
+callable.
+
+The methods live in `src/swmcp/operations.py`, which is **generated** from the catalog
+by `--write-artifacts`, like the manifest. They are typed on their results. Their
+arguments are typed through the args models rather than restated as annotations, which
+would be a second copy of every schema. `SolidWorks.describe(name)` prints the input
+schema of any operation.
+
+**MCP server.** Run `solidworks-mcp` with no command, configured as shown in
+[Quick start](#quick-start). Nothing about it changed.
+
+**Agent skill.** The skill ships inside the package, at `src/swmcp/skill/`. It has a
+`SKILL.md` and a generated tool index. Install it with:
+
+```bash
+uv run solidworks-mcp install-skill            # from this folder; to ~/.claude/skills/solidworks
+uv run --project C:/path/to/solidworks-mcp solidworks-mcp install-skill --dest DIR   # from anywhere
+```
+
+Installing pins the interpreter that ran the install into the copied `SKILL.md`, so
+the agent runs the Python that actually has `swmcp` installed rather than whichever
+one is first on PATH. The skill drives these commands:
+
+```bash
+python -m swmcp call sw_doc_list                          # one operation, JSON out
+python -m swmcp call sw_export @args.json --allowed-root C:/cad/work
+python -m swmcp tools fillet edge                         # search every tier
+python -m swmcp describe sw_feature_fillet                # input schema and safety
+```
+
+`call` exits with **0** when the operation succeeded and verified, **1** when it
+failed, and **2** when it ran but its verification did not hold. For multi-step builds,
+the skill tells the agent to write a library script instead. That keeps one process and
+one attach for the whole build, and keeps the checkpoint debounce, which a fresh process
+per command would reset. Its examples are tested against the catalog
+(`tests/test_library.py`), so a field renamed in a schema fails the build rather than
+the agent.
 
 ## What makes it different
 

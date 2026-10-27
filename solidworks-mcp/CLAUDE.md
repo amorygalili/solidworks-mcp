@@ -306,6 +306,20 @@ If you call an interface that `src/swmcp/generated/swapi.json` does not cover, a
 rest. `fetch_api_docs.py` reads its interface list *from* `swapi.json`, so there is only
 one list to update.
 
+## Three front ends, one pipeline
+
+The library (`swmcp.library.SolidWorks`), the MCP server (`server.py`) and the skill's
+CLI (`__main__.py`: `call`, `tools`, `describe`, `install-skill`) are all thin over
+`Dispatcher.execute`. Behaviour belongs in a handler or in the dispatcher, never in a
+front end. A rule enforced in only one of them is a rule the other two bypass.
+
+Adding or changing an `@op` needs no front-end edits. `--write-artifacts` regenerates
+the library's typed methods (`src/swmcp/operations.py`) and the skill's tool index
+(`src/swmcp/skill/reference/tools.md`) along with the manifest, and `pytest` fails while
+either is stale. Do not edit those two files by hand. `SKILL.md` itself is hand-written,
+and `tests/test_library.py` validates every example in it against the catalog, so a
+renamed field fails there first.
+
 ## An operation is not done because COM returned
 
 `SAFE-010` is structural: a `model_mutation` must return a `MutationResult` carrying
